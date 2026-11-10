@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Deutsch B1-B2 Anki Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --app-height: 100dvh;
+    }
+    body {
+      height: 100dvh;
+      height: var(--app-height);
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .safe-pb {
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+    }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
+
+  <!-- Compact Top Bar -->
+  <header class="w-full flex-none bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 py-2 z-20">
+    <div class="max-w-md mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
+          DE
+        </div>
+        <div>
+          <h1 class="text-xs font-bold leading-none tracking-tight">Anki B1–B2</h1>
+          <span class="text-[10px] text-slate-400 font-medium" id="voiceStatusBadge">Голос: авто</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <select id="modeSelect" class="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 font-semibold focus:outline-none">
+          <option value="de-ru">DE → RU</option>
+          <option value="ru-de">RU → DE</option>
+          <option value="mixed" selected>Микс</option>
+        </select>
+
+        <button id="openModalBtn" class="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition" title="Настройки и словарь">
+          <svg class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+
+        <button id="themeToggleBtn" class="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
+          <svg id="themeIconSun" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+          <svg id="themeIconMoon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status & Daily Goal Ribbon -->
+  <div class="flex-none max-w-md w-full mx-auto px-3 pt-2">
+    <div class="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
+      <span id="dailyReviewedCounter" class="px-2 py-0.5 rounded-md font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+        Сегодня: 0 / 60
+      </span>
+      <div class="flex gap-1.5 text-[10px]">
+        <span class="text-blue-600 dark:text-blue-400" id="newCounter">Новые: 0</span>
+        <span>•</span>
+        <span class="text-amber-600 dark:text-amber-400" id="learningCounter">Учим: 0</span>
+        <span>•</span>
+        <span class="text-emerald-600 dark:text-emerald-400" id="masteredCounter">Повторено: 0</span>
+      </div>
+    </div>
+    <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden">
+      <div id="sessionProgressBar" class="bg-blue-600 h-1 transition-all duration-300" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- Screen Content Area (Fits perfectly on screen without outer scrolling) -->
+  <main class="flex-1 max-w-md w-full mx-auto px-3 py-2 flex flex-col justify-between overflow-hidden">
+    
+    <!-- Empty / Limit Reached View -->
+    <div id="emptyDeckView" class="hidden my-auto text-center py-8 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
+      <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h2 id="emptyViewTitle" class="text-base font-bold mb-1">Норма на сегодня выполнена!</h2>
+      <p id="emptyViewDesc" class="text-xs text-slate-500 dark:text-slate-400 mb-4">60 карточек повторено. Для прочного запоминания сделайте перерыв.</p>
+      <button id="resetSessionBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition">
+        Продолжить ещё 20 карточек
+      </button>
+    </div>
+
+    <!-- Active Card Frame -->
+    <div id="cardDeckView" class="flex-1 flex flex-col justify-between overflow-hidden">
+      
+      <!-- Tactile Card Container -->
+      <div id="cardWrapper" class="flex-1 flex flex-col justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-md active:scale-[0.99] transition duration-150 cursor-pointer overflow-y-auto">
+        
+        <!-- Header inside card -->
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <span id="cardDirectionBadge" class="text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            DE → RU
+          </span>
+          <span id="cardContextTag" class="text-[11px] text-slate-400 font-medium truncate max-w-[190px]"></span>
+          <button id="speakPromptBtn" class="p-1.5 text-blue-600 dark:text-blue-400 rounded-full hover:bg-blue-50 dark:hover:bg-slate-800 transition" title="Произнести">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+          </button>
+        </div>
+
+        <!-- Question / Front Text -->
+        <div class="my-auto py-2 text-center">
+          <h2 id="cardPrompt" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-snug">
+            <!-- German or Russian -->
+          </h2>
+          <div id="cardPromptExampleContainer" class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal italic">
+            <p id="cardPromptExample"></p>
+          </div>
+          <div id="tapToFlipHint" class="mt-4 text-[10px] text-slate-400 font-semibold uppercase tracking-wider animate-pulse">
+            Нажмите на карточку для ответа
+          </div>
+        </div>
+
+        <!-- Answer / Back Text (Revealed) -->
+        <div id="cardBackContent" class="hidden pt-3 border-t border-slate-100 dark:border-slate-800 text-center animate-fade-in">
+          <div id="cardAnswer" class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 mb-1 leading-snug">
+            <!-- Answer -->
+          </div>
+          <div id="cardAnswerExample" class="text-xs text-slate-500 dark:text-slate-400 italic">
+            <!-- Example translated -->
+          </div>
+        </div>
+
+        <!-- Card bottom info -->
+        <div class="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <span id="cardRepsInfo">Повторений: 0</span>
+          <span id="cardTagsInfo" class="truncate max-w-[140px]"></span>
+        </div>
+
+      </div>
+
+      <!-- Action Panel & Voice buttons (Thumb Ergonomics) -->
+      <div class="flex-none mt-2 safe-pb">
+        <!-- Separate Speak Audio Chips -->
+        <div id="audioButtonsBar" class="hidden flex items-center justify-center gap-2 mb-2">
+          <button id="speakTermOnlyBtn" class="flex-1 py-1.5 px-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition">
+            <svg class="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
+            Слово
+          </button>
+          <button id="speakExampleOnlyBtn" class="flex-1 py-1.5 px-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition">
+            <svg class="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
+            Пример
+          </button>
+        </div>
+
+        <!-- Big Primary Flip Button -->
+        <button id="showAnswerBtn" class="w-full h-13 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-500/25 active:scale-95 transition flex items-center justify-center gap-2">
+          Показать ответ
+        </button>
+
+        <!-- Anki 4 Rating Buttons -->
+        <div id="ratingButtons" class="hidden grid grid-cols-4 gap-1.5 w-full">
+          <button data-rate="again" class="h-12 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-rose-300/40">
+            <span>Снова</span>
+            <span class="text-[9px] opacity-70">1 мин</span>
+          </button>
+          <button data-rate="hard" class="h-12 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-amber-300/40">
+            <span>Трудно</span>
+            <span class="text-[9px] opacity-70">1 день</span>
+          </button>
+          <button data-rate="good" class="h-12 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-blue-300/40">
+            <span>Хорошо</span>
+            <span class="text-[9px] opacity-70">3 дня</span>
+          </button>
+          <button data-rate="easy" class="h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-emerald-300/40">
+            <span>Легко</span>
+            <span class="text-[9px] opacity-70">5 дней</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal: Settings, Voice & Vocabulary -->
+  <div id="vocabModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[88dvh] overflow-hidden">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-sm font-bold">Настройки и словарь</h3>
+        <button id="closeModalBtn" class="text-slate-400 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Scrollable Settings Body -->
+      <div class="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+        
+        <!-- Voice Settings Box -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+          <div class="font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+            <span>Голос и произношение</span>
+            <label class="inline-flex items-center gap-1 font-normal cursor-pointer text-[11px]">
+              <input type="checkbox" id="autoPlayAudio" checked class="rounded text-blue-600">
+              <span>Автоозвучка</span>
+            </label>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Выбор голоса (приоритет отдан естественным нейросетям):</label>
+            <select id="voiceSelect" class="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Скорость: <span id="rateValueLabel">0.92x</span></label>
+              <input type="range" id="speechRateInput" min="0.7" max="1.2" step="0.02" value="0.92" class="w-full accent-blue-600">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Тон (Pitch): <span id="pitchValueLabel">1.0</span></label>
+              <input type="range" id="speechPitchInput" min="0.8" max="1.2" step="0.05" value="1.0" class="w-full accent-blue-600">
+            </div>
+          </div>
+          <button id="testVoiceBtn" class="w-full py-1.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded-lg text-xs font-semibold">
+            Прослушать образец голоса
+          </button>
+        </div>
+
+        <!-- Daily Limit Setting -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+          <div>
+            <div class="font-bold text-slate-800 dark:text-slate-200">Дневной лимит карточек:</div>
+            <div class="text-[10px] text-slate-400">Рекомендуется 60 для баланса</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="number" id="dailyLimitInput" min="10" max="200" step="5" value="60" class="w-16 text-center font-bold text-xs p-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+            <button id="saveDailyLimitBtn" class="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold">OK</button>
+          </div>
+        </div>
+
+        <!-- Import / CSV Accordion -->
+        <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-3">
+          <div class="font-bold mb-2">Импорт / Экспорт CSV</div>
+          <textarea id="importTextarea" rows="4" placeholder="German;Russian;Example_DE;Example_RU;Context;Tags" class="w-full font-mono text-[11px] p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 mb-2"></textarea>
+          <div class="flex gap-2">
+            <button id="doImportAppendBtn" class="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold">Добавить</button>
+            <button id="exportCsvBtn" class="flex-1 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold">Экспорт</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full text-xs shadow-xl opacity-0 pointer-events-none transition-all duration-300 z-50">
+    <span id="toastMsg">Успешно!</span>
+  </div>
+
+  <script>
+    // --- 70 Cards Corpus (50 Vocabulary + 20 Grammar) ---
+    const DEFAULT_CORPUS = [
+      { id: 1, german: "die Herausforderung, -en", russian: "вызов, сложная задача", example_de: "Die Digitalisierung stellt viele Unternehmen vor eine neue Herausforderung.", example_ru: "Цифровизация ставит многие предприятия перед новым вызовом.", context: "Nomen, f.", tags: "b1_b2 n_fem work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 2, german: "abhängen von", russian: "зависеть от", example_de: "Die Dauer der Fahrt hängt stark vom Berufsverkehr ab.", example_ru: "Продолжительность поездки сильно зависит от часа пик.", context: "Verb (+ Dat.)", tags: "b1_b2 v_prep grammar", reps: 0, interval: 0, nextReview: 0 },
+      { id: 3, german: "zur Verfügung stehen", russian: "быть в распоряжении, иметься", example_de: "Für dieses Bauprojekt stehen derzeit keine ausreichenden Mittel zur Verfügung.", example_ru: "Для этого проекта сейчас нет достаточных средств в наличии.", context: "NVV", tags: "b2 nvv formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 4, german: "in Betracht ziehen", russian: "принимать во внимание, учитывать", example_de: "Wir sollten auch alternative Routen in Betracht ziehen.", example_ru: "Нам следует также принять во внимание альтернативные маршруты.", context: "NVV", tags: "b2 nvv formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 5, german: "verzichten auf", russian: "отказываться от", example_de: "Viele Pendler verzichten mittlerweile auf das eigene Auto.", example_ru: "Многие люди отказываются сейчас от личного авто.", context: "Verb (+ Akk.)", tags: "b1_b2 v_prep daily", reps: 0, interval: 0, nextReview: 0 },
+      { id: 6, german: "nachhaltig", russian: "устойчивый, долговременный", example_de: "Wir benötigen dringend eine nachhaltige Lösung für die Energieversorgung.", example_ru: "Нам срочно нужно устойчивое решение для энергоснабжения.", context: "Adjektiv", tags: "b2 adj society", reps: 0, interval: 0, nextReview: 0 },
+      { id: 7, german: "die Maßnahme, -n", russian: "мера, мероприятие", example_de: "Die Behörden haben strenge Maßnahmen zur Verkehrssicherheit ergriffen.", example_ru: "Власти приняли строгие меры по безопасности движения.", context: "Nomen, f.", tags: "b1_b2 n_fem formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 8, german: "einen Beitrag leisten zu", russian: "вносить вклад в", example_de: "Jeder Einzelne kann einen spürbaren Beitrag zum Klimaschutz leisten.", example_ru: "Каждый человек может внести заметный вклад в защиту климата.", context: "NVV (+ Dat.)", tags: "b2 nvv society", reps: 0, interval: 0, nextReview: 0 },
+      { id: 9, german: "beantragen", russian: "подавать заявление, запрашивать", example_de: "Ich muss bis zum Monatsende eine neue Arbeitserlaubnis beantragen.", example_ru: "Мне нужно подать заявление на новое разрешение на работу до конца месяца.", context: "Verb (+ Akk.)", tags: "b1_b2 v_trans work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 10, german: "sich gewöhnen an", russian: "привыкать к", example_de: "Man gewöhnt sich nur langsam an das wechselhafte Wetter.", example_ru: "К переменчивой погоде привыкаешь медленно.", context: "Refl. Verb (+ Akk.)", tags: "b1_b2 v_refl daily", reps: 0, interval: 0, nextReview: 0 },
+      { id: 11, german: "sich auseinandersetzen mit", russian: "детально разбираться с, дискутировать", example_de: "Wir müssen uns gründlich mit diesem Problem auseinandersetzen.", example_ru: "Мы должны основательно разобраться с этой проблемой.", context: "Refl. Verb (+ Dat.)", tags: "b2 v_refl academic", reps: 0, interval: 0, nextReview: 0 },
+      { id: 12, german: "der Begriff, -e", russian: "понятие, термин", example_de: "In diesem Fachartikel wird der Begriff präzise definiert.", example_ru: "В этой научной статье данный термин определяется точно.", context: "Nomen, m.", tags: "b1_b2 n_masc academic", reps: 0, interval: 0, nextReview: 0 },
+      { id: 13, german: "überzeugen von", russian: "убеждать в", example_de: "Seine schlüssigen Argumente konnten das gesamte Team überzeugen.", example_ru: "Его убедительные аргументы смогли убедить всю команду.", context: "Verb (+ Dat.)", tags: "b1_b2 v_prep communication", reps: 0, interval: 0, nextReview: 0 },
+      { id: 14, german: "zur Folge haben", russian: "влечь за собой, иметь последствием", example_de: "Die Verzögerung hatte erhebliche Mehrkosten zur Folge.", example_ru: "Задержка повлекла за собой значительные дополнительные затраты.", context: "NVV", tags: "b2 nvv formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 15, german: "aufgrund", russian: "по причине, из-за", example_de: "Aufgrund eines technischen Defekts fällt der Zug heute aus.", example_ru: "Из-за технической неисправности поезд сегодня отменен.", context: "Präposition (+ Gen.)", tags: "b1_b2 prep grammar", reps: 0, interval: 0, nextReview: 0 },
+      { id: 16, german: "scheitern an", russian: "потерпеть неудачу из-за", example_de: "Das Vorhaben scheiterte letztlich an fehlenden finanziellen Mitteln.", example_ru: "План в итоге провалился из-за отсутствия финансовых средств.", context: "Verb (+ Dat.)", tags: "b2 v_prep formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 17, german: "die Voraussetzung, -en", russian: "предпосылка, требование, условие", example_de: "Gute Deutschkenntnisse sind eine zentrale Voraussetzung für die Stelle.", example_ru: "Хорошие знания немецкого являются главным условием для этой должности.", context: "Nomen, f.", tags: "b1_b2 n_fem work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 18, german: "beibehalten", russian: "сохранять, не менять", example_de: "Trotz des Widerstands wollen wir diese bewährte Strategie beibehalten.", example_ru: "Несмотря на сопротивление, мы хотим сохранить эту проверенную стратегию.", context: "Verb (trennb.)", tags: "b2 v_trans work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 19, german: "Einfluss nehmen auf", russian: "оказывать влияние на", example_de: "Externe Faktoren können starken Einfluss auf die Messergebnisse nehmen.", example_ru: "Внешние факторы могут оказывать сильное влияние на результаты измерений.", context: "NVV (+ Akk.)", tags: "b2 nvv academic", reps: 0, interval: 0, nextReview: 0 },
+      { id: 20, german: "die Auswirkung, -en", russian: "последствие, воздействие", example_de: "Die genauen Auswirkungen dieser Entscheidung sind noch nicht absehbar.", example_ru: "Точные последствия этого решения пока невозможно предвидеть.", context: "Nomen, f.", tags: "b1_b2 n_fem society", reps: 0, interval: 0, nextReview: 0 },
+      { id: 21, german: "achten auf", russian: "обращать внимание на, следить за", example_de: "Bitte achten Sie genau auf die Durchsagen am Bahnsteig.", example_ru: "Пожалуйста, внимательно следите за объявлениями на перроне.", context: "Verb (+ Akk.)", tags: "b1_b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 22, german: "ankommen auf", russian: "зависеть от", example_de: "Es kommt jetzt auf eine schnelle und koordinierte Entscheidung an.", example_ru: "Сейчас всё зависит от быстрого и скоординированного решения.", context: "Verb (+ Akk.)", tags: "b1_b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 23, german: "sich ärgern über", russian: "злиться из-за, раздражаться", example_de: "Er ärgert sich über die ständigen Verspätungen der Bahn.", example_ru: "Он злится из-за постоянных опозданий поездов.", context: "Refl. Verb (+ Akk.)", tags: "b1_b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 24, german: "bestehen aus", russian: "состоять из", example_de: "Das modulare System besteht aus vier unabhängigen Komponenten.", example_ru: "Модульная система состоит из четырех независимых компонентов.", context: "Verb (+ Dat.)", tags: "b1_b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 25, german: "bestehen auf", russian: "настаивать на", example_de: "Der Kunde besteht auf einer schriftlichen Bestätigung des Termins.", example_ru: "Клиент настаивает на письменном подтверждении встречи.", context: "Verb (+ Dat.)", tags: "b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 26, german: "sich beziehen auf", russian: "ссылаться на", example_de: "Ich beziehe mich auf unser gestriges Telefongespräch.", example_ru: "Я ссылаюсь на наш вчерашний телефонный разговор.", context: "Refl. Verb (+ Akk.)", tags: "b1_b2 v_prep formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 27, german: "hinweisen auf", russian: "указывать на", example_de: "Der Prüfer weist auf ein ernstes Sicherheitsrisiko hin.", example_ru: "Инспектор указывает на серьезный риск безопасности.", context: "Verb (trennb., + Akk.)", tags: "b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 28, german: "rechnen mit", russian: "рассчитывать на, ожидать", example_de: "Wir rechnen mit einer spürbaren Verbesserung der Gesamtlage.", example_ru: "Мы рассчитываем на ощутимое улучшение общей ситуации.", context: "Verb (+ Dat.)", tags: "b1_b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 29, german: "zweifeln an", russian: "сомневаться в", example_de: "Niemand im Team zweifelt an der Richtigkeit dieser Zahlen.", example_ru: "Никто в команде не сомневается в правильности этих цифр.", context: "Verb (+ Dat.)", tags: "b2 v_prep", reps: 0, interval: 0, nextReview: 0 },
+      { id: 30, german: "infrage kommen", russian: "приниматься в расчет, подходить", example_de: "Diese extrem teure Variante kommt für uns keinesfalls infrage.", example_ru: "Этот чрезвычайно дорогой вариант нам ни в коем случае не подходит.", context: "NVV", tags: "b1_b2 nvv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 31, german: "zur Sprache bringen", russian: "поднимать вопрос, высказывать", example_de: "Er wollte das heikle Problem im großen Meeting nicht zur Sprache bringen.", example_ru: "Он не хотел поднимать эту щекотливую проблему на общем собрании.", context: "NVV", tags: "b2 nvv formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 32, german: "in Kauf nehmen", russian: "мириться с чем-то, идти на издержки", example_de: "Wer mitten in der Stadt wohnt, muss den Lärm in Kauf nehmen.", example_ru: "Тот, кто живет в центре, должен мириться с шумом.", context: "NVV", tags: "b2 nvv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 33, german: "zur Verfügung stellen", russian: "предоставлять в распоряжение", example_de: "Das Institut stellt den Forschern alle Geräte kostenlos zur Verfügung.", example_ru: "Институт бесплатно предоставляет исследователям все приборы.", context: "NVV", tags: "b1_b2 nvv work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 34, german: "eine Rolle spielen", russian: "играть роль, иметь значение", example_de: "Finanzielle Faktoren spielen bei der Wahl eine untergeordnete Rolle.", example_ru: "Финансовые факторы играют при этом выборе второстепенную роль.", context: "NVV", tags: "b1_b2 nvv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 35, german: "Kritik üben an", russian: "критиковать кого-то/что-то", example_de: "Fachleute übten deutliche Kritik an dem vorgelegten Gesetzesentwurf.", example_ru: "Специалисты высказали явную критику по поводу представленного законопроекта.", context: "NVV (+ Dat.)", tags: "b2 nvv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 36, german: "einen Entschluss fassen", russian: "принимать твердое решение", example_de: "Nach reiflicher Überlegung fasste sie endlich einen mutigen Entschluss.", example_ru: "После зрелых размышлений она наконец приняла смелое решение.", context: "NVV", tags: "b2 nvv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 37, german: "die Anforderung, -en", russian: "требование", example_de: "Die Anforderungen an moderne Softwarearchitekturen steigen stetig.", example_ru: "Требования к современной архитектуре ПО непрерывно растут.", context: "Nomen, f.", tags: "b1_b2 n_fem work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 38, german: "die Angelegenheit, -en", russian: "дело, служебный вопрос", example_de: "Ich kümmere mich schnellstmöglich um diese dringende Angelegenheit.", example_ru: "Я займусь этим срочным вопросом как можно быстрее.", context: "Nomen, f.", tags: "b2 n_fem formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 39, german: "die Genehmigung, -en", russian: "разрешение, согласование", example_de: "Ohne behördliche Genehmigung darf das Gebäude nicht umgebaut werden.", example_ru: "Без разрешения властей здание нельзя перестраивать.", context: "Nomen, f.", tags: "b1_b2 n_fem formal", reps: 0, interval: 0, nextReview: 0 },
+      { id: 40, german: "der Ablauf, -¨e", russian: "процедура, рабочий процесс, распорядок", example_de: "Ein klarer Ablauf verhindert Missverständnisse im Projekt.", example_ru: "Четкий порядок действий предотвращает недопонимания в проекте.", context: "Nomen, m.", tags: "b1_b2 n_masc work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 41, german: "das Verfahren, -", russian: "метод, процедура, судебный процесс", example_de: "Dieses Verfahren spart im Alltag viel Zeit und Ressourcen.", example_ru: "Этот метод экономит много времени и ресурсов на практике.", context: "Nomen, n.", tags: "b2 n_neut tech", reps: 0, interval: 0, nextReview: 0 },
+      { id: 42, german: "angemessen", russian: "соответствующий, соразмерный, адекватный", example_de: "Wir erwarten für diese Leistung eine angemessene Vergütung.", example_ru: "Мы ожидаем соразмерной оплаты за эту работу.", context: "Adjektiv", tags: "b2 adj", reps: 0, interval: 0, nextReview: 0 },
+      { id: 43, german: "anspruchsvoll", russian: "требовательный, сложный, высокоуровневый", example_de: "Die Prüfung am Goethe-Institut war äußerst anspruchsvoll.", example_ru: "Экзамен в Гёте-институте был чрезвычайно сложным.", context: "Adjektiv", tags: "b2 adj work", reps: 0, interval: 0, nextReview: 0 },
+      { id: 44, german: "ausschlaggebend", russian: "решающий, определяющий", example_de: "Ihre Praxiserfahrung war ausschlaggebend bei der Einstellung.", example_ru: "Её практический опыт был решающим при приеме на работу.", context: "Adjektiv", tags: "b2 adj", reps: 0, interval: 0, nextReview: 0 },
+      { id: 45, german: "effizient", russian: "эффективный, действенный", example_de: "Wir müssen lernen, unsere Arbeitszeit effizienter zu nutzen.", example_ru: "Мы должны научиться эффективнее использовать рабочее время.", context: "Adjektiv", tags: "b1_b2 adj", reps: 0, interval: 0, nextReview: 0 },
+      { id: 46, german: "zuverlässig", russian: "надежный, верный", example_de: "Er ist seit Jahren ein absolut zuverlässiger Ansprechpartner.", example_ru: "Он уже много лет абсолютно надежное контактное лицо.", context: "Adjektiv", tags: "b1_b2 adj", reps: 0, interval: 0, nextReview: 0 },
+      { id: 47, german: "vermeiden", russian: "избегать, предотвращать", example_de: "Mit gründlichen Tests lassen sich kritische Fehler leicht vermeiden.", example_ru: "С помощью тщательных тестов можно легко избежать критических ошибок.", context: "Verb (+ Akk.)", tags: "b1_b2 v_trans", reps: 0, interval: 0, nextReview: 0 },
+      { id: 48, german: "allerdings", russian: "однако, правда, тем не менее", example_de: "Die Idee überzeugt mich, allerdings fehlt uns das Budget.", example_ru: "Идея меня убеждает, однако нам не хватает бюджета.", context: "Adverb / Konnektor", tags: "b1_b2 adv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 49, german: "mittlerweile", russian: "тем временем, к этому моменту", example_de: "Ich habe mich mittlerweile sehr gut in München eingelebt.", example_ru: "К этому моменту я уже очень хорошо освоился в Мюнхене.", context: "Adverb", tags: "b1_b2 adv daily", reps: 0, interval: 0, nextReview: 0 },
+      { id: 50, german: "wesentlich", russian: "существенный / значительно", example_de: "Die zweite Version arbeitet wesentlich stabiler als die erste.", example_ru: "Вторая версия работает существенно стабильнее первой.", context: "Adjektiv / Adverb", tags: "b1_b2 adj", reps: 0, interval: 0, nextReview: 0 },
+      { id: 51, german: "obwohl (Nebensatz: Verb am Ende)", russian: "хотя (союз: глагол в конце)", example_de: "Obwohl der Verkehr dicht war, kam er pünktlich zum Termin an.", example_ru: "Хотя движение было плотным, он прибыл на встречу вовремя.", context: "Grammatik: Subjunktion (Konzessiv)", tags: "b1_b2 grammar clause", reps: 0, interval: 0, nextReview: 0 },
+      { id: 52, german: "indem (Nebensatz: Verb am Ende)", russian: "путем того что, благодаря тому что (образ действия)", example_de: "Man spart viel Energie, indem man die Raumtemperatur um ein Grad senkt.", example_ru: "Экономят много энергии тем, что снижают температуру в помещении на один градус.", context: "Grammatik: Subjunktion (Modal)", tags: "b2 grammar clause", reps: 0, interval: 0, nextReview: 0 },
+      { id: 53, german: "sodass / so ..., dass", russian: "так что, таким образом что (следствие)", example_de: "Der Zug hatte starke Verspätung, sodass ich den Anschluss verpasste.", example_ru: "Поезд сильно опоздал, так что я упустил пересадку.", context: "Grammatik: Subjunktion (Konsekutiv)", tags: "b1_b2 grammar clause", reps: 0, interval: 0, nextReview: 0 },
+      { id: 54, german: "damit (Subjekt 1 ≠ Subjekt 2)", russian: "чтобы, для того чтобы (разные субъекты)", example_de: "Ich schicke Ihnen den Entwurf, damit Sie ihn vorab prüfen können.", example_ru: "Я отправляю вам проект, чтобы вы могли заранее его проверить.", context: "Grammatik: Subjunktion (Final)", tags: "b1_b2 grammar clause", reps: 0, interval: 0, nextReview: 0 },
+      { id: 55, german: "um ... zu + Infinitiv (gleiches Subjekt)", russian: "чтобы, с целью (один и тот же субъект)", example_de: "Er lernt intensiv Deutsch, um in Frankfurt als Ingenieur zu arbeiten.", example_ru: "Он интенсивно учит немецкий, чтобы работать инженером во Франкфурте.", context: "Grammatik: Infinitivgruppe (Final)", tags: "b1_b2 grammar infinitive", reps: 0, interval: 0, nextReview: 0 },
+      { id: 56, german: "je ... desto / umso ...", russian: "чем ..., тем ... (je + Komparativ, Verb am Ende; desto + Komparativ, Verb Pos. 2)", example_de: "Je mehr wir im Team kommunizieren, desto schneller lösen wir das Problem.", example_ru: "Чем больше мы общаемся в команде, тем быстрее решаем проблему.", context: "Grammatik: Doppelkonnektor", tags: "b2 grammar word_order", reps: 0, interval: 0, nextReview: 0 },
+      { id: 57, german: "ohne ... zu + Infinitiv / ohne dass", russian: "без того чтобы, не делая чего-то", example_de: "Er verließ die Besprechung, ohne ein einziges Wort zu sagen.", example_ru: "Он покинул совещание, не сказав ни единого слова.", context: "Grammatik: Modalsatz (ohne zu)", tags: "b1_b2 grammar infinitive", reps: 0, interval: 0, nextReview: 0 },
+      { id: 58, german: "anstatt ... zu + Infinitiv / anstatt dass", russian: "вместо того чтобы", example_de: "Anstatt lange zu zögern, trafen sie sofort eine mutige Entscheidung.", example_ru: "Вместо того чтобы долго колебаться, они сразу приняли смелое решение.", context: "Grammatik: Adversativsatz", tags: "b1_b2 grammar infinitive", reps: 0, interval: 0, nextReview: 0 },
+      { id: 59, german: "während (Gegensatz / Zeit)", russian: "в то время как / пока (глагол в конце)", example_de: "Während die Kosten steigen, sinken die Einnahmen im laufenden Quartal.", example_ru: "В то время как расходы растут, доходы в текущем квартале падают.", context: "Grammatik: Subjunktion (Temporal/Adversativ)", tags: "b1_b2 grammar clause", reps: 0, interval: 0, nextReview: 0 },
+      { id: 60, german: "Relativsatz mit Präposition (worüber / woran)", russian: "относительное придаточное с предлогом неодуш. (то, о чем / в чем)", example_de: "Das ist genau das Thema, worüber wir gestern lange gestritten haben.", example_ru: "Это именно та тема, о которой мы вчера долго спорили.", context: "Grammatik: Pronominaladverb (wo+r+Präp)", tags: "b2 grammar relative", reps: 0, interval: 0, nextReview: 0 },
+      { id: 61, german: "Relativsatz: Präposition + Dativ / Akkusativ", russian: "относительное придаточное с предлогом одуш./конкр. сущ.", example_de: "Der Kollege, mit dem ich das Projekt leite, ist heute im Urlaub.", example_ru: "Коллега, с которым я руковожу проектом, сегодня в отпуске.", context: "Grammatik: Relativpronomen + Fall", tags: "b1_b2 grammar relative", reps: 0, interval: 0, nextReview: 0 },
+      { id: 62, german: "sich lassen + Infinitiv (Passiversatz)", russian: "можно сделать / поддается выполнению (= kann gemacht werden)", example_de: "Dieses Problem lässt sich durch ein Software-Update leicht beheben.", example_ru: "Эту проблему можно легко устранить с помощью обновления ПО.", context: "Grammatik: Passiv-Alternative", tags: "b2 grammar passiv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 63, german: "sein + zu + Infinitiv (Passiversatz)", russian: "необходимо / можно сделать (= muss/kann gemacht werden)", example_de: "Das Protokoll ist bis morgen früh von allen Beteiligten zu unterschreiben.", example_ru: "Протокол должен быть подписан всеми участниками до завтрашнего утра.", context: "Grammatik: Passiv-Alternative (Notwendigkeit)", tags: "b2 grammar passiv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 64, german: "Konjunktiv II: höfliche Bitte (könnten / würden)", russian: "вежливая просьба / пожелание", example_de: "Könnten Sie mir die aktualisierten Unterlagen bitte bis 14 Uhr zusenden?", example_ru: "Не могли бы вы прислать мне обновленные документы до 14:00?", context: "Grammatik: Konjunktiv II (Höflichkeit)", tags: "b1_b2 grammar konjunktiv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 65, german: "Konjunktiv II: irreale Bedingung (hätte... wäre...)", russian: "нереальное условие в прошлом (если бы..., то...)", example_de: "Wenn wir früher losgefahren wären, hätten wir den Flug nicht verpasst.", example_ru: "Если бы мы выехали раньше, мы бы не опоздали на самолет.", context: "Grammatik: Konjunktiv II (Vergangenheit)", tags: "b2 grammar konjunktiv", reps: 0, interval: 0, nextReview: 0 },
+      { id: 66, german: "Partizip I als Adjektiv (Verb-stamm + -end + Endung)", russian: "причастие настоящего времени в роли прилагательного (активный процесс)", example_de: "Die steigenden Energiekosten belasten die Produktion erheblich.", example_ru: "Растущие затраты на энергию значительно обременяют производство.", context: "Grammatik: Partizip I als Adjektiv", tags: "b2 grammar partizip", reps: 0, interval: 0, nextReview: 0 },
+      { id: 67, german: "Partizip II als Adjektiv (vollendete Handlung)", russian: "причастие прошедшего времени в роли прилагательного (завершенный результат)", example_de: "Die getroffene Vereinbarung gilt verbindlich für das gesamte nächste Jahr.", example_ru: "Достигнутая договоренность имеет обязательную силу на весь следующий год.", context: "Grammatik: Partizip II als Adjektiv", tags: "b2 grammar partizip", reps: 0, interval: 0, nextReview: 0 },
+      { id: 68, german: "zwar ..., aber ...", russian: "правда ..., но ... (уступка и противопоставление)", example_de: "Die Software ist zwar recht teuer, aber sie spart enorm viel Arbeitszeit.", example_ru: "Программа, правда, довольно дорогая, но она экономит колоссально много времени.", context: "Grammatik: Zweiteiliger Konnektor", tags: "b1_b2 grammar connector", reps: 0, interval: 0, nextReview: 0 },
+      { id: 69, german: "weder ... noch ...", russian: "ни ..., ни ... (двойное отрицание)", example_de: "Für diesen Defekt gab es weder eine Erklärung noch eine schnelle Lösung.", example_ru: "Для этой поломки не было ни объяснения, ни быстрого решения.", context: "Grammatik: Zweiteiliger Konnektor", tags: "b1_b2 grammar connector", reps: 0, interval: 0, nextReview: 0 },
+      { id: 70, german: "nicht nur ..., sondern auch ...", russian: "не только ..., но и ...", example_de: "Das Seminar war nicht nur fachlich fundiert, sondern auch sehr praxisnah.", example_ru: "Семинар был не только профессионально глубоким, но и очень практичным.", context: "Grammatik: Zweiteiliger Konnektor", tags: "b1_b2 grammar connector", reps: 0, interval: 0, nextReview: 0 }
+    ];
+
+    // --- State Variables ---
+    let deck = [];
+    let queue = [];
+    let currentIndex = 0;
+    let isFlipped = false;
+    let currentDirection = 'de-ru';
+    let chosenVoice = null;
+    let dailyLimit = 60;
+    let dailyReviewedCount = 0;
+    let speechRate = 0.92;
+    let speechPitch = 1.0;
+
+    // --- DOM Elements ---
+    const cardPrompt = document.getElementById('cardPrompt');
+    const cardPromptExample = document.getElementById('cardPromptExample');
+    const cardPromptExampleContainer = document.getElementById('cardPromptExampleContainer');
+    const cardAnswer = document.getElementById('cardAnswer');
+    const cardAnswerExample = document.getElementById('cardAnswerExample');
+    const cardContextTag = document.getElementById('cardContextTag');
+    const cardDirectionBadge = document.getElementById('cardDirectionBadge');
+    const cardRepsInfo = document.getElementById('cardRepsInfo');
+    const cardTagsInfo = document.getElementById('cardTagsInfo');
+    const cardWrapper = document.getElementById('cardWrapper');
+    const cardBackContent = document.getElementById('cardBackContent');
+    const tapToFlipHint = document.getElementById('tapToFlipHint');
+    const showAnswerBtn = document.getElementById('showAnswerBtn');
+    const ratingButtons = document.getElementById('ratingButtons');
+    const audioButtonsBar = document.getElementById('audioButtonsBar');
+    const emptyDeckView = document.getElementById('emptyDeckView');
+    const emptyViewTitle = document.getElementById('emptyViewTitle');
+    const emptyViewDesc = document.getElementById('emptyViewDesc');
+    const cardDeckView = document.getElementById('cardDeckView');
+    const sessionProgressBar = document.getElementById('sessionProgressBar');
+    const modeSelect = document.getElementById('modeSelect');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const autoPlayAudio = document.getElementById('autoPlayAudio');
+    const voiceStatusBadge = document.getElementById('voiceStatusBadge');
+    const speechRateInput = document.getElementById('speechRateInput');
+    const speechPitchInput = document.getElementById('speechPitchInput');
+    const rateValueLabel = document.getElementById('rateValueLabel');
+    const pitchValueLabel = document.getElementById('pitchValueLabel');
+
+    // Counters
+    const dailyReviewedCounter = document.getElementById('dailyReviewedCounter');
+    const newCounter = document.getElementById('newCounter');
+    const learningCounter = document.getElementById('learningCounter');
+    const masteredCounter = document.getElementById('masteredCounter');
+    const dailyLimitInput = document.getElementById('dailyLimitInput');
+
+    // --- Advanced Speech Engine (Prioritizing Natural & Neural German Voices) ---
+    function initSpeechEngine() {
+      if (!('speechSynthesis' in window)) {
+        voiceStatusBadge.textContent = 'Звук недоступен';
+        return;
+      }
+
+      function pickBestVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return;
+
+        voiceSelect.innerHTML = '';
+        const deVoices = voices.filter(v => v.lang && (v.lang.startsWith('de') || v.lang.includes('DE')));
+
+        // Quality Ranking Patterns
+        const rankVoice = (v) => {
+          const name = v.name.toLowerCase();
+          if (name.includes('natural') || name.includes('neural')) return 100;
+          if (name.includes('google deutsch') || name.includes('google')) return 80;
+          if (name.includes('anna') || name.includes('katja') || name.includes('petra') || name.includes('markus')) return 70;
+          if (name.includes('siri') || name.includes('enhanced') || name.includes('premium')) return 60;
+          if (v.lang === 'de-DE') return 50;
+          return 10;
+        };
+
+        const sortedVoices = (deVoices.length > 0 ? deVoices : voices).sort((a, b) => rankVoice(b) - rankVoice(a));
+
+        sortedVoices.forEach((v, index) => {
+          const opt = document.createElement('option');
+          opt.value = v.name;
+          const isHighQuality = rankVoice(v) >= 60;
+          opt.textContent = `${isHighQuality ? '★ ' : ''}${v.name} (${v.lang})`;
+          voiceSelect.appendChild(opt);
+          if (index === 0 && !chosenVoice) {
+            chosenVoice = v;
+          }
+        });
+
+        // Restore saved voice if exists
+        const savedVoiceName = localStorage.getItem('anki_de_voice_name');
+        if (savedVoiceName) {
+          const found = sortedVoices.find(v => v.name === savedVoiceName);
+          if (found) {
+            chosenVoice = found;
+            voiceSelect.value = found.name;
+          }
+        }
+
+        if (chosenVoice) {
+          voiceStatusBadge.textContent = `Голос: ${chosenVoice.name.split(' ')[0]}`;
+        }
+      }
+
+      pickBestVoice();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = pickBestVoice;
+      }
+
+      voiceSelect.addEventListener('change', (e) => {
+        const voices = window.speechSynthesis.getVoices();
+        chosenVoice = voices.find(v => v.name === e.target.value) || null;
+        if (chosenVoice) {
+          localStorage.setItem('anki_de_voice_name', chosenVoice.name);
+          voiceStatusBadge.textContent = `Голос: ${chosenVoice.name.split(' ')[0]}`;
+        }
+      });
+
+      speechRateInput.addEventListener('input', (e) => {
+        speechRate = parseFloat(e.target.value);
+        rateValueLabel.textContent = `${speechRate.toFixed(2)}x`;
+        localStorage.setItem('anki_speech_rate', String(speechRate));
+      });
+
+      speechPitchInput.addEventListener('input', (e) => {
+        speechPitch = parseFloat(e.target.value);
+        pitchValueLabel.textContent = speechPitch.toFixed(2);
+        localStorage.setItem('anki_speech_pitch', String(speechPitch));
+      });
+
+      // Load saved speech settings
+      const savedRate = localStorage.getItem('anki_speech_rate');
+      if (savedRate) {
+        speechRate = parseFloat(savedRate);
+        speechRateInput.value = speechRate;
+        rateValueLabel.textContent = `${speechRate.toFixed(2)}x`;
+      }
+      const savedPitch = localStorage.getItem('anki_speech_pitch');
+      if (savedPitch) {
+        speechPitch = parseFloat(savedPitch);
+        speechPitchInput.value = speechPitch;
+        pitchValueLabel.textContent = speechPitch.toFixed(2);
+      }
+    }
+
+    function cleanGermanSpeechText(text) {
+      if (!text) return '';
+      // Remove grammatical bracket annotations like (Verb am Ende), (gleiches Subjekt)
+      return text
+        .replace(/\([^)]*\)/g, '')
+        .replace(/\+ (Dat\.|Akk\.|Gen\.)/gi, '')
+        .replace(/Grammatik:?/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function speakGermanText(rawText) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      const text = cleanGermanSpeechText(rawText);
+      if (!text) return;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'de-DE';
+      utterance.rate = speechRate;
+      utterance.pitch = speechPitch;
+
+      if (chosenVoice) {
+        utterance.voice = chosenVoice;
+      }
+      window.speechSynthesis.speak(utterance);
+    }
+
+    document.getElementById('testVoiceBtn').addEventListener('click', () => {
+      speakGermanText('Guten Tag! Ich spreche Deutsch flüssig und natürlich.');
+    });
+
+    // --- Daily Stats Management ---
+    function getTodayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function loadDailyStats() {
+      dailyLimit = parseInt(localStorage.getItem('anki_daily_limit') || '60', 10);
+      dailyLimitInput.value = dailyLimit;
+
+      const savedDate = localStorage.getItem('anki_today_date');
+      const today = getTodayKey();
+      if (savedDate === today) {
+        dailyReviewedCount = parseInt(localStorage.getItem('anki_today_count') || '0', 10);
+      } else {
+        dailyReviewedCount = 0;
+        localStorage.setItem('anki_today_date', today);
+        localStorage.setItem('anki_today_count', '0');
+      }
+      updateDailyUI();
+    }
+
+    function incrementDailyStats() {
+      const today = getTodayKey();
+      localStorage.setItem('anki_today_date', today);
+      dailyReviewedCount++;
+      localStorage.setItem('anki_today_count', String(dailyReviewedCount));
+      updateDailyUI();
+    }
+
+    function updateDailyUI() {
+      dailyReviewedCounter.textContent = `Сегодня: ${dailyReviewedCount} / ${dailyLimit}`;
+      if (dailyReviewedCount >= dailyLimit) {
+        dailyReviewedCounter.className = "px-2 py-0.5 rounded-md font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300";
+      } else {
+        dailyReviewedCounter.className = "px-2 py-0.5 rounded-md font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300";
+      }
+    }
+
+    document.getElementById('saveDailyLimitBtn').addEventListener('click', () => {
+      const val = parseInt(dailyLimitInput.value, 10);
+      if (!isNaN(val) && val >= 5) {
+        dailyLimit = val;
+        localStorage.setItem('anki_daily_limit', String(dailyLimit));
+        updateDailyUI();
+        showToast(`Дневной лимит: ${dailyLimit}`);
+        buildSessionQueue();
+      }
+    });
+
+    // --- State Storage ---
+    function loadDeck() {
+      loadDailyStats();
+      const stored = localStorage.getItem('anki_de_corpus_v3');
+      if (stored) {
+        try {
+          deck = JSON.parse(stored);
+        } catch (e) {
+          deck = [...DEFAULT_CORPUS];
+        }
+      } else {
+        deck = [...DEFAULT_CORPUS];
+        saveDeck();
+      }
+      buildSessionQueue();
+    }
+
+    function saveDeck() {
+      localStorage.setItem('anki_de_corpus_v3', JSON.stringify(deck));
+      updateDeckStats();
+    }
+
+    function buildSessionQueue(forceMore = false) {
+      const remainingToday = Math.max(0, dailyLimit - dailyReviewedCount);
+      const sessionCap = forceMore ? Math.min(dailyLimit, 20) : (remainingToday > 0 ? remainingToday : 0);
+
+      const pool = [...deck].sort(() => Math.random() - 0.5);
+      queue = sessionCap > 0 ? pool.slice(0, sessionCap) : [];
+      currentIndex = 0;
+      updateDeckStats();
+      renderCurrentCard();
+    }
+
+    function updateDeckStats() {
+      const newCards = deck.filter(c => c.reps === 0).length;
+      const learning = deck.filter(c => c.reps > 0 && c.reps < 3).length;
+      const mastered = deck.filter(c => c.reps >= 3).length;
+
+      newCounter.textContent = `Новые: ${newCards}`;
+      learningCounter.textContent = `Учим: ${learning}`;
+      masteredCounter.textContent = `Повторено: ${mastered}`;
+
+      const progress = queue.length > 0 ? (currentIndex / queue.length) * 100 : 100;
+      sessionProgressBar.style.width = `${progress}%`;
+    }
+
+    // --- Rendering Logic ---
+    function renderCurrentCard() {
+      if (queue.length === 0 || currentIndex >= queue.length) {
+        cardDeckView.classList.add('hidden');
+        emptyDeckView.classList.remove('hidden');
+        sessionProgressBar.style.width = '100%';
+
+        if (dailyReviewedCount >= dailyLimit) {
+          emptyViewTitle.textContent = "Дневная норма выполнена!";
+          emptyViewDesc.textContent = `Вы повторили ${dailyReviewedCount} из ${dailyLimit} карточек. Отличная работа!`;
+        } else {
+          emptyViewTitle.textContent = "Очередь завершена!";
+          emptyViewDesc.textContent = `Вы повторили ${dailyReviewedCount} карточек за сегодня.`;
+        }
+        return;
+      }
+
+      emptyDeckView.classList.add('hidden');
+      cardDeckView.classList.remove('hidden');
+
+      const card = queue[currentIndex];
+      isFlipped = false;
+
+      const mode = modeSelect.value;
+      if (mode === 'mixed') {
+        currentDirection = Math.random() > 0.5 ? 'de-ru' : 'ru-de';
+      } else {
+        currentDirection = mode;
+      }
+
+      cardDirectionBadge.textContent = currentDirection === 'de-ru' ? 'DE → RU' : 'RU → DE';
+      cardContextTag.textContent = card.context || '';
+      cardRepsInfo.textContent = `Повторений: ${card.reps || 0}`;
+      cardTagsInfo.textContent = card.tags ? `#${card.tags.split(' ')[0]}` : '';
+
+      if (currentDirection === 'de-ru') {
+        cardPrompt.textContent = card.german;
+        cardPromptExample.textContent = card.example_de || '';
+        cardPromptExampleContainer.style.display = card.example_de ? 'block' : 'none';
+        
+        cardAnswer.textContent = card.russian;
+        cardAnswerExample.textContent = card.example_ru || '';
+      } else {
+        cardPrompt.textContent = card.russian;
+        cardPromptExample.textContent = card.example_ru || '';
+        cardPromptExampleContainer.style.display = card.example_ru ? 'block' : 'none';
+        
+        cardAnswer.textContent = card.german;
+        cardAnswerExample.textContent = card.example_de || '';
+      }
+
+      cardBackContent.classList.add('hidden');
+      tapToFlipHint.classList.remove('hidden');
+      showAnswerBtn.classList.remove('hidden');
+      ratingButtons.classList.add('hidden');
+      audioButtonsBar.classList.add('hidden');
+
+      if (currentDirection === 'de-ru' && autoPlayAudio.checked) {
+        speakGermanText(`${card.german}. ${card.example_de || ''}`);
+      }
+    }
+
+    function flipCard() {
+      if (isFlipped) return;
+      isFlipped = true;
+
+      const card = queue[currentIndex];
+      cardBackContent.classList.remove('hidden');
+      tapToFlipHint.classList.add('hidden');
+      showAnswerBtn.classList.add('hidden');
+      ratingButtons.classList.remove('hidden');
+      audioButtonsBar.classList.remove('hidden');
+
+      if (currentDirection === 'ru-de' && autoPlayAudio.checked) {
+        speakGermanText(`${card.german}. ${card.example_de || ''}`);
+      }
+    }
+
+    function handleRating(rate) {
+      if (!isFlipped) return;
+      const card = queue[currentIndex];
+
+      if (rate === 'again') {
+        card.reps = 0;
+        card.interval = 1;
+        queue.push(card);
+      } else if (rate === 'hard') {
+        card.reps = (card.reps || 0) + 1;
+        card.interval = Math.max(1, (card.interval || 1) * 1.2);
+      } else if (rate === 'good') {
+        card.reps = (card.reps || 0) + 1;
+        card.interval = Math.max(2, (card.interval || 1) * 2.0);
+      } else if (rate === 'easy') {
+        card.reps = (card.reps || 0) + 2;
+        card.interval = Math.max(4, (card.interval || 1) * 2.8);
+      }
+
+      incrementDailyStats();
+      saveDeck();
+      currentIndex++;
+      updateDeckStats();
+      renderCurrentCard();
+    }
+
+    // --- Event Listeners ---
+    cardWrapper.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      if (!isFlipped) flipCard();
+    });
+
+    showAnswerBtn.addEventListener('click', flipCard);
+
+    document.querySelectorAll('#ratingButtons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        handleRating(btn.getAttribute('data-rate'));
+      });
+    });
+
+    document.getElementById('speakPromptBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = queue[currentIndex];
+      speakGermanText(`${card.german}. ${card.example_de || ''}`);
+    });
+
+    document.getElementById('speakTermOnlyBtn').addEventListener('click', () => {
+      const card = queue[currentIndex];
+      speakGermanText(card.german);
+    });
+
+    document.getElementById('speakExampleOnlyBtn').addEventListener('click', () => {
+      const card = queue[currentIndex];
+      speakGermanText(card.example_de || '');
+    });
+
+    modeSelect.addEventListener('change', () => renderCurrentCard());
+
+    document.getElementById('resetSessionBtn').addEventListener('click', () => {
+      buildSessionQueue(true);
+    });
+
+    // Keyboard Shortcuts for desktop/tablets
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!isFlipped) flipCard();
+      } else if (isFlipped) {
+        if (e.key === '1') handleRating('again');
+        if (e.key === '2') handleRating('hard');
+        if (e.key === '3') handleRating('good');
+        if (e.key === '4') handleRating('easy');
+      }
+    });
+
+    // Modal Handling
+    const vocabModal = document.getElementById('vocabModal');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const importTextarea = document.getElementById('importTextarea');
+
+    openModalBtn.addEventListener('click', () => vocabModal.classList.remove('hidden'));
+    closeModalBtn.addEventListener('click', () => vocabModal.classList.add('hidden'));
+    vocabModal.addEventListener('click', (e) => {
+      if (e.target === vocabModal) vocabModal.classList.add('hidden');
+    });
+
+    document.getElementById('doImportAppendBtn').addEventListener('click', () => {
+      const text = importTextarea.value.trim();
+      if (!text) return;
+      const lines = text.split('\n');
+      let count = 0;
+      let idCounter = Date.now();
+
+      lines.forEach(l => {
+        const parts = l.split(';').map(p => p.trim());
+        if (parts.length >= 2) {
+          deck.push({
+            id: idCounter++,
+            german: parts[0],
+            russian: parts[1],
+            example_de: parts[2] || '',
+            example_ru: parts[3] || '',
+            context: parts[4] || '',
+            tags: parts[5] || 'custom',
+            reps: 0,
+            interval: 0
+          });
+          count++;
+        }
+      });
+
+      saveDeck();
+      buildSessionQueue();
+      importTextarea.value = '';
+      vocabModal.classList.add('hidden');
+      showToast(`Добавлено карточек: ${count}`);
+    });
+
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const rows = [
+        'German;Russian;Example_DE;Example_RU;Context;Tags',
+        ...deck.map(c => `"${c.german}";"${c.russian}";"${c.example_de || ''}";"${c.example_ru || ''}";"${c.context || ''}";"${c.tags || ''}"`)
+      ];
+      const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(rows.join('\n'));
+      const link = document.createElement('a');
+      link.setAttribute('href', csvContent);
+      link.setAttribute('download', 'anki_deutsch_b1_b2.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('CSV успешно экспортирован');
+    });
+
+    // Theme Toggle
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIconSun = document.getElementById('themeIconSun');
+    const themeIconMoon = document.getElementById('themeIconMoon');
+
+    function applyTheme(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeIconSun.classList.remove('hidden');
+        themeIconMoon.classList.add('hidden');
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeIconSun.classList.add('hidden');
+        themeIconMoon.classList.remove('hidden');
+      }
+      localStorage.setItem('anki_theme', isDark ? 'dark' : 'light');
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      applyTheme(!isDark);
+    });
+
+    const savedTheme = localStorage.getItem('anki_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme === 'dark');
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0');
+      setTimeout(() => toast.classList.add('opacity-0'), 2200);
+    }
+
+    window.onload = function() {
+      initSpeechEngine();
+      loadDeck();
+    };
+  </script>
+</body>
+</html>
