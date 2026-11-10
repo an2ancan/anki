@@ -1,2 +1,2 @@
 # anki
-anki website 
+personal anki website 
