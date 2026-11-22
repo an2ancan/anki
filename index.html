@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Deutsch B1-B2 Anki Mobile</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -55,18 +56,27 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5">
-        <select id="modeSelect" class="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 font-semibold focus:outline-none">
+      <div class="flex items-center gap-1">
+        <select id="modeSelect" class="text-[11px] bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 font-semibold focus:outline-none">
           <option value="de-ru">DE → RU</option>
           <option value="ru-de">RU → DE</option>
           <option value="mixed" selected>Микс</option>
         </select>
 
-        <button id="openModalBtn" class="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition" title="Настройки и словарь">
+        <button id="openAddCardBtn" class="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-sm" title="Добавить карточку" aria-label="Добавить карточку">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        </button>
+
+        <button id="openAuthBtn" class="relative flex items-center gap-1 px-2 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition text-[11px] font-semibold text-slate-700 dark:text-slate-200" title="Профиль и синхронизация Supabase">
+          <span id="authStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="authBtnLabel" class="max-w-[64px] truncate">Войти</span>
+        </button>
+
+        <button id="openModalBtn" class="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition" title="Настройки и словарь" aria-label="Настройки и словарь">
           <svg class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
 
-        <button id="themeToggleBtn" class="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
+        <button id="themeToggleBtn" class="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300" title="Сменить тему" aria-label="Сменить тему">
           <svg id="themeIconSun" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
           <svg id="themeIconMoon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
         </button>
@@ -253,6 +263,18 @@
           </div>
         </div>
 
+        <!-- My Custom Cards List -->
+        <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="font-bold">Мои карточки (<span id="customCardsCount">0</span>)</div>
+            <button id="openAddCardFromSettingsBtn" class="px-2 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-bold">+ Добавить</button>
+          </div>
+          <input type="search" id="customCardsSearch" placeholder="Поиск по моим карточкам..." class="w-full text-xs p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-blue-500">
+          <div id="customCardsList" class="max-h-40 overflow-y-auto space-y-1.5">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
         <!-- Import / CSV Accordion -->
         <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-3">
           <div class="font-bold mb-2">Импорт / Экспорт CSV</div>
@@ -268,12 +290,149 @@
     </div>
   </div>
 
+  <!-- Modal: Add Custom Card -->
+  <div id="addCardModal" role="dialog" aria-modal="true" aria-labelledby="addCardModalTitle" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h3 id="addCardModalTitle" class="text-sm font-bold">Новая карточка</h3>
+        <button id="closeAddCardModalBtn" class="text-slate-400 p-1" aria-label="Закрыть">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="addCardForm" class="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+        <div>
+          <label for="newCardGerman" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Немецкое слово / фраза *</label>
+          <input type="text" id="newCardGerman" required placeholder="например: die Erfahrung, -en" class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label for="newCardRussian" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Перевод на русский *</label>
+          <input type="text" id="newCardRussian" required placeholder="например: опыт" class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label for="newCardExampleDe" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Пример на немецком</label>
+          <textarea id="newCardExampleDe" rows="2" placeholder="Ich habe gute Erfahrungen damit gemacht." class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+        <div>
+          <label for="newCardExampleRu" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Перевод примера</label>
+          <textarea id="newCardExampleRu" rows="2" placeholder="У меня был хороший опыт с этим." class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label for="newCardContext" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Грамматика / контекст</label>
+            <input type="text" id="newCardContext" placeholder="Nomen, f. / Verb (+ Dat.)" class="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label for="newCardTags" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Теги</label>
+            <input type="text" id="newCardTags" placeholder="custom b2 work" value="custom" class="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer pt-1">
+          <input type="checkbox" id="newCardStudyNow" checked class="rounded text-blue-600">
+          <span>Сразу показать эту карточку для изучения</span>
+        </label>
+        <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-md">
+          Сохранить карточку
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Supabase Profile & Auth -->
+  <div id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 id="authModalTitle" class="text-sm font-bold">Профиль и облако (Supabase)</h3>
+          <p id="syncStatusText" class="text-[10px] text-slate-400">Режим: локально (без входа)</p>
+        </div>
+        <button id="closeAuthModalBtn" class="text-slate-400 p-1" aria-label="Закрыть">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+        <!-- Logged-In View -->
+        <div id="authLoggedInView" class="hidden space-y-3">
+          <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-3.5">
+            <div class="text-[10px] uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-300 mb-0.5">Вы вошли как</div>
+            <div id="authUserEmail" class="text-sm font-bold text-slate-900 dark:text-white break-all"></div>
+            <div id="authUserStats" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1"></div>
+          </div>
+          <div class="flex gap-2">
+            <button id="syncNowBtn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition">
+              Синхронизировать
+            </button>
+            <button id="signOutBtn" class="px-4 py-2.5 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-200 rounded-xl font-bold transition">
+              Выйти
+            </button>
+          </div>
+        </div>
+
+        <!-- Logged-Out / Login & Sign Up View -->
+        <div id="authLoggedOutView" class="space-y-3">
+          <div id="supabaseNotConfiguredNotice" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-200 rounded-2xl p-3 text-[11px] leading-relaxed">
+            Укажите <strong>Supabase URL</strong> и <strong>Anon Key</strong> ниже (или в <code>SUPABASE_CONFIG</code> внутри <code>index.html</code>), чтобы включить вход и синхронизацию между устройствами. Без входа прогресс сохраняется локально в браузере.
+          </div>
+
+          <div class="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+            <button type="button" id="authTabSignIn" class="py-1.5 rounded-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition">Вход</button>
+            <button type="button" id="authTabSignUp" class="py-1.5 rounded-lg font-bold text-slate-500 dark:text-slate-400 transition">Регистрация</button>
+          </div>
+
+          <form id="authForm" class="space-y-2.5">
+            <div>
+              <label for="authEmailInput" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Email</label>
+              <input type="email" id="authEmailInput" required autocomplete="email" placeholder="you@example.com" class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label for="authPasswordInput" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Пароль (минимум 6 символов)</label>
+              <input type="password" id="authPasswordInput" required minlength="6" autocomplete="current-password" placeholder="••••••" class="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+            </div>
+            <div id="authErrorMsg" class="hidden text-[11px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/50 p-2 rounded-lg"></div>
+            <div id="authInfoMsg" class="hidden text-[11px] text-emerald-700 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/50 p-2 rounded-lg"></div>
+            <button type="submit" id="authSubmitBtn" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+              Войти через Supabase
+            </button>
+          </form>
+        </div>
+
+        <!-- Supabase Connection Settings -->
+        <details id="supabaseConfigDetails" class="border border-slate-200 dark:border-slate-700 rounded-2xl p-3">
+          <summary class="font-bold cursor-pointer select-none">Настройки подключения Supabase</summary>
+          <div class="mt-2.5 space-y-2">
+            <div>
+              <label for="supabaseUrlInput" class="block text-[10px] text-slate-400 mb-1">Project URL</label>
+              <input type="url" id="supabaseUrlInput" placeholder="https://xxxx.supabase.co" class="w-full p-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl">
+            </div>
+            <div>
+              <label for="supabaseKeyInput" class="block text-[10px] text-slate-400 mb-1">Anon / Publishable Key</label>
+              <input type="text" id="supabaseKeyInput" placeholder="eyJhbGciOi... или sb_publishable_..." class="w-full p-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl">
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button type="button" id="saveSupabaseConfigBtn" class="flex-1 py-2 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold">Сохранить</button>
+              <button type="button" id="clearSupabaseConfigBtn" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold">Сбросить</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full text-xs shadow-xl opacity-0 pointer-events-none transition-all duration-300 z-50">
     <span id="toastMsg">Успешно!</span>
   </div>
 
   <script>
+    // --- Supabase Configuration ---
+    // Option A: Paste your Supabase Project URL and Anon/Publishable Key here for automatic setup on all devices.
+    // Option B: Leave empty and configure directly in the app via "Войти" -> "Настройки подключения Supabase".
+    const SUPABASE_CONFIG = {
+      url: '',
+      anonKey: ''
+    };
+
     // --- 70 Cards Corpus (50 Vocabulary + 20 Grammar) ---
     const DEFAULT_CORPUS = [
       { id: 1, german: "die Herausforderung, -en", russian: "вызов, сложная задача", example_de: "Die Digitalisierung stellt viele Unternehmen vor eine neue Herausforderung.", example_ru: "Цифровизация ставит многие предприятия перед новым вызовом.", context: "Nomen, f.", tags: "b1_b2 n_fem work", reps: 0, interval: 0, nextReview: 0 },
@@ -349,6 +508,10 @@
     ];
 
     // --- State Variables ---
+    let supabaseClient = null;
+    let currentUser = null;
+    let authMode = 'signin';
+    let isSyncing = false;
     let deck = [];
     let queue = [];
     let currentIndex = 0;
@@ -397,6 +560,80 @@
     const masteredCounter = document.getElementById('masteredCounter');
     const dailyLimitInput = document.getElementById('dailyLimitInput');
 
+    // Auth & Custom Cards DOM Elements
+    const authModal = document.getElementById('authModal');
+    const openAuthBtn = document.getElementById('openAuthBtn');
+    const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+    const authStatusDot = document.getElementById('authStatusDot');
+    const authBtnLabel = document.getElementById('authBtnLabel');
+    const syncStatusText = document.getElementById('syncStatusText');
+    const authLoggedInView = document.getElementById('authLoggedInView');
+    const authLoggedOutView = document.getElementById('authLoggedOutView');
+    const authUserEmail = document.getElementById('authUserEmail');
+    const authUserStats = document.getElementById('authUserStats');
+    const supabaseNotConfiguredNotice = document.getElementById('supabaseNotConfiguredNotice');
+    const supabaseConfigDetails = document.getElementById('supabaseConfigDetails');
+    const supabaseUrlInput = document.getElementById('supabaseUrlInput');
+    const supabaseKeyInput = document.getElementById('supabaseKeyInput');
+    const authTabSignIn = document.getElementById('authTabSignIn');
+    const authTabSignUp = document.getElementById('authTabSignUp');
+    const authForm = document.getElementById('authForm');
+    const authEmailInput = document.getElementById('authEmailInput');
+    const authPasswordInput = document.getElementById('authPasswordInput');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const authErrorMsg = document.getElementById('authErrorMsg');
+    const authInfoMsg = document.getElementById('authInfoMsg');
+
+    const addCardModal = document.getElementById('addCardModal');
+    const openAddCardBtn = document.getElementById('openAddCardBtn');
+    const openAddCardFromSettingsBtn = document.getElementById('openAddCardFromSettingsBtn');
+    const closeAddCardModalBtn = document.getElementById('closeAddCardModalBtn');
+    const addCardForm = document.getElementById('addCardForm');
+    const customCardsCount = document.getElementById('customCardsCount');
+    const customCardsSearch = document.getElementById('customCardsSearch');
+    const customCardsList = document.getElementById('customCardsList');
+
+    // --- Helpers ---
+    function generateCustomKey() {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return `custom_${window.crypto.randomUUID()}`;
+      }
+      return `custom_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    function normalizeCard(card, fallbackIndex = 0) {
+      const isDefaultId = typeof card.id === 'number' && card.id >= 1 && card.id <= DEFAULT_CORPUS.length && !card.isCustom;
+      return {
+        id: card.id ?? Date.now() + fallbackIndex,
+        cardKey: card.cardKey || (isDefaultId ? `default_${card.id}` : generateCustomKey()),
+        german: String(card.german || '').trim(),
+        russian: String(card.russian || '').trim(),
+        example_de: String(card.example_de || '').trim(),
+        example_ru: String(card.example_ru || '').trim(),
+        context: String(card.context || '').trim(),
+        tags: String(card.tags || '').trim(),
+        isCustom: Boolean(card.isCustom ?? !isDefaultId),
+        reps: Number(card.reps) || 0,
+        interval: Number(card.interval) || 0,
+        nextReview: Number(card.nextReview) || 0,
+        updatedAt: Number(card.updatedAt) || 0
+      };
+    }
+
+    function getDefaultDeck() {
+      return DEFAULT_CORPUS.map((c, idx) => normalizeCard({ ...c, cardKey: `default_${c.id}`, isCustom: false, updatedAt: 0 }, idx));
+    }
+
+    function getStoragePrefix() {
+      return currentUser ? `anki_u_${currentUser.id}_` : 'anki_guest_';
+    }
+
+    function isAnyModalOpen() {
+      return !vocabModal.classList.contains('hidden') ||
+        !addCardModal.classList.contains('hidden') ||
+        !authModal.classList.contains('hidden');
+    }
+
     // --- Advanced Speech Engine (Prioritizing Natural & Neural German Voices) ---
     function initSpeechEngine() {
       if (!('speechSynthesis' in window)) {
@@ -411,7 +648,6 @@
         voiceSelect.innerHTML = '';
         const deVoices = voices.filter(v => v.lang && (v.lang.startsWith('de') || v.lang.includes('DE')));
 
-        // Quality Ranking Patterns
         const rankVoice = (v) => {
           const name = v.name.toLowerCase();
           if (name.includes('natural') || name.includes('neural')) return 100;
@@ -435,7 +671,6 @@
           }
         });
 
-        // Restore saved voice if exists
         const savedVoiceName = localStorage.getItem('anki_de_voice_name');
         if (savedVoiceName) {
           const found = sortedVoices.find(v => v.name === savedVoiceName);
@@ -476,7 +711,6 @@
         localStorage.setItem('anki_speech_pitch', String(speechPitch));
       });
 
-      // Load saved speech settings
       const savedRate = localStorage.getItem('anki_speech_rate');
       if (savedRate) {
         speechRate = parseFloat(savedRate);
@@ -493,7 +727,6 @@
 
     function cleanGermanSpeechText(text) {
       if (!text) return '';
-      // Remove grammatical bracket annotations like (Verb am Ende), (gleiches Subjekt)
       return text
         .replace(/\([^)]*\)/g, '')
         .replace(/\+ (Dat\.|Akk\.|Gen\.)/gi, '')
@@ -524,6 +757,284 @@
       speakGermanText('Guten Tag! Ich spreche Deutsch flüssig und natürlich.');
     });
 
+    // --- Supabase Client & Auth ---
+    function getEffectiveSupabaseConfig() {
+      const storedUrl = localStorage.getItem('anki_supabase_url') || '';
+      const storedKey = localStorage.getItem('anki_supabase_key') || '';
+      return {
+        url: (SUPABASE_CONFIG.url || storedUrl).trim(),
+        anonKey: (SUPABASE_CONFIG.anonKey || storedKey).trim()
+      };
+    }
+
+    function setSyncUI(state, detail = '') {
+      if (!currentUser) {
+        authStatusDot.className = 'w-2 h-2 rounded-full bg-slate-400';
+        authBtnLabel.textContent = 'Войти';
+        syncStatusText.textContent = detail || 'Режим: локально (без входа)';
+        return;
+      }
+      const shortName = currentUser.email ? currentUser.email.split('@')[0] : 'Профиль';
+      authBtnLabel.textContent = shortName;
+      if (state === 'syncing') {
+        authStatusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+        syncStatusText.textContent = 'Синхронизация с Supabase...';
+      } else if (state === 'error') {
+        authStatusDot.className = 'w-2 h-2 rounded-full bg-rose-500';
+        syncStatusText.textContent = detail || 'Ошибка синхронизации (данные сохранены локально)';
+      } else {
+        authStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        syncStatusText.textContent = detail || 'Синхронизировано с Supabase';
+      }
+    }
+
+    function updateAuthModalUI() {
+      const cfg = getEffectiveSupabaseConfig();
+      const configured = Boolean(cfg.url && cfg.anonKey && window.supabase);
+      supabaseUrlInput.value = cfg.url;
+      supabaseKeyInput.value = cfg.anonKey;
+
+      if (currentUser) {
+        authLoggedInView.classList.remove('hidden');
+        authLoggedOutView.classList.add('hidden');
+        authUserEmail.textContent = currentUser.email || currentUser.id;
+        const customCount = deck.filter(c => c.isCustom).length;
+        authUserStats.textContent = `Карточек: ${deck.length} (своих: ${customCount}) • Сегодня: ${dailyReviewedCount}/${dailyLimit}`;
+      } else {
+        authLoggedInView.classList.add('hidden');
+        authLoggedOutView.classList.remove('hidden');
+        if (!configured) {
+          supabaseNotConfiguredNotice.classList.remove('hidden');
+          supabaseConfigDetails.open = true;
+        } else {
+          supabaseNotConfiguredNotice.classList.add('hidden');
+        }
+      }
+    }
+
+    function setAuthTab(mode) {
+      authMode = mode;
+      authErrorMsg.classList.add('hidden');
+      authInfoMsg.classList.add('hidden');
+      if (mode === 'signin') {
+        authTabSignIn.className = 'py-1.5 rounded-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition';
+        authTabSignUp.className = 'py-1.5 rounded-lg font-bold text-slate-500 dark:text-slate-400 transition';
+        authPasswordInput.setAttribute('autocomplete', 'current-password');
+        authSubmitBtn.textContent = 'Войти через Supabase';
+      } else {
+        authTabSignUp.className = 'py-1.5 rounded-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition';
+        authTabSignIn.className = 'py-1.5 rounded-lg font-bold text-slate-500 dark:text-slate-400 transition';
+        authPasswordInput.setAttribute('autocomplete', 'new-password');
+        authSubmitBtn.textContent = 'Создать аккаунт';
+      }
+    }
+
+    async function initSupabase() {
+      const cfg = getEffectiveSupabaseConfig();
+      if (!cfg.url || !cfg.anonKey || !window.supabase || typeof window.supabase.createClient !== 'function') {
+        supabaseClient = null;
+        currentUser = null;
+        setSyncUI('local');
+        updateAuthModalUI();
+        return;
+      }
+
+      try {
+        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+          currentUser = session.user;
+          loadDeck();
+          await syncWithSupabase();
+        } else {
+          currentUser = null;
+          setSyncUI('local');
+        }
+        updateAuthModalUI();
+
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+          const nextUser = session ? session.user : null;
+          const changed = (nextUser && nextUser.id) !== (currentUser && currentUser.id);
+          currentUser = nextUser;
+          if (currentUser && (changed || event === 'SIGNED_IN')) {
+            loadDeck();
+            await syncWithSupabase();
+          } else if (!currentUser && event === 'SIGNED_OUT') {
+            loadDeck();
+            setSyncUI('local');
+          }
+          updateAuthModalUI();
+        });
+      } catch (err) {
+        console.error('Supabase init error:', err);
+        supabaseClient = null;
+        setSyncUI('error', 'Неверный URL или ключ Supabase');
+        updateAuthModalUI();
+      }
+    }
+
+    function cardToSupabaseRow(card) {
+      return {
+        user_id: currentUser.id,
+        card_key: card.cardKey,
+        german: card.german,
+        russian: card.russian,
+        example_de: card.example_de || '',
+        example_ru: card.example_ru || '',
+        context: card.context || '',
+        tags: card.tags || '',
+        is_custom: Boolean(card.isCustom),
+        reps: Number(card.reps) || 0,
+        interval: Number(card.interval) || 0,
+        next_review: Number(card.nextReview) || 0,
+        updated_at: new Date(card.updatedAt || Date.now()).toISOString()
+      };
+    }
+
+    function supabaseRowToCard(row) {
+      const defaultMatch = DEFAULT_CORPUS.find(c => `default_${c.id}` === row.card_key);
+      return normalizeCard({
+        id: defaultMatch ? defaultMatch.id : row.id,
+        cardKey: row.card_key,
+        german: row.german,
+        russian: row.russian,
+        example_de: row.example_de,
+        example_ru: row.example_ru,
+        context: row.context,
+        tags: row.tags,
+        isCustom: row.is_custom,
+        reps: row.reps,
+        interval: row.interval,
+        nextReview: row.next_review,
+        updatedAt: row.updated_at ? Date.parse(row.updated_at) : Date.now()
+      });
+    }
+
+    async function syncProfileToSupabase() {
+      if (!supabaseClient || !currentUser) return;
+      const { error } = await supabaseClient.from('user_profiles').upsert({
+        user_id: currentUser.id,
+        daily_limit: dailyLimit,
+        today_date: getTodayKey(),
+        today_count: dailyReviewedCount,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+      if (error) {
+        console.error('Profile sync error:', error);
+        setSyncUI('error', `Ошибка профиля: ${error.message}`);
+      }
+    }
+
+    async function syncCardsToSupabase(cards) {
+      if (!supabaseClient || !currentUser || !cards || cards.length === 0) return;
+      setSyncUI('syncing');
+      const rows = cards.map(cardToSupabaseRow);
+      const { error } = await supabaseClient.from('user_cards').upsert(rows, { onConflict: 'user_id,card_key' });
+      if (error) {
+        console.error('Card sync error:', error);
+        setSyncUI('error', `Ошибка карточек: ${error.message}`);
+      } else {
+        setSyncUI('synced', `Синхронизировано • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+      }
+    }
+
+    async function deleteCardFromSupabase(cardKey) {
+      if (!supabaseClient || !currentUser) return;
+      const { error } = await supabaseClient
+        .from('user_cards')
+        .delete()
+        .eq('user_id', currentUser.id)
+        .eq('card_key', cardKey);
+      if (error) {
+        console.error('Delete card sync error:', error);
+        setSyncUI('error', `Ошибка удаления: ${error.message}`);
+      }
+    }
+
+    async function syncWithSupabase() {
+      if (!supabaseClient || !currentUser || isSyncing) return;
+      isSyncing = true;
+      setSyncUI('syncing');
+
+      try {
+        const today = getTodayKey();
+        const [profileRes, cardsRes] = await Promise.all([
+          supabaseClient.from('user_profiles').select('*').eq('user_id', currentUser.id).maybeSingle(),
+          supabaseClient.from('user_cards').select('*').eq('user_id', currentUser.id)
+        ]);
+
+        if (profileRes.error) throw profileRes.error;
+        if (cardsRes.error) throw cardsRes.error;
+
+        // 1. Merge profile stats
+        if (profileRes.data) {
+          const remoteProfile = profileRes.data;
+          if (remoteProfile.daily_limit >= 5) {
+            dailyLimit = remoteProfile.daily_limit;
+            dailyLimitInput.value = dailyLimit;
+            localStorage.setItem(`${getStoragePrefix()}daily_limit`, String(dailyLimit));
+          }
+          if (remoteProfile.today_date === today) {
+            dailyReviewedCount = Math.max(dailyReviewedCount, Number(remoteProfile.today_count) || 0);
+            localStorage.setItem(`${getStoragePrefix()}today_date`, today);
+            localStorage.setItem(`${getStoragePrefix()}today_count`, String(dailyReviewedCount));
+          }
+          updateDailyUI();
+        }
+        await syncProfileToSupabase();
+
+        // 2. Merge cards (default + local + remote, newest updatedAt wins)
+        const mergedMap = new Map();
+        getDefaultDeck().forEach(c => mergedMap.set(c.cardKey, c));
+
+        // Overlay current local deck
+        deck.forEach(localCard => {
+          const normalized = normalizeCard(localCard);
+          const existing = mergedMap.get(normalized.cardKey);
+          if (!existing || normalized.isCustom || normalized.reps > 0 || normalized.updatedAt > existing.updatedAt) {
+            mergedMap.set(normalized.cardKey, normalized);
+          }
+        });
+
+        const remoteMap = new Map();
+        (cardsRes.data || []).forEach(row => {
+          const remoteCard = supabaseRowToCard(row);
+          remoteMap.set(remoteCard.cardKey, remoteCard);
+          const localCard = mergedMap.get(remoteCard.cardKey);
+          if (!localCard || remoteCard.updatedAt >= localCard.updatedAt) {
+            mergedMap.set(remoteCard.cardKey, remoteCard);
+          }
+        });
+
+        // Push any local custom cards or newer progress to Supabase
+        const toPush = [];
+        mergedMap.forEach(card => {
+          const remoteCard = remoteMap.get(card.cardKey);
+          const hasLocalProgress = card.isCustom || card.reps > 0 || card.updatedAt > 0;
+          if (hasLocalProgress && (!remoteCard || card.updatedAt > remoteCard.updatedAt)) {
+            toPush.push(card);
+          }
+        });
+
+        deck = Array.from(mergedMap.values());
+        saveDeckLocalOnly();
+        renderCustomCardsList();
+        buildSessionQueue();
+
+        if (toPush.length > 0) {
+          await syncCardsToSupabase(toPush);
+        } else {
+          setSyncUI('synced', `Синхронизировано • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+        }
+        updateAuthModalUI();
+      } catch (err) {
+        console.error('Full sync error:', err);
+        setSyncUI('error', `Ошибка синхронизации: ${err.message || err}`);
+      } finally {
+        isSyncing = false;
+      }
+    }
+
     // --- Daily Stats Management ---
     function getTodayKey() {
       const d = new Date();
@@ -531,27 +1042,34 @@
     }
 
     function loadDailyStats() {
-      dailyLimit = parseInt(localStorage.getItem('anki_daily_limit') || '60', 10);
+      const prefix = getStoragePrefix();
+      const legacyLimit = !currentUser ? localStorage.getItem('anki_daily_limit') : null;
+      const legacyDate = !currentUser ? localStorage.getItem('anki_today_date') : null;
+      const legacyCount = !currentUser ? localStorage.getItem('anki_today_count') : null;
+
+      dailyLimit = parseInt(localStorage.getItem(`${prefix}daily_limit`) || legacyLimit || '60', 10);
       dailyLimitInput.value = dailyLimit;
 
-      const savedDate = localStorage.getItem('anki_today_date');
+      const savedDate = localStorage.getItem(`${prefix}today_date`) || legacyDate;
       const today = getTodayKey();
       if (savedDate === today) {
-        dailyReviewedCount = parseInt(localStorage.getItem('anki_today_count') || '0', 10);
+        dailyReviewedCount = parseInt(localStorage.getItem(`${prefix}today_count`) || legacyCount || '0', 10);
       } else {
         dailyReviewedCount = 0;
-        localStorage.setItem('anki_today_date', today);
-        localStorage.setItem('anki_today_count', '0');
+        localStorage.setItem(`${prefix}today_date`, today);
+        localStorage.setItem(`${prefix}today_count`, '0');
       }
       updateDailyUI();
     }
 
     function incrementDailyStats() {
+      const prefix = getStoragePrefix();
       const today = getTodayKey();
-      localStorage.setItem('anki_today_date', today);
+      localStorage.setItem(`${prefix}today_date`, today);
       dailyReviewedCount++;
-      localStorage.setItem('anki_today_count', String(dailyReviewedCount));
+      localStorage.setItem(`${prefix}today_count`, String(dailyReviewedCount));
       updateDailyUI();
+      syncProfileToSupabase();
     }
 
     function updateDailyUI() {
@@ -567,8 +1085,9 @@
       const val = parseInt(dailyLimitInput.value, 10);
       if (!isNaN(val) && val >= 5) {
         dailyLimit = val;
-        localStorage.setItem('anki_daily_limit', String(dailyLimit));
+        localStorage.setItem(`${getStoragePrefix()}daily_limit`, String(dailyLimit));
         updateDailyUI();
+        syncProfileToSupabase();
         showToast(`Дневной лимит: ${dailyLimit}`);
         buildSessionQueue();
       }
@@ -577,31 +1096,62 @@
     // --- State Storage ---
     function loadDeck() {
       loadDailyStats();
-      const stored = localStorage.getItem('anki_de_corpus_v3');
+      const prefix = getStoragePrefix();
+      const stored = localStorage.getItem(`${prefix}corpus_v4`) || (!currentUser ? localStorage.getItem('anki_de_corpus_v3') : null);
       if (stored) {
         try {
-          deck = JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            deck = parsed.map((c, idx) => normalizeCard(c, idx));
+          } else {
+            deck = getDefaultDeck();
+          }
         } catch (e) {
-          deck = [...DEFAULT_CORPUS];
+          deck = getDefaultDeck();
         }
       } else {
-        deck = [...DEFAULT_CORPUS];
-        saveDeck();
+        deck = getDefaultDeck();
+        saveDeckLocalOnly();
       }
+      renderCustomCardsList();
       buildSessionQueue();
     }
 
-    function saveDeck() {
-      localStorage.setItem('anki_de_corpus_v3', JSON.stringify(deck));
+    function saveDeckLocalOnly() {
+      localStorage.setItem(`${getStoragePrefix()}corpus_v4`, JSON.stringify(deck));
       updateDeckStats();
+    }
+
+    function saveDeck(changedCards = null) {
+      saveDeckLocalOnly();
+      if (changedCards && changedCards.length > 0) {
+        syncCardsToSupabase(changedCards);
+      }
     }
 
     function buildSessionQueue(forceMore = false) {
       const remainingToday = Math.max(0, dailyLimit - dailyReviewedCount);
       const sessionCap = forceMore ? Math.min(dailyLimit, 20) : (remainingToday > 0 ? remainingToday : 0);
 
-      const pool = [...deck].sort(() => Math.random() - 0.5);
-      queue = sessionCap > 0 ? pool.slice(0, sessionCap) : [];
+      if (sessionCap === 0) {
+        queue = [];
+        currentIndex = 0;
+        updateDeckStats();
+        renderCurrentCard();
+        return;
+      }
+
+      const now = Date.now();
+      const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+      const dueCards = shuffle(deck.filter(c => c.reps > 0 && (!c.nextReview || c.nextReview <= now)));
+      const newCards = shuffle(deck.filter(c => c.reps === 0));
+      const futureCards = shuffle(deck.filter(c => c.reps > 0 && c.nextReview > now));
+
+      const prioritized = [...dueCards, ...newCards, ...(forceMore ? futureCards : [])];
+      const pool = prioritized.length > 0 ? prioritized : futureCards;
+
+      queue = pool.slice(0, sessionCap);
       currentIndex = 0;
       updateDeckStats();
       renderCurrentCard();
@@ -618,6 +1168,76 @@
 
       const progress = queue.length > 0 ? (currentIndex / queue.length) * 100 : 100;
       sessionProgressBar.style.width = `${progress}%`;
+    }
+
+    // --- Custom Cards Management ---
+    function renderCustomCardsList() {
+      const query = (customCardsSearch.value || '').trim().toLowerCase();
+      const customCards = deck.filter(c => c.isCustom);
+      customCardsCount.textContent = String(customCards.length);
+
+      const filtered = query
+        ? customCards.filter(c =>
+            c.german.toLowerCase().includes(query) ||
+            c.russian.toLowerCase().includes(query) ||
+            (c.tags || '').toLowerCase().includes(query)
+          )
+        : customCards;
+
+      customCardsList.innerHTML = '';
+
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-[11px] text-slate-400 text-center py-3';
+        empty.textContent = customCards.length === 0
+          ? 'Вы ещё не добавили своих карточек.'
+          : 'Ничего не найдено.';
+        customCardsList.appendChild(empty);
+        return;
+      }
+
+      filtered.slice().reverse().forEach(card => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700';
+
+        const info = document.createElement('div');
+        info.className = 'min-w-0 flex-1';
+
+        const de = document.createElement('div');
+        de.className = 'font-bold text-slate-800 dark:text-slate-100 truncate';
+        de.textContent = card.german;
+
+        const ru = document.createElement('div');
+        ru.className = 'text-[11px] text-slate-500 dark:text-slate-400 truncate';
+        ru.textContent = card.russian;
+
+        info.appendChild(de);
+        info.appendChild(ru);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'px-2 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950 rounded-lg transition flex-none';
+        delBtn.textContent = 'Удалить';
+        delBtn.addEventListener('click', () => deleteCustomCard(card.cardKey));
+
+        row.appendChild(info);
+        row.appendChild(delBtn);
+        customCardsList.appendChild(row);
+      });
+    }
+
+    function deleteCustomCard(cardKey) {
+      deck = deck.filter(c => c.cardKey !== cardKey);
+      queue = queue.filter(c => c.cardKey !== cardKey);
+      if (currentIndex >= queue.length) {
+        currentIndex = Math.max(0, queue.length - 1);
+      }
+      saveDeckLocalOnly();
+      deleteCardFromSupabase(cardKey);
+      renderCustomCardsList();
+      renderCurrentCard();
+      updateAuthModalUI();
+      showToast('Карточка удалена');
     }
 
     // --- Rendering Logic ---
@@ -651,7 +1271,7 @@
       }
 
       cardDirectionBadge.textContent = currentDirection === 'de-ru' ? 'DE → RU' : 'RU → DE';
-      cardContextTag.textContent = card.context || '';
+      cardContextTag.textContent = card.context || (card.isCustom ? 'Моя карточка' : '');
       cardRepsInfo.textContent = `Повторений: ${card.reps || 0}`;
       cardTagsInfo.textContent = card.tags ? `#${card.tags.split(' ')[0]}` : '';
 
@@ -659,14 +1279,14 @@
         cardPrompt.textContent = card.german;
         cardPromptExample.textContent = card.example_de || '';
         cardPromptExampleContainer.style.display = card.example_de ? 'block' : 'none';
-        
+
         cardAnswer.textContent = card.russian;
         cardAnswerExample.textContent = card.example_ru || '';
       } else {
         cardPrompt.textContent = card.russian;
         cardPromptExample.textContent = card.example_ru || '';
         cardPromptExampleContainer.style.display = card.example_ru ? 'block' : 'none';
-        
+
         cardAnswer.textContent = card.german;
         cardAnswerExample.textContent = card.example_de || '';
       }
@@ -683,7 +1303,7 @@
     }
 
     function flipCard() {
-      if (isFlipped) return;
+      if (isFlipped || !queue[currentIndex]) return;
       isFlipped = true;
 
       const card = queue[currentIndex];
@@ -699,26 +1319,33 @@
     }
 
     function handleRating(rate) {
-      if (!isFlipped) return;
+      if (!isFlipped || !queue[currentIndex]) return;
       const card = queue[currentIndex];
+      const now = Date.now();
+      const DAY_MS = 24 * 60 * 60 * 1000;
 
       if (rate === 'again') {
         card.reps = 0;
-        card.interval = 1;
+        card.interval = 0;
+        card.nextReview = now + 60 * 1000;
         queue.push(card);
       } else if (rate === 'hard') {
         card.reps = (card.reps || 0) + 1;
         card.interval = Math.max(1, (card.interval || 1) * 1.2);
+        card.nextReview = now + Math.round(card.interval * DAY_MS);
       } else if (rate === 'good') {
         card.reps = (card.reps || 0) + 1;
         card.interval = Math.max(2, (card.interval || 1) * 2.0);
+        card.nextReview = now + Math.round(card.interval * DAY_MS);
       } else if (rate === 'easy') {
         card.reps = (card.reps || 0) + 2;
         card.interval = Math.max(4, (card.interval || 1) * 2.8);
+        card.nextReview = now + Math.round(card.interval * DAY_MS);
       }
 
+      card.updatedAt = now;
       incrementDailyStats();
-      saveDeck();
+      saveDeck([card]);
       currentIndex++;
       updateDeckStats();
       renderCurrentCard();
@@ -741,17 +1368,17 @@
     document.getElementById('speakPromptBtn').addEventListener('click', (e) => {
       e.stopPropagation();
       const card = queue[currentIndex];
-      speakGermanText(`${card.german}. ${card.example_de || ''}`);
+      if (card) speakGermanText(`${card.german}. ${card.example_de || ''}`);
     });
 
     document.getElementById('speakTermOnlyBtn').addEventListener('click', () => {
       const card = queue[currentIndex];
-      speakGermanText(card.german);
+      if (card) speakGermanText(card.german);
     });
 
     document.getElementById('speakExampleOnlyBtn').addEventListener('click', () => {
       const card = queue[currentIndex];
-      speakGermanText(card.example_de || '');
+      if (card) speakGermanText(card.example_de || '');
     });
 
     modeSelect.addEventListener('change', () => renderCurrentCard());
@@ -762,6 +1389,13 @@
 
     // Keyboard Shortcuts for desktop/tablets
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        vocabModal.classList.add('hidden');
+        addCardModal.classList.add('hidden');
+        authModal.classList.add('hidden');
+        return;
+      }
+      if (isAnyModalOpen()) return;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
       if (e.code === 'Space') {
         e.preventDefault();
@@ -774,54 +1408,223 @@
       }
     });
 
-    // Modal Handling
+    // --- Settings & Vocabulary Modal ---
     const vocabModal = document.getElementById('vocabModal');
     const openModalBtn = document.getElementById('openModalBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
     const importTextarea = document.getElementById('importTextarea');
 
-    openModalBtn.addEventListener('click', () => vocabModal.classList.remove('hidden'));
+    openModalBtn.addEventListener('click', () => {
+      renderCustomCardsList();
+      vocabModal.classList.remove('hidden');
+    });
     closeModalBtn.addEventListener('click', () => vocabModal.classList.add('hidden'));
     vocabModal.addEventListener('click', (e) => {
       if (e.target === vocabModal) vocabModal.classList.add('hidden');
     });
+    customCardsSearch.addEventListener('input', renderCustomCardsList);
 
+    // --- Add Card Modal ---
+    function openAddCardModal() {
+      vocabModal.classList.add('hidden');
+      addCardModal.classList.remove('hidden');
+      setTimeout(() => document.getElementById('newCardGerman').focus(), 50);
+    }
+
+    openAddCardBtn.addEventListener('click', openAddCardModal);
+    openAddCardFromSettingsBtn.addEventListener('click', openAddCardModal);
+    closeAddCardModalBtn.addEventListener('click', () => addCardModal.classList.add('hidden'));
+    addCardModal.addEventListener('click', (e) => {
+      if (e.target === addCardModal) addCardModal.classList.add('hidden');
+    });
+
+    addCardForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const german = document.getElementById('newCardGerman').value.trim();
+      const russian = document.getElementById('newCardRussian').value.trim();
+      if (!german || !russian) return;
+
+      const newCard = normalizeCard({
+        id: Date.now(),
+        cardKey: generateCustomKey(),
+        german,
+        russian,
+        example_de: document.getElementById('newCardExampleDe').value.trim(),
+        example_ru: document.getElementById('newCardExampleRu').value.trim(),
+        context: document.getElementById('newCardContext').value.trim(),
+        tags: document.getElementById('newCardTags').value.trim() || 'custom',
+        isCustom: true,
+        reps: 0,
+        interval: 0,
+        nextReview: 0,
+        updatedAt: Date.now()
+      });
+
+      deck.push(newCard);
+      saveDeck([newCard]);
+      renderCustomCardsList();
+      updateAuthModalUI();
+
+      const studyNow = document.getElementById('newCardStudyNow').checked;
+      if (studyNow) {
+        queue.splice(currentIndex, 0, newCard);
+        renderCurrentCard();
+      } else if (queue.length === 0) {
+        buildSessionQueue(true);
+      }
+
+      addCardForm.reset();
+      document.getElementById('newCardTags').value = 'custom';
+      document.getElementById('newCardStudyNow').checked = true;
+      addCardModal.classList.add('hidden');
+      showToast('Карточка добавлена!');
+    });
+
+    // --- Auth Modal Events ---
+    openAuthBtn.addEventListener('click', () => {
+      updateAuthModalUI();
+      authModal.classList.remove('hidden');
+    });
+    closeAuthModalBtn.addEventListener('click', () => authModal.classList.add('hidden'));
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) authModal.classList.add('hidden');
+    });
+
+    authTabSignIn.addEventListener('click', () => setAuthTab('signin'));
+    authTabSignUp.addEventListener('click', () => setAuthTab('signup'));
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authErrorMsg.classList.add('hidden');
+      authInfoMsg.classList.add('hidden');
+
+      if (!supabaseClient) {
+        authErrorMsg.textContent = 'Сначала укажите Supabase URL и Anon Key в настройках ниже.';
+        authErrorMsg.classList.remove('hidden');
+        supabaseConfigDetails.open = true;
+        return;
+      }
+
+      const email = authEmailInput.value.trim();
+      const password = authPasswordInput.value;
+      authSubmitBtn.disabled = true;
+      authSubmitBtn.classList.add('opacity-60');
+
+      try {
+        if (authMode === 'signin') {
+          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          authForm.reset();
+          authModal.classList.add('hidden');
+          showToast('Вход выполнен!');
+        } else {
+          const { data, error } = await supabaseClient.auth.signUp({ email, password });
+          if (error) throw error;
+          if (data.session) {
+            authForm.reset();
+            authModal.classList.add('hidden');
+            showToast('Аккаунт создан и подключён!');
+          } else {
+            authInfoMsg.textContent = 'Аккаунт создан! Проверьте почту для подтверждения email, затем войдите.';
+            authInfoMsg.classList.remove('hidden');
+          }
+        }
+      } catch (err) {
+        authErrorMsg.textContent = err.message || 'Ошибка авторизации';
+        authErrorMsg.classList.remove('hidden');
+      } finally {
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.classList.remove('opacity-60');
+      }
+    });
+
+    document.getElementById('syncNowBtn').addEventListener('click', async () => {
+      await syncWithSupabase();
+      showToast('Синхронизация завершена');
+    });
+
+    document.getElementById('signOutBtn').addEventListener('click', async () => {
+      if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+      }
+      currentUser = null;
+      loadDeck();
+      setSyncUI('local');
+      updateAuthModalUI();
+      showToast('Вы вышли из аккаунта');
+    });
+
+    document.getElementById('saveSupabaseConfigBtn').addEventListener('click', async () => {
+      const url = supabaseUrlInput.value.trim();
+      const key = supabaseKeyInput.value.trim();
+      if (!url || !key) {
+        showToast('Заполните URL и ключ');
+        return;
+      }
+      localStorage.setItem('anki_supabase_url', url);
+      localStorage.setItem('anki_supabase_key', key);
+      await initSupabase();
+      showToast('Настройки Supabase сохранены');
+    });
+
+    document.getElementById('clearSupabaseConfigBtn').addEventListener('click', async () => {
+      localStorage.removeItem('anki_supabase_url');
+      localStorage.removeItem('anki_supabase_key');
+      supabaseUrlInput.value = SUPABASE_CONFIG.url || '';
+      supabaseKeyInput.value = SUPABASE_CONFIG.anonKey || '';
+      await initSupabase();
+      showToast('Локальные ключи сброшены');
+    });
+
+    // --- CSV Import / Export ---
     document.getElementById('doImportAppendBtn').addEventListener('click', () => {
       const text = importTextarea.value.trim();
       if (!text) return;
       const lines = text.split('\n');
-      let count = 0;
+      const addedCards = [];
       let idCounter = Date.now();
 
       lines.forEach(l => {
-        const parts = l.split(';').map(p => p.trim());
-        if (parts.length >= 2) {
-          deck.push({
+        const parts = l.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
+        if (parts.length >= 2 && parts[0] && parts[1] && parts[0].toLowerCase() !== 'german') {
+          const card = normalizeCard({
             id: idCounter++,
+            cardKey: generateCustomKey(),
             german: parts[0],
             russian: parts[1],
             example_de: parts[2] || '',
             example_ru: parts[3] || '',
             context: parts[4] || '',
             tags: parts[5] || 'custom',
+            isCustom: true,
             reps: 0,
-            interval: 0
+            interval: 0,
+            nextReview: 0,
+            updatedAt: Date.now()
           });
-          count++;
+          deck.push(card);
+          addedCards.push(card);
         }
       });
 
-      saveDeck();
+      if (addedCards.length === 0) {
+        showToast('Не найдено валидных строк CSV');
+        return;
+      }
+
+      saveDeck(addedCards);
+      renderCustomCardsList();
       buildSessionQueue();
       importTextarea.value = '';
       vocabModal.classList.add('hidden');
-      showToast(`Добавлено карточек: ${count}`);
+      showToast(`Добавлено карточек: ${addedCards.length}`);
     });
 
     document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const esc = (v) => String(v || '').replace(/"/g, '""');
       const rows = [
         'German;Russian;Example_DE;Example_RU;Context;Tags',
-        ...deck.map(c => `"${c.german}";"${c.russian}";"${c.example_de || ''}";"${c.example_ru || ''}";"${c.context || ''}";"${c.tags || ''}"`)
+        ...deck.map(c => `"${esc(c.german)}";"${esc(c.russian)}";"${esc(c.example_de)}";"${esc(c.example_ru)}";"${esc(c.context)}";"${esc(c.tags)}"`)
       ];
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(rows.join('\n'));
       const link = document.createElement('a');
@@ -867,9 +1670,10 @@
       setTimeout(() => toast.classList.add('opacity-0'), 2200);
     }
 
-    window.onload = function() {
+    window.onload = async function() {
       initSpeechEngine();
       loadDeck();
+      await initSupabase();
     };
   </script>
 </body>
