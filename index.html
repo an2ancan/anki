@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Deutsch B1-B2 Anki Mobile</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -86,16 +86,17 @@
 
   <!-- Status & Daily Goal Ribbon -->
   <div class="flex-none max-w-md w-full mx-auto px-3 pt-2">
-    <div class="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
-      <span id="dailyReviewedCounter" class="px-2 py-0.5 rounded-md font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-        Сегодня: 0 / 60
-      </span>
-      <div class="flex gap-1.5 text-[10px]">
-        <span class="text-blue-600 dark:text-blue-400" id="newCounter">Новые: 0</span>
+    <div class="flex items-center justify-between gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+      <button type="button" id="openProgressBtn" class="flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:opacity-90 transition" title="Открыть подробный прогресс">
+        <span id="dailyReviewedCounter">Сегодня: 0 / 60</span>
+        <svg class="w-3 h-3 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </button>
+      <div class="flex items-center gap-1 text-[10px]">
+        <button type="button" data-progress-filter="new" class="progress-ribbon-btn text-blue-600 dark:text-blue-400 hover:underline font-semibold" id="newCounter">Новые: 0</button>
         <span>•</span>
-        <span class="text-amber-600 dark:text-amber-400" id="learningCounter">Учим: 0</span>
+        <button type="button" data-progress-filter="learning" class="progress-ribbon-btn text-amber-600 dark:text-amber-400 hover:underline font-semibold" id="learningCounter">Учим: 0</button>
         <span>•</span>
-        <span class="text-emerald-600 dark:text-emerald-400" id="masteredCounter">Повторено: 0</span>
+        <button type="button" data-progress-filter="mastered" class="progress-ribbon-btn text-emerald-600 dark:text-emerald-400 hover:underline font-semibold" id="masteredCounter">Выучено: 0</button>
       </div>
     </div>
     <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden">
@@ -419,6 +420,68 @@
     </div>
   </div>
 
+  <!-- Modal: Learning Progress & Cards Breakdown -->
+  <div id="progressModal" role="dialog" aria-modal="true" aria-labelledby="progressModalTitle" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 id="progressModalTitle" class="text-sm font-bold">Прогресс обучения</h3>
+          <p id="progressSummarySubtitle" class="text-[10px] text-slate-400">Всего: 0 • Выучено: 0%</p>
+        </div>
+        <button id="closeProgressModalBtn" class="text-slate-400 p-1" aria-label="Закрыть">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Summary Stats & Visual Progress Bar -->
+      <div class="py-3 space-y-2.5 flex-none">
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <button type="button" data-progress-tab="mastered" class="progress-stat-card p-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 transition">
+            <div id="statMasteredNum" class="text-lg font-black text-emerald-600 dark:text-emerald-400 leading-tight">0</div>
+            <div class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">Выучено</div>
+          </button>
+          <button type="button" data-progress-tab="learning" class="progress-stat-card p-2 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 transition">
+            <div id="statLearningNum" class="text-lg font-black text-amber-600 dark:text-amber-400 leading-tight">0</div>
+            <div class="text-[10px] font-semibold text-amber-700 dark:text-amber-300">В процессе</div>
+          </button>
+          <button type="button" data-progress-tab="new" class="progress-stat-card p-2 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 transition">
+            <div id="statNewNum" class="text-lg font-black text-blue-600 dark:text-blue-400 leading-tight">0</div>
+            <div class="text-[10px] font-semibold text-blue-700 dark:text-blue-300">Не выучено</div>
+          </button>
+        </div>
+
+        <!-- Stacked Progress Bar -->
+        <div>
+          <div class="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mb-1">
+            <span id="progressPercentLabel">Освоено: 0%</span>
+            <span id="progressDueLabel">К повторению сейчас: 0</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
+            <div id="barMastered" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+            <div id="barLearning" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="flex gap-1 overflow-x-auto pb-0.5 text-[11px]" id="progressFilterTabs">
+          <button type="button" data-filter="all" class="progress-filter-btn px-2.5 py-1 rounded-lg font-bold whitespace-nowrap bg-blue-600 text-white">Все</button>
+          <button type="button" data-filter="mastered" class="progress-filter-btn px-2.5 py-1 rounded-lg font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Выучены</button>
+          <button type="button" data-filter="learning" class="progress-filter-btn px-2.5 py-1 rounded-lg font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Учим</button>
+          <button type="button" data-filter="new" class="progress-filter-btn px-2.5 py-1 rounded-lg font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Не выучены</button>
+          <button type="button" data-filter="custom" class="progress-filter-btn px-2.5 py-1 rounded-lg font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Мои</button>
+        </div>
+
+        <!-- Search -->
+        <input type="search" id="progressSearchInput" placeholder="Поиск слова, перевода или тега..." class="w-full text-xs p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-blue-500">
+      </div>
+
+      <!-- Cards List -->
+      <div id="progressCardsList" class="flex-1 overflow-y-auto space-y-1.5 pr-0.5 text-xs">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full text-xs shadow-xl opacity-0 pointer-events-none transition-all duration-300 z-50">
     <span id="toastMsg">Успешно!</span>
@@ -429,8 +492,8 @@
     // Option A: Paste your Supabase Project URL and Anon/Publishable Key here for automatic setup on all devices.
     // Option B: Leave empty and configure directly in the app via "Войти" -> "Настройки подключения Supabase".
     const SUPABASE_CONFIG = {
-      url: '',
-      anonKey: ''
+      url: 'https://cvvjnztfqsnipldixbzd.supabase.co',
+      anonKey: 'sb_publishable_TGjo5mNuueYhv4EaI_8vWQ_wopUkkvX'
     };
 
     // --- 70 Cards Corpus (50 Vocabulary + 20 Grammar) ---
@@ -593,6 +656,22 @@
     const customCardsSearch = document.getElementById('customCardsSearch');
     const customCardsList = document.getElementById('customCardsList');
 
+    // Progress Modal DOM Elements
+    const progressModal = document.getElementById('progressModal');
+    const openProgressBtn = document.getElementById('openProgressBtn');
+    const closeProgressModalBtn = document.getElementById('closeProgressModalBtn');
+    const progressSummarySubtitle = document.getElementById('progressSummarySubtitle');
+    const statMasteredNum = document.getElementById('statMasteredNum');
+    const statLearningNum = document.getElementById('statLearningNum');
+    const statNewNum = document.getElementById('statNewNum');
+    const progressPercentLabel = document.getElementById('progressPercentLabel');
+    const progressDueLabel = document.getElementById('progressDueLabel');
+    const barMastered = document.getElementById('barMastered');
+    const barLearning = document.getElementById('barLearning');
+    const progressSearchInput = document.getElementById('progressSearchInput');
+    const progressCardsList = document.getElementById('progressCardsList');
+    let progressFilter = 'all';
+
     // --- Helpers ---
     function generateCustomKey() {
       if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -631,7 +710,8 @@
     function isAnyModalOpen() {
       return !vocabModal.classList.contains('hidden') ||
         !addCardModal.classList.contains('hidden') ||
-        !authModal.classList.contains('hidden');
+        !authModal.classList.contains('hidden') ||
+        !progressModal.classList.contains('hidden');
     }
 
     // --- Advanced Speech Engine (Prioritizing Natural & Neural German Voices) ---
@@ -788,9 +868,54 @@
       }
     }
 
+    let supabaseCreateClientFn = null;
+    let supabaseSdkError = '';
+
+    async function getSupabaseCreateClient() {
+      if (supabaseCreateClientFn) return supabaseCreateClientFn;
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabaseCreateClientFn = window.supabase.createClient;
+        return supabaseCreateClientFn;
+      }
+
+      const esmUrls = [
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm',
+        'https://esm.sh/@supabase/supabase-js@2'
+      ];
+      for (const url of esmUrls) {
+        try {
+          const mod = await import(url);
+          if (mod && typeof mod.createClient === 'function') {
+            supabaseCreateClientFn = mod.createClient;
+            return supabaseCreateClientFn;
+          }
+        } catch (err) {
+          console.warn('ESM Supabase load failed:', url, err);
+        }
+      }
+
+      try {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          supabaseCreateClientFn = window.supabase.createClient;
+          return supabaseCreateClientFn;
+        }
+      } catch (err) {
+        console.warn('UMD unpkg Supabase load failed:', err);
+      }
+
+      return null;
+    }
+
     function updateAuthModalUI() {
       const cfg = getEffectiveSupabaseConfig();
-      const configured = Boolean(cfg.url && cfg.anonKey && window.supabase);
+      const hasKeys = Boolean(cfg.url && cfg.anonKey);
       supabaseUrlInput.value = cfg.url;
       supabaseKeyInput.value = cfg.anonKey;
 
@@ -803,11 +928,12 @@
       } else {
         authLoggedInView.classList.add('hidden');
         authLoggedOutView.classList.remove('hidden');
-        if (!configured) {
+        if (!hasKeys) {
           supabaseNotConfiguredNotice.classList.remove('hidden');
           supabaseConfigDetails.open = true;
         } else {
           supabaseNotConfiguredNotice.classList.add('hidden');
+          if (supabaseClient) supabaseConfigDetails.open = false;
         }
       }
     }
@@ -830,8 +956,9 @@
     }
 
     async function initSupabase() {
+      supabaseSdkError = '';
       const cfg = getEffectiveSupabaseConfig();
-      if (!cfg.url || !cfg.anonKey || !window.supabase || typeof window.supabase.createClient !== 'function') {
+      if (!cfg.url || !cfg.anonKey) {
         supabaseClient = null;
         currentUser = null;
         setSyncUI('local');
@@ -839,8 +966,18 @@
         return;
       }
 
+      const createClient = await getSupabaseCreateClient();
+      if (!createClient) {
+        supabaseClient = null;
+        currentUser = null;
+        supabaseSdkError = 'Не удалось загрузить Supabase SDK. Проверьте интернет или отключите блокировщик для jsdelivr/esm.sh/unpkg.';
+        setSyncUI('error', supabaseSdkError);
+        updateAuthModalUI();
+        return;
+      }
+
       try {
-        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+        supabaseClient = createClient(cfg.url, cfg.anonKey);
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session && session.user) {
           currentUser = session.user;
@@ -848,7 +985,7 @@
           await syncWithSupabase();
         } else {
           currentUser = null;
-          setSyncUI('local');
+          setSyncUI('local', 'Supabase подключён (войдите в аккаунт)');
         }
         updateAuthModalUI();
 
@@ -861,14 +998,15 @@
             await syncWithSupabase();
           } else if (!currentUser && event === 'SIGNED_OUT') {
             loadDeck();
-            setSyncUI('local');
+            setSyncUI('local', 'Supabase подключён (войдите в аккаунт)');
           }
           updateAuthModalUI();
         });
       } catch (err) {
         console.error('Supabase init error:', err);
         supabaseClient = null;
-        setSyncUI('error', 'Неверный URL или ключ Supabase');
+        supabaseSdkError = `Ошибка инициализации Supabase: ${err.message || err}`;
+        setSyncUI('error', supabaseSdkError);
         updateAuthModalUI();
       }
     }
@@ -1075,9 +1213,9 @@
     function updateDailyUI() {
       dailyReviewedCounter.textContent = `Сегодня: ${dailyReviewedCount} / ${dailyLimit}`;
       if (dailyReviewedCount >= dailyLimit) {
-        dailyReviewedCounter.className = "px-2 py-0.5 rounded-md font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300";
+        openProgressBtn.className = "flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:opacity-90 transition";
       } else {
-        dailyReviewedCounter.className = "px-2 py-0.5 rounded-md font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300";
+        openProgressBtn.className = "flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:opacity-90 transition";
       }
     }
 
@@ -1164,10 +1302,209 @@
 
       newCounter.textContent = `Новые: ${newCards}`;
       learningCounter.textContent = `Учим: ${learning}`;
-      masteredCounter.textContent = `Повторено: ${mastered}`;
+      masteredCounter.textContent = `Выучено: ${mastered}`;
 
       const progress = queue.length > 0 ? (currentIndex / queue.length) * 100 : 100;
       sessionProgressBar.style.width = `${progress}%`;
+
+      if (!progressModal.classList.contains('hidden')) {
+        renderProgressModal();
+      }
+    }
+
+    // --- Progress Dashboard Modal ---
+    function formatNextReview(card) {
+      if (!card.reps) return 'Ещё не начато';
+      const now = Date.now();
+      if (!card.nextReview || card.nextReview <= now) return 'Повторить сегодня';
+      const diffHours = Math.ceil((card.nextReview - now) / (1000 * 60 * 60));
+      if (diffHours < 24) return `Через ${diffHours} ч.`;
+      const diffDays = Math.ceil(diffHours / 24);
+      return `Через ${diffDays} дн.`;
+    }
+
+    function openProgressModal(filter = 'all') {
+      progressFilter = filter;
+      progressModal.classList.remove('hidden');
+      renderProgressModal();
+    }
+
+    function practiceCardNow(cardKey) {
+      const card = deck.find(c => c.cardKey === cardKey);
+      if (!card) return;
+      queue = queue.filter(c => c.cardKey !== cardKey);
+      queue.splice(currentIndex, 0, card);
+      progressModal.classList.add('hidden');
+      renderCurrentCard();
+      showToast('Карточка открыта для повторения');
+    }
+
+    function resetCardProgress(cardKey) {
+      const card = deck.find(c => c.cardKey === cardKey);
+      if (!card) return;
+      card.reps = 0;
+      card.interval = 0;
+      card.nextReview = 0;
+      card.updatedAt = Date.now();
+      saveDeck([card]);
+      renderProgressModal();
+      showToast('Прогресс карточки сброшен');
+    }
+
+    function renderProgressModal() {
+      const total = deck.length;
+      const masteredCards = deck.filter(c => c.reps >= 3);
+      const learningCards = deck.filter(c => c.reps > 0 && c.reps < 3);
+      const newCards = deck.filter(c => c.reps === 0);
+      const customCards = deck.filter(c => c.isCustom);
+      const now = Date.now();
+      const dueCount = deck.filter(c => c.reps > 0 && (!c.nextReview || c.nextReview <= now)).length;
+
+      const masteredPct = total > 0 ? Math.round((masteredCards.length / total) * 100) : 0;
+      const learningPct = total > 0 ? Math.round((learningCards.length / total) * 100) : 0;
+
+      statMasteredNum.textContent = String(masteredCards.length);
+      statLearningNum.textContent = String(learningCards.length);
+      statNewNum.textContent = String(newCards.length);
+      progressSummarySubtitle.textContent = `Всего: ${total} • Выучено: ${masteredCards.length} (${masteredPct}%) • Осталось: ${total - masteredCards.length}`;
+      progressPercentLabel.textContent = `Освоено: ${masteredPct}% (${masteredCards.length}/${total})`;
+      progressDueLabel.textContent = `К повторению: ${dueCount}`;
+      barMastered.style.width = `${masteredPct}%`;
+      barLearning.style.width = `${Math.min(100 - masteredPct, learningPct)}%`;
+
+      const counts = {
+        all: total,
+        mastered: masteredCards.length,
+        learning: learningCards.length,
+        new: newCards.length,
+        custom: customCards.length
+      };
+      const labels = {
+        all: 'Все',
+        mastered: 'Выучены',
+        learning: 'Учим',
+        new: 'Не выучены',
+        custom: 'Мои'
+      };
+
+      document.querySelectorAll('.progress-filter-btn').forEach(btn => {
+        const f = btn.getAttribute('data-filter');
+        btn.textContent = `${labels[f]} (${counts[f]})`;
+        if (f === progressFilter) {
+          btn.className = 'progress-filter-btn px-2.5 py-1 rounded-lg font-bold whitespace-nowrap bg-blue-600 text-white';
+        } else {
+          btn.className = 'progress-filter-btn px-2.5 py-1 rounded-lg font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+        }
+      });
+
+      let list = deck;
+      if (progressFilter === 'mastered') list = masteredCards;
+      else if (progressFilter === 'learning') list = learningCards;
+      else if (progressFilter === 'new') list = newCards;
+      else if (progressFilter === 'custom') list = customCards;
+
+      const query = (progressSearchInput.value || '').trim().toLowerCase();
+      if (query) {
+        list = list.filter(c =>
+          c.german.toLowerCase().includes(query) ||
+          c.russian.toLowerCase().includes(query) ||
+          (c.tags || '').toLowerCase().includes(query) ||
+          (c.context || '').toLowerCase().includes(query)
+        );
+      }
+
+      // Sort: most recently studied / highest reps first in mastered/learning, newest first in custom
+      const sorted = [...list].sort((a, b) => (b.reps - a.reps) || (b.updatedAt - a.updatedAt));
+
+      progressCardsList.innerHTML = '';
+      if (sorted.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-center text-slate-400 py-8 text-xs';
+        empty.textContent = 'В этой категории пока нет карточек.';
+        progressCardsList.appendChild(empty);
+        return;
+      }
+
+      sorted.forEach(card => {
+        const item = document.createElement('div');
+        item.className = 'p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2';
+
+        const left = document.createElement('div');
+        left.className = 'min-w-0 flex-1';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'flex items-center gap-1.5 mb-0.5';
+
+        const badge = document.createElement('span');
+        if (card.reps >= 3) {
+          badge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex-none';
+          badge.textContent = `Выучено ×${card.reps}`;
+        } else if (card.reps > 0) {
+          badge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex-none';
+          badge.textContent = `Учим ×${card.reps}`;
+        } else {
+          badge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex-none';
+          badge.textContent = 'Новая';
+        }
+
+        const schedule = document.createElement('span');
+        schedule.className = 'text-[10px] text-slate-400 truncate';
+        schedule.textContent = formatNextReview(card);
+
+        topRow.appendChild(badge);
+        if (card.isCustom) {
+          const customTag = document.createElement('span');
+          customTag.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex-none';
+          customTag.textContent = 'Моя';
+          topRow.appendChild(customTag);
+        }
+        topRow.appendChild(schedule);
+
+        const de = document.createElement('div');
+        de.className = 'font-bold text-slate-900 dark:text-white truncate';
+        de.textContent = card.german;
+
+        const ru = document.createElement('div');
+        ru.className = 'text-[11px] text-slate-500 dark:text-slate-400 truncate';
+        ru.textContent = card.russian;
+
+        left.appendChild(topRow);
+        left.appendChild(de);
+        left.appendChild(ru);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center gap-1 flex-none';
+
+        const speakBtn = document.createElement('button');
+        speakBtn.type = 'button';
+        speakBtn.className = 'p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition';
+        speakBtn.title = 'Озвучить';
+        speakBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>';
+        speakBtn.addEventListener('click', () => speakGermanText(card.german));
+
+        const studyBtn = document.createElement('button');
+        studyBtn.type = 'button';
+        studyBtn.className = 'px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition';
+        studyBtn.textContent = 'Учить';
+        studyBtn.addEventListener('click', () => practiceCardNow(card.cardKey));
+
+        actions.appendChild(speakBtn);
+        actions.appendChild(studyBtn);
+
+        if (card.reps > 0) {
+          const resetBtn = document.createElement('button');
+          resetBtn.type = 'button';
+          resetBtn.className = 'px-1.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950 dark:hover:text-rose-300 transition';
+          resetBtn.title = 'Сбросить прогресс карточки';
+          resetBtn.textContent = '↺';
+          resetBtn.addEventListener('click', () => resetCardProgress(card.cardKey));
+          actions.appendChild(resetBtn);
+        }
+
+        item.appendChild(left);
+        item.appendChild(actions);
+        progressCardsList.appendChild(item);
+      });
     }
 
     // --- Custom Cards Management ---
@@ -1393,6 +1730,7 @@
         vocabModal.classList.add('hidden');
         addCardModal.classList.add('hidden');
         authModal.classList.add('hidden');
+        progressModal.classList.add('hidden');
         return;
       }
       if (isAnyModalOpen()) return;
@@ -1407,6 +1745,29 @@
         if (e.key === '4') handleRating('easy');
       }
     });
+
+    // --- Progress Modal Events ---
+    openProgressBtn.addEventListener('click', () => openProgressModal('all'));
+    document.querySelectorAll('.progress-ribbon-btn').forEach(btn => {
+      btn.addEventListener('click', () => openProgressModal(btn.getAttribute('data-progress-filter')));
+    });
+    closeProgressModalBtn.addEventListener('click', () => progressModal.classList.add('hidden'));
+    progressModal.addEventListener('click', (e) => {
+      if (e.target === progressModal) progressModal.classList.add('hidden');
+    });
+    document.querySelectorAll('.progress-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        progressFilter = btn.getAttribute('data-filter');
+        renderProgressModal();
+      });
+    });
+    document.querySelectorAll('.progress-stat-card').forEach(card => {
+      card.addEventListener('click', () => {
+        progressFilter = card.getAttribute('data-progress-tab');
+        renderProgressModal();
+      });
+    });
+    progressSearchInput.addEventListener('input', renderProgressModal);
 
     // --- Settings & Vocabulary Modal ---
     const vocabModal = document.getElementById('vocabModal');
@@ -1499,9 +1860,12 @@
       authInfoMsg.classList.add('hidden');
 
       if (!supabaseClient) {
-        authErrorMsg.textContent = 'Сначала укажите Supabase URL и Anon Key в настройках ниже.';
+        await initSupabase();
+      }
+      if (!supabaseClient) {
+        authErrorMsg.textContent = supabaseSdkError || 'Сначала укажите Supabase URL и Anon Key в настройках ниже.';
         authErrorMsg.classList.remove('hidden');
-        supabaseConfigDetails.open = true;
+        if (!supabaseSdkError) supabaseConfigDetails.open = true;
         return;
       }
 
