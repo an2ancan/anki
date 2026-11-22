@@ -372,10 +372,6 @@
 
         <!-- Logged-Out / Login & Sign Up View -->
         <div id="authLoggedOutView" class="space-y-3">
-          <div id="supabaseNotConfiguredNotice" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-200 rounded-2xl p-3 text-[11px] leading-relaxed">
-            Укажите <strong>Supabase URL</strong> и <strong>Anon Key</strong> ниже (или в <code>SUPABASE_CONFIG</code> внутри <code>index.html</code>), чтобы включить вход и синхронизацию между устройствами. Без входа прогресс сохраняется локально в браузере.
-          </div>
-
           <div class="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button type="button" id="authTabSignIn" class="py-1.5 rounded-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition">Вход</button>
             <button type="button" id="authTabSignUp" class="py-1.5 rounded-lg font-bold text-slate-500 dark:text-slate-400 transition">Регистрация</button>
@@ -393,29 +389,10 @@
             <div id="authErrorMsg" class="hidden text-[11px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/50 p-2 rounded-lg"></div>
             <div id="authInfoMsg" class="hidden text-[11px] text-emerald-700 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/50 p-2 rounded-lg"></div>
             <button type="submit" id="authSubmitBtn" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
-              Войти через Supabase
+              Войти
             </button>
           </form>
         </div>
-
-        <!-- Supabase Connection Settings -->
-        <details id="supabaseConfigDetails" class="border border-slate-200 dark:border-slate-700 rounded-2xl p-3">
-          <summary class="font-bold cursor-pointer select-none">Настройки подключения Supabase</summary>
-          <div class="mt-2.5 space-y-2">
-            <div>
-              <label for="supabaseUrlInput" class="block text-[10px] text-slate-400 mb-1">Project URL</label>
-              <input type="url" id="supabaseUrlInput" placeholder="https://xxxx.supabase.co" class="w-full p-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl">
-            </div>
-            <div>
-              <label for="supabaseKeyInput" class="block text-[10px] text-slate-400 mb-1">Anon / Publishable Key</label>
-              <input type="text" id="supabaseKeyInput" placeholder="eyJhbGciOi... или sb_publishable_..." class="w-full p-2 font-mono text-[11px] bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl">
-            </div>
-            <div class="flex gap-2 pt-1">
-              <button type="button" id="saveSupabaseConfigBtn" class="flex-1 py-2 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold">Сохранить</button>
-              <button type="button" id="clearSupabaseConfigBtn" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold">Сбросить</button>
-            </div>
-          </div>
-        </details>
       </div>
     </div>
   </div>
@@ -634,10 +611,6 @@
     const authLoggedOutView = document.getElementById('authLoggedOutView');
     const authUserEmail = document.getElementById('authUserEmail');
     const authUserStats = document.getElementById('authUserStats');
-    const supabaseNotConfiguredNotice = document.getElementById('supabaseNotConfiguredNotice');
-    const supabaseConfigDetails = document.getElementById('supabaseConfigDetails');
-    const supabaseUrlInput = document.getElementById('supabaseUrlInput');
-    const supabaseKeyInput = document.getElementById('supabaseKeyInput');
     const authTabSignIn = document.getElementById('authTabSignIn');
     const authTabSignUp = document.getElementById('authTabSignUp');
     const authForm = document.getElementById('authForm');
@@ -914,11 +887,6 @@
     }
 
     function updateAuthModalUI() {
-      const cfg = getEffectiveSupabaseConfig();
-      const hasKeys = Boolean(cfg.url && cfg.anonKey);
-      supabaseUrlInput.value = cfg.url;
-      supabaseKeyInput.value = cfg.anonKey;
-
       if (currentUser) {
         authLoggedInView.classList.remove('hidden');
         authLoggedOutView.classList.add('hidden');
@@ -928,13 +896,6 @@
       } else {
         authLoggedInView.classList.add('hidden');
         authLoggedOutView.classList.remove('hidden');
-        if (!hasKeys) {
-          supabaseNotConfiguredNotice.classList.remove('hidden');
-          supabaseConfigDetails.open = true;
-        } else {
-          supabaseNotConfiguredNotice.classList.add('hidden');
-          if (supabaseClient) supabaseConfigDetails.open = false;
-        }
       }
     }
 
@@ -946,7 +907,7 @@
         authTabSignIn.className = 'py-1.5 rounded-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition';
         authTabSignUp.className = 'py-1.5 rounded-lg font-bold text-slate-500 dark:text-slate-400 transition';
         authPasswordInput.setAttribute('autocomplete', 'current-password');
-        authSubmitBtn.textContent = 'Войти через Supabase';
+        authSubmitBtn.textContent = 'Войти';
       } else {
         authTabSignUp.className = 'py-1.5 rounded-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition';
         authTabSignIn.className = 'py-1.5 rounded-lg font-bold text-slate-500 dark:text-slate-400 transition';
@@ -1863,9 +1824,8 @@
         await initSupabase();
       }
       if (!supabaseClient) {
-        authErrorMsg.textContent = supabaseSdkError || 'Сначала укажите Supabase URL и Anon Key в настройках ниже.';
+        authErrorMsg.textContent = supabaseSdkError || 'Supabase не настроен в index.html.';
         authErrorMsg.classList.remove('hidden');
-        if (!supabaseSdkError) supabaseConfigDetails.open = true;
         return;
       }
 
@@ -1916,28 +1876,6 @@
       setSyncUI('local');
       updateAuthModalUI();
       showToast('Вы вышли из аккаунта');
-    });
-
-    document.getElementById('saveSupabaseConfigBtn').addEventListener('click', async () => {
-      const url = supabaseUrlInput.value.trim();
-      const key = supabaseKeyInput.value.trim();
-      if (!url || !key) {
-        showToast('Заполните URL и ключ');
-        return;
-      }
-      localStorage.setItem('anki_supabase_url', url);
-      localStorage.setItem('anki_supabase_key', key);
-      await initSupabase();
-      showToast('Настройки Supabase сохранены');
-    });
-
-    document.getElementById('clearSupabaseConfigBtn').addEventListener('click', async () => {
-      localStorage.removeItem('anki_supabase_url');
-      localStorage.removeItem('anki_supabase_key');
-      supabaseUrlInput.value = SUPABASE_CONFIG.url || '';
-      supabaseKeyInput.value = SUPABASE_CONFIG.anonKey || '';
-      await initSupabase();
-      showToast('Локальные ключи сброшены');
     });
 
     // --- CSV Import / Export ---
