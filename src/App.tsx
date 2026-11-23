@@ -77,6 +77,9 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState('');
   const toastTimerRef = useRef<number | null>(null);
   const isSyncingRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
+  const modeRef = useRef<StudyMode>(mode);
+  modeRef.current = mode;
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -143,7 +146,7 @@ export default function App() {
       );
       const updatedStats: DailyStats = { ...nextStats, activeCardKeys: activeKeys };
       setStats(updatedStats);
-      const uid = targetUserId !== undefined ? targetUserId : (user?.id ?? null);
+      const uid = targetUserId !== undefined ? targetUserId : userIdRef.current;
       saveLocalDailyStats(uid, updatedStats);
       if (uid) {
         syncProfileToSupabase(uid, updatedStats).catch(() => {});
@@ -151,9 +154,9 @@ export default function App() {
       setQueue(nextQueue);
       setCurrentIndex(0);
       setIsFlipped(false);
-      setDirection(pickDirection(mode));
+      setDirection(pickDirection(modeRef.current));
     },
-    [mode, user]
+    []
   );
 
   // Initial queue build
@@ -201,6 +204,7 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!active) return;
       if (session?.user) {
+        userIdRef.current = session.user.id;
         setUser(session.user);
         const uDeck = loadLocalDeck(session.user.id);
         const uStats = loadLocalDailyStats(session.user.id);
@@ -214,8 +218,11 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       const nextUser = session?.user ?? null;
+      const nextId = nextUser?.id ?? null;
+      const changed = nextId !== userIdRef.current;
+      userIdRef.current = nextId;
       setUser(nextUser);
-      if (nextUser && event === 'SIGNED_IN') {
+      if (nextUser && event === 'SIGNED_IN' && changed) {
         const uDeck = loadLocalDeck(nextUser.id);
         const uStats = loadLocalDailyStats(nextUser.id);
         setDeck(uDeck);
@@ -226,7 +233,7 @@ export default function App() {
         const gStats = loadLocalDailyStats(null);
         setDeck(gDeck);
         setStats(gStats);
-        rebuildQueue(gDeck, gStats);
+        rebuildQueue(gDeck, gStats, false, null);
         setSyncState({ status: 'local', message: 'Режим: локально (без входа)' });
       }
     });
