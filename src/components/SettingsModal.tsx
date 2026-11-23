@@ -260,7 +260,7 @@ export function SettingsModal({
                 Макс. неизвестных слов одновременно:
               </div>
               <div className="text-[10px] text-slate-400">
-                Новые + слова на повторении сегодня (рекомендуется 8–15)
+                Новые + слова на повторении сегодня (по умолчанию 5)
               </div>
             </div>
             <div className="flex items-center gap-2">

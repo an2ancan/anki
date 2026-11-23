@@ -42,7 +42,7 @@ export function loadLocalDailyStats(userId: string | null): DailyStats {
   const legacyCount = !userId ? localStorage.getItem('anki_today_count') : null;
 
   const dailyLimit = parseInt(localStorage.getItem(`${prefix}daily_limit`) || legacyLimit || '60', 10);
-  const maxActiveUnknown = parseInt(localStorage.getItem(`${prefix}max_active_unknown`) || '10', 10);
+  const maxActiveUnknown = parseInt(localStorage.getItem(`${prefix}max_active_unknown`) || '5', 10);
 
   const savedDate = localStorage.getItem(`${prefix}today_date`) || legacyDate;
   const today = getTodayKey();
@@ -69,7 +69,7 @@ export function loadLocalDailyStats(userId: string | null): DailyStats {
   return {
     dailyLimit: Number.isNaN(dailyLimit) ? 60 : dailyLimit,
     dailyReviewedCount: Number.isNaN(dailyReviewedCount) ? 0 : dailyReviewedCount,
-    maxActiveUnknown: Number.isNaN(maxActiveUnknown) ? 10 : maxActiveUnknown,
+    maxActiveUnknown: Number.isNaN(maxActiveUnknown) ? 5 : maxActiveUnknown,
     activeCardKeys,
   };
 }

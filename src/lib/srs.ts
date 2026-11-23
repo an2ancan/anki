@@ -63,7 +63,7 @@ export function getRatingPreviewLabels(card: Card, now = Date.now()): Record<Rat
   const hardLabel = unknown
     ? `${HARD_UNKNOWN_MINUTES} мин`
     : `${Math.max(1, Math.round(baseInterval * 1.2))} дн.`;
-  const goodDays = Math.max(2, Math.round(baseInterval * 2.0));
+  const goodDays = card.interval > 0 ? Math.max(2, Math.round(card.interval * 2.0)) : 1;
   const easyDays = Math.max(4, Math.round(baseInterval * 2.8));
 
   return {
@@ -107,7 +107,7 @@ export function applyCardRating(card: Card, rate: Rating, now = Date.now()): Rat
 
   if (rate === 'good') {
     updated.reps = (card.reps || 0) + 1;
-    updated.interval = Math.max(2, (card.interval || 1) * 2.0);
+    updated.interval = card.interval > 0 ? Math.max(2, card.interval * 2.0) : 1;
     updated.nextReview = now + Math.round(updated.interval * DAY_MS);
     return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0 };
   }

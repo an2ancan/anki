@@ -7,7 +7,7 @@ create table if not exists public.user_profiles (
   daily_limit integer not null default 60,
   today_date text not null default '',
   today_count integer not null default 0,
-  max_active_unknown integer not null default 10,
+  max_active_unknown integer not null default 5,
   active_card_keys text[] not null default '{}',
   tts_engine text not null default 'google',
   google_voice text not null default 'de-DE-Wavenet-C',
@@ -16,7 +16,7 @@ create table if not exists public.user_profiles (
 );
 
 -- Safe migration for existing installations:
-alter table public.user_profiles add column if not exists max_active_unknown integer not null default 10;
+alter table public.user_profiles add column if not exists max_active_unknown integer not null default 5;
 alter table public.user_profiles add column if not exists active_card_keys text[] not null default '{}';
 alter table public.user_profiles add column if not exists tts_engine text not null default 'google';
 alter table public.user_profiles add column if not exists google_voice text not null default 'de-DE-Wavenet-C';
