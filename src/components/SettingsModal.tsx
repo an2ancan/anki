@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import type { Card, SpeechSettings } from '../types';
-import { rankVoice } from '../lib/speech';
+import { useEffect, useState } from 'react';
+import type { Card, SpeechSettings, TtsEngine } from '../types';
+import { GOOGLE_DE_VOICES, rankVoice } from '../lib/speech';
+import { clearAudioCache, getAudioCacheCount } from '../lib/audioCache';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -41,6 +42,13 @@ export function SettingsModal({
   const [unknownLimitInput, setUnknownLimitInput] = useState(String(maxActiveUnknown));
   const [search, setSearch] = useState('');
   const [csvText, setCsvText] = useState('');
+  const [cacheCount, setCacheCount] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      getAudioCacheCount().then(setCacheCount);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -86,23 +94,93 @@ export function SettingsModal({
                 <span>Автоозвучка</span>
               </label>
             </div>
-            <div>
-              <label className="text-[10px] text-slate-400 block mb-1">
-                Выбор голоса (приоритет отдан естественным нейросетям):
-              </label>
-              <select
-                value={speechSettings.voiceName}
-                onChange={(e) => onUpdateSpeech({ ...speechSettings, voiceName: e.target.value })}
-                className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"
-              >
-                {voices.map((v) => (
-                  <option key={v.name} value={v.name}>
-                    {rankVoice(v) >= 60 ? '★ ' : ''}
-                    {v.name} ({v.lang})
-                  </option>
-                ))}
-              </select>
+            {/* Engine Switcher */}
+            <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
+              {(['system', 'google'] as TtsEngine[]).map((eng) => (
+                <button
+                  key={eng}
+                  type="button"
+                  onClick={() => onUpdateSpeech({ ...speechSettings, engine: eng })}
+                  className={`py-1.5 rounded-lg text-[11px] font-bold transition ${
+                    speechSettings.engine === eng
+                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {eng === 'system' ? 'Системный голос' : 'Google Cloud TTS'}
+                </button>
+              ))}
             </div>
+
+            {speechSettings.engine === 'system' ? (
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1">
+                  Выбор системного голоса (приоритет отдан нейросетям):
+                </label>
+                <select
+                  value={speechSettings.voiceName}
+                  onChange={(e) => onUpdateSpeech({ ...speechSettings, voiceName: e.target.value })}
+                  className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"
+                >
+                  {voices.map((v) => (
+                    <option key={v.name} value={v.name}>
+                      {rankVoice(v) >= 60 ? '★ ' : ''}
+                      {v.name} ({v.lang})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">
+                    Голос Google Cloud TTS (онлайн для ваших карточек + кэш):
+                  </label>
+                  <select
+                    value={speechSettings.googleVoiceName}
+                    onChange={(e) =>
+                      onUpdateSpeech({ ...speechSettings, googleVoiceName: e.target.value })
+                    }
+                    className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"
+                  >
+                    {GOOGLE_DE_VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">
+                    Свой API Key (необязательно — если пусто, используется общий серверный ключ Supabase после входа):
+                  </label>
+                  <input
+                    type="password"
+                    value={speechSettings.googleApiKey}
+                    onChange={(e) =>
+                      onUpdateSpeech({ ...speechSettings, googleApiKey: e.target.value })
+                    }
+                    placeholder="Оставьте пустым для общего ключа..."
+                    className="w-full p-2 font-mono text-[11px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl"
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                  <span>В кэше браузера: {cacheCount} фраз</span>
+                  {cacheCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await clearAudioCache();
+                        setCacheCount(0);
+                      }}
+                      className="text-rose-600 dark:text-rose-400 font-semibold hover:underline"
+                    >
+                      Очистить кэш
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">

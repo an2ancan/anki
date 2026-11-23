@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Card, DailyStats } from '../types';
+import type { Card, DailyStats, SpeechSettings } from '../types';
 import { DEFAULT_CORPUS } from '../data/defaultCorpus';
 import { getDefaultDeck, normalizeCard } from './srs';
 import { getTodayKey } from './storage';
@@ -63,17 +63,24 @@ function rowToCard(row: SupabaseCardRow): Card {
   });
 }
 
-export async function syncProfileToSupabase(userId: string, stats: DailyStats): Promise<void> {
-  const { error } = await supabase.from('user_profiles').upsert(
-    {
-      user_id: userId,
-      daily_limit: stats.dailyLimit,
-      today_date: getTodayKey(),
-      today_count: stats.dailyReviewedCount,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id' }
-  );
+export async function syncProfileToSupabase(
+  userId: string,
+  stats: DailyStats,
+  speech?: SpeechSettings
+): Promise<void> {
+  const payload: Record<string, unknown> = {
+    user_id: userId,
+    daily_limit: stats.dailyLimit,
+    today_date: getTodayKey(),
+    today_count: stats.dailyReviewedCount,
+    updated_at: new Date().toISOString(),
+  };
+  if (speech) {
+    payload.tts_engine = speech.engine;
+    payload.google_voice = speech.googleVoiceName;
+    payload.google_tts_key = speech.googleApiKey.trim();
+  }
+  const { error } = await supabase.from('user_profiles').upsert(payload, { onConflict: 'user_id' });
   if (error) throw error;
 }
 
@@ -98,8 +105,9 @@ export async function deleteCardFromSupabase(userId: string, cardKey: string): P
 export async function fullSyncWithSupabase(
   userId: string,
   localDeck: Card[],
-  localStats: DailyStats
-): Promise<{ mergedDeck: Card[]; mergedStats: DailyStats }> {
+  localStats: DailyStats,
+  localSpeech: SpeechSettings
+): Promise<{ mergedDeck: Card[]; mergedStats: DailyStats; mergedSpeech: SpeechSettings }> {
   const today = getTodayKey();
   const [profileRes, cardsRes] = await Promise.all([
     supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle(),
@@ -110,6 +118,8 @@ export async function fullSyncWithSupabase(
   if (cardsRes.error) throw cardsRes.error;
 
   const mergedStats: DailyStats = { ...localStats };
+  const mergedSpeech: SpeechSettings = { ...localSpeech };
+
   if (profileRes.data) {
     if (profileRes.data.daily_limit >= 5) {
       mergedStats.dailyLimit = profileRes.data.daily_limit;
@@ -120,8 +130,19 @@ export async function fullSyncWithSupabase(
         Number(profileRes.data.today_count) || 0
       );
     }
+    if (profileRes.data.google_tts_key && !mergedSpeech.googleApiKey) {
+      mergedSpeech.googleApiKey = String(profileRes.data.google_tts_key);
+    }
+    if (profileRes.data.google_voice) {
+      mergedSpeech.googleVoiceName = String(profileRes.data.google_voice);
+    }
+    if (profileRes.data.tts_engine === 'google' || profileRes.data.tts_engine === 'system') {
+      if (profileRes.data.google_tts_key || !mergedSpeech.googleApiKey) {
+        mergedSpeech.engine = profileRes.data.tts_engine;
+      }
+    }
   }
-  await syncProfileToSupabase(userId, mergedStats);
+  await syncProfileToSupabase(userId, mergedStats, mergedSpeech);
 
   const mergedMap = new Map<string, Card>();
   getDefaultDeck().forEach((c) => mergedMap.set(c.cardKey, c));
@@ -157,5 +178,5 @@ export async function fullSyncWithSupabase(
     await syncCardsToSupabase(userId, toPush);
   }
 
-  return { mergedDeck: Array.from(mergedMap.values()), mergedStats };
+  return { mergedDeck: Array.from(mergedMap.values()), mergedStats, mergedSpeech };
 }

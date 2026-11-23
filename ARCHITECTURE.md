@@ -24,12 +24,15 @@ flowchart TD
   subgraph Logic["Бизнес-логика (src/lib)"]
     SRS["srs.ts<br/>(SRS, лимит неизвестных, очередь)"]
     Storage["storage.ts<br/>(localStorage + миграция)"]
-    Speech["speech.ts<br/>(Web Speech API + ранжирование)"]
+    Speech["speech.ts + audioCache.ts<br/>(Google Cloud TTS + IndexedDB / Web Speech)"]
     SupaLib["supabase.ts<br/>(Auth + merge-синхронизация)"]
   end
 
   Data["data/defaultCorpus.ts<br/>(70 встроенных карточек B1–B2)"]
   LS[("Browser localStorage")]
+  IDB[("Browser IndexedDB<br/>(MP3-кэш озвучки)")]
+  EdgeTTS["Supabase Edge Function: tts<br/>(JWT + allowlist + GOOGLE_TTS_API_KEY)"]
+  GoogleTTS[("Google Cloud TTS API<br/>(Neural2 / WaveNet)")]
   SupaDB[("Supabase Cloud<br/>Auth + Postgres RLS")]
 
   UI <--> App
@@ -39,6 +42,9 @@ flowchart TD
   App --> SupaLib
   SRS --> Data
   Storage <--> LS
+  Speech <--> IDB
+  Speech -.->|"мастер-ключ (по умолчанию)"| EdgeTTS
+  EdgeTTS -.-> GoogleTTS
   SupaLib <--> SupaDB
 ```
 
@@ -53,6 +59,10 @@ anki/
 ├── tsconfig.json                   # Строгие настройки TypeScript (strict: true)
 ├── vite.config.ts                  # Конфигурация сборки Vite + Tailwind CSS v4
 ├── supabase_schema.sql             # SQL-схема таблиц и политик RLS в Supabase
+├── supabase/
+│   └── functions/
+│       └── tts/
+│           └── index.ts            # Edge Function: прокси Google Cloud TTS с мастер-ключом
 ├── .github/workflows/deploy.yml    # Автоматический билд и деплой на GitHub Pages
 └── src/
     ├── main.tsx                    # Монтирование React в #root
@@ -64,7 +74,8 @@ anki/
     ├── lib/
     │   ├── srs.ts                  # Алгоритм повторений, лимит неизвестных слов, очередь
     │   ├── storage.ts              # Сохранение/загрузка localStorage с разделением по userId
-    │   ├── speech.ts               # Озвучка немецких слов и очистка грамматических меток
+    │   ├── audioCache.ts           # Кэш MP3-файлов в IndexedDB для Google Cloud TTS
+    │   ├── speech.ts               # Движок озвучки: Google Cloud TTS + фолбэк на Web Speech API
     │   └── supabase.ts             # Клиент Supabase и логика fullSync / upsert / delete
     └── components/
         ├── Header.tsx              # Шапка: режим, +, статус входа, настройки, тема
@@ -113,6 +124,9 @@ erDiagram
     integer daily_limit
     text today_date
     integer today_count
+    text tts_engine
+    text google_voice
+    text google_tts_key
     timestamptz updated_at
   }
 
@@ -218,9 +232,29 @@ sequenceDiagram
 
 ## 6. Разбор остальных модулей
 
-### Движок озвучки (`src/lib/speech.ts`)
-- **`rankVoice`**: присваивает веса голосам браузера (`natural/neural` → 100, `Google Deutsch` → 80, `Anna/Katja/Petra/Markus` → 70, `enhanced/premium` → 60, любой `de-DE` → 50) и автоматически выбирает лучший доступный.
-- **`cleanGermanSpeechText`**: перед озвучкой вырезает служебные грамматические пометки в скобках (`(Verb am Ende)`, `+ Dat.`, `Grammatik:`), чтобы диктор читал только естественную немецкую фразу.
+### Движок озвучки (`src/lib/speech.ts`, `src/lib/audioCache.ts` и `supabase/functions/tts/index.ts`)
+
+Поддерживаются два движка с возможностью переключения в **Настройках (⚙)**:
+
+```mermaid
+flowchart LR
+  Play["Запрос озвучки карточки"] --> Clean["cleanGermanSpeechText()<br/>(удаление скобок и тегов)"]
+  Clean --> Engine{"Движок?"}
+  Engine -->|"Системный (default)"| WebSpeech["Web Speech API<br/>(лучший системный голос)"]
+  Engine -->|"Google Cloud TTS"| Cache{"Есть MP3 в<br/>IndexedDB?"}
+  Cache -->|"Да"| Audio["HTMLAudioElement.play()"]
+  Cache -->|"Нет"| KeyMode{"Личный ключ<br/>указан?"}
+  KeyMode -->|"Нет (мастер-ключ)"| Edge["Supabase Edge Function: tts<br/>(JWT + allowlist + 300 симв.)"] --> API["Google Cloud TTS API"]
+  KeyMode -->|"Да"| API
+  API -->|"OK"| Save["Сохранить MP3 в IndexedDB"] --> Audio
+  API -->|"Ошибка / нет сети"| WebSpeech
+```
+
+- **Серверный мастер-ключ (`supabase/functions/tts/index.ts`)**: хранится в **Supabase Secrets** (`GOOGLE_TTS_API_KEY`) и никогда не передаётся в браузер. Edge Function проверяет JWT-токен пользователя (`auth.getUser()`), пропускает только бесплатные голоса (`de-DE-Neural2-B/C/D/F`, `de-DE-Wavenet-B/C`) и ограничивает длину текста до `300` символов.
+- **Онлайн-генерация по требованию**: аудио генерируется строго для тех карточек, которые реально прослушивает пользователь (включая добавленные вручную).
+- **Кэш в `IndexedDB` (`audioCache.ts`)**: ключ кэша = `voice|rate|pitch|text`. Повторное прослушивание карточки не тратит квоту API и работает мгновенно даже офлайн.
+- **Синхронизация настроек TTS**: выбранный движок (`tts_engine`), голос (`google_voice`) и опциональный личный ключ (`google_tts_key`) сохраняются в `user_profiles` под защитой RLS.
+- **Автоматический фолбэк**: если пользователь не вошёл в аккаунт (и личного ключа нет), пропал интернет или произошла ошибка — приложение без паузы переключается на системный `Web Speech API`.
 
 ### Главный контейнер (`src/App.tsx`)
 - Хранит состояние колоды (`deck`), текущей очереди (`queue`, `currentIndex`, `isFlipped`), дневной статистики (`stats`), настроек озвучки (`speechSettings`) и открытых модальных окон.

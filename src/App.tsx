@@ -113,15 +113,21 @@ export default function App() {
   );
 
   const voiceLabel = useMemo(() => {
+    if (speechSettings.engine === 'google' && (speechSettings.googleApiKey.trim() || user)) {
+      const short = speechSettings.googleVoiceName.replace('de-DE-', '');
+      return `Google: ${short}`;
+    }
     if (!('speechSynthesis' in window)) return 'Звук недоступен';
     return chosenVoice ? `Голос: ${chosenVoice.name.split(' ')[0]}` : 'Голос: авто';
-  }, [chosenVoice]);
+  }, [chosenVoice, speechSettings.engine, speechSettings.googleApiKey, speechSettings.googleVoiceName, user]);
 
   const speak = useCallback(
     (text: string) => {
-      speakGermanText(text, chosenVoice, speechSettings.rate, speechSettings.pitch);
+      speakGermanText(text, speechSettings, chosenVoice, Boolean(user), () => {
+        showToast('Google TTS недоступен, включён системный голос');
+      });
     },
-    [chosenVoice, speechSettings.rate, speechSettings.pitch]
+    [chosenVoice, speechSettings, user, showToast]
   );
 
   const rebuildQueue = useCallback(
@@ -154,15 +160,18 @@ export default function App() {
       isSyncingRef.current = true;
       setSyncState({ status: 'syncing', message: 'Синхронизация с Supabase...' });
       try {
-        const { mergedDeck, mergedStats } = await fullSyncWithSupabase(
+        const { mergedDeck, mergedStats, mergedSpeech } = await fullSyncWithSupabase(
           targetUser.id,
           localDeck,
-          localStats
+          localStats,
+          loadSpeechSettings()
         );
         saveLocalDeck(targetUser.id, mergedDeck);
         saveLocalDailyStats(targetUser.id, mergedStats);
+        saveSpeechSettings(mergedSpeech);
         setDeck(mergedDeck);
         setStats(mergedStats);
+        setSpeechSettings(mergedSpeech);
         rebuildQueue(mergedDeck, mergedStats);
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setSyncState({ status: 'synced', message: `Синхронизировано • ${time}` });
@@ -535,6 +544,9 @@ export default function App() {
         onUpdateSpeech={(next) => {
           setSpeechSettings(next);
           saveSpeechSettings(next);
+          if (user) {
+            syncProfileToSupabase(user.id, stats, next).catch(() => {});
+          }
         }}
         onTestVoice={() => speak('Guten Tag! Ich spreche Deutsch flüssig und natürlich.')}
         dailyLimit={stats.dailyLimit}

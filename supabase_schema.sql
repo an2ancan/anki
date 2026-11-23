@@ -1,14 +1,22 @@
 -- Supabase Schema for Deutsch B1-B2 Anki Mobile
 -- Run this entire script in your Supabase Dashboard -> SQL Editor -> New Query
 
--- 1. User profiles (daily goal & daily progress)
+-- 1. User profiles (daily goal, daily progress, and optional TTS settings)
 create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   daily_limit integer not null default 60,
   today_date text not null default '',
   today_count integer not null default 0,
+  tts_engine text not null default 'system',
+  google_voice text not null default 'de-DE-Neural2-C',
+  google_tts_key text not null default '',
   updated_at timestamptz not null default now()
 );
+
+-- Safe migration for existing installations:
+alter table public.user_profiles add column if not exists tts_engine text not null default 'system';
+alter table public.user_profiles add column if not exists google_voice text not null default 'de-DE-Neural2-C';
+alter table public.user_profiles add column if not exists google_tts_key text not null default '';
 
 -- 2. User cards (both progress on built-in cards and custom user-created cards)
 create table if not exists public.user_cards (

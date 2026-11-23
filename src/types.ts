@@ -43,8 +43,13 @@ export interface DailyStats {
   maxActiveUnknown: number;
 }
 
+export type TtsEngine = 'system' | 'google';
+
 export interface SpeechSettings {
+  engine: TtsEngine;
   voiceName: string;
+  googleVoiceName: string;
+  googleApiKey: string;
   rate: number;
   pitch: number;
   autoPlay: boolean;

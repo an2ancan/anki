@@ -9,8 +9,13 @@ A personal mobile-first web app for learning German vocabulary and grammar (B1�
 - **Learning Progress Dashboard**: View how many cards are mastered (`reps >= 3`), in progress (`1–2` reps), or unlearned (`0` reps), filter and search all cards, jump straight into practicing any card, or reset a card's progress.
 - **Supabase Auth & Cloud Sync**: Sign up / sign in with Email + Password; automatically syncs per-card progress, custom cards, and daily stats across devices with Row Level Security (RLS).
 - **Offline / Guest Mode**: Works locally in `localStorage` without signing in.
-- **German Speech Engine (Web Speech API)**: Automatically prioritizes natural/neural German voices with adjustable speed and pitch.
+- **German Speech Engine**: Supports both the default browser **Web Speech API** and on-demand **Google Cloud Text-to-Speech (`de-DE-Neural2` / `WaveNet`)** with local `IndexedDB` MP3 caching and automatic fallback.
 - **Dark / Light Theme** and mobile-friendly touch layout.
+
+### Optional: Google Cloud TTS Setup (1M free chars/month)
+1. In [Google Cloud Console](https://console.cloud.google.com/), enable **Cloud Text-to-Speech API**.
+2. Create an API key under **APIs & Services → Credentials** (optionally restrict it to the Text-to-Speech API and your GitHub Pages domain).
+3. In the app, open **Settings (⚙) → Голос и произношение → Google Cloud TTS**, choose a voice (e.g. `de-DE-Neural2-C`), and paste your API key. Generated audio clips are cached locally in `IndexedDB`.
 
 ---
 

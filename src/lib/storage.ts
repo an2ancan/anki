@@ -71,8 +71,12 @@ export function saveLocalDailyStats(userId: string | null, stats: DailyStats): v
 }
 
 export function loadSpeechSettings(): SpeechSettings {
+  const savedEngine = localStorage.getItem('anki_tts_engine');
   return {
+    engine: savedEngine === 'google' ? 'google' : 'system',
     voiceName: localStorage.getItem('anki_de_voice_name') || '',
+    googleVoiceName: localStorage.getItem('anki_google_voice') || 'de-DE-Neural2-C',
+    googleApiKey: localStorage.getItem('anki_google_tts_key') || '',
     rate: parseFloat(localStorage.getItem('anki_speech_rate') || '0.92') || 0.92,
     pitch: parseFloat(localStorage.getItem('anki_speech_pitch') || '1.0') || 1.0,
     autoPlay: localStorage.getItem('anki_autoplay') !== 'false',
@@ -80,7 +84,10 @@ export function loadSpeechSettings(): SpeechSettings {
 }
 
 export function saveSpeechSettings(settings: SpeechSettings): void {
+  localStorage.setItem('anki_tts_engine', settings.engine);
   if (settings.voiceName) localStorage.setItem('anki_de_voice_name', settings.voiceName);
+  localStorage.setItem('anki_google_voice', settings.googleVoiceName);
+  localStorage.setItem('anki_google_tts_key', settings.googleApiKey.trim());
   localStorage.setItem('anki_speech_rate', String(settings.rate));
   localStorage.setItem('anki_speech_pitch', String(settings.pitch));
   localStorage.setItem('anki_autoplay', String(settings.autoPlay));
