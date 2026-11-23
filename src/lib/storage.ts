@@ -55,10 +55,22 @@ export function loadLocalDailyStats(userId: string | null): DailyStats {
     localStorage.setItem(`${prefix}today_count`, '0');
   }
 
+  let activeCardKeys: string[] = [];
+  try {
+    const rawKeys = localStorage.getItem(`${prefix}active_card_keys`);
+    if (rawKeys) {
+      const parsed = JSON.parse(rawKeys);
+      if (Array.isArray(parsed)) activeCardKeys = parsed.map(String);
+    }
+  } catch {
+    activeCardKeys = [];
+  }
+
   return {
     dailyLimit: Number.isNaN(dailyLimit) ? 60 : dailyLimit,
     dailyReviewedCount: Number.isNaN(dailyReviewedCount) ? 0 : dailyReviewedCount,
     maxActiveUnknown: Number.isNaN(maxActiveUnknown) ? 10 : maxActiveUnknown,
+    activeCardKeys,
   };
 }
 
@@ -68,14 +80,15 @@ export function saveLocalDailyStats(userId: string | null, stats: DailyStats): v
   localStorage.setItem(`${prefix}today_date`, getTodayKey());
   localStorage.setItem(`${prefix}today_count`, String(stats.dailyReviewedCount));
   localStorage.setItem(`${prefix}max_active_unknown`, String(stats.maxActiveUnknown));
+  localStorage.setItem(`${prefix}active_card_keys`, JSON.stringify(stats.activeCardKeys || []));
 }
 
 export function loadSpeechSettings(): SpeechSettings {
   const savedEngine = localStorage.getItem('anki_tts_engine');
   return {
-    engine: savedEngine === 'google' ? 'google' : 'system',
+    engine: savedEngine === 'system' ? 'system' : 'google',
     voiceName: localStorage.getItem('anki_de_voice_name') || '',
-    googleVoiceName: localStorage.getItem('anki_google_voice') || 'de-DE-Neural2-C',
+    googleVoiceName: localStorage.getItem('anki_google_voice') || 'de-DE-Wavenet-C',
     googleApiKey: localStorage.getItem('anki_google_tts_key') || '',
     rate: parseFloat(localStorage.getItem('anki_speech_rate') || '0.92') || 0.92,
     pitch: parseFloat(localStorage.getItem('anki_speech_pitch') || '1.0') || 1.0,

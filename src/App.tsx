@@ -15,6 +15,7 @@ import {
   buildSessionQueue,
   generateCustomKey,
   normalizeCard,
+  reconcileActiveQueue,
 } from './lib/srs';
 import {
   loadLocalDailyStats,
@@ -131,20 +132,28 @@ export default function App() {
   );
 
   const rebuildQueue = useCallback(
-    (nextDeck: Card[], nextStats: DailyStats, forceMore = false) => {
-      const nextQueue = buildSessionQueue(
+    (nextDeck: Card[], nextStats: DailyStats, forceMore = false, targetUserId?: string | null) => {
+      const { queue: nextQueue, activeKeys } = buildSessionQueue(
         nextDeck,
         nextStats.dailyLimit,
         nextStats.dailyReviewedCount,
         nextStats.maxActiveUnknown,
+        nextStats.activeCardKeys,
         forceMore
       );
+      const updatedStats: DailyStats = { ...nextStats, activeCardKeys: activeKeys };
+      setStats(updatedStats);
+      const uid = targetUserId !== undefined ? targetUserId : (user?.id ?? null);
+      saveLocalDailyStats(uid, updatedStats);
+      if (uid) {
+        syncProfileToSupabase(uid, updatedStats).catch(() => {});
+      }
       setQueue(nextQueue);
       setCurrentIndex(0);
       setIsFlipped(false);
       setDirection(pickDirection(mode));
     },
-    [mode]
+    [mode, user]
   );
 
   // Initial queue build
@@ -172,7 +181,7 @@ export default function App() {
         setDeck(mergedDeck);
         setStats(mergedStats);
         setSpeechSettings(mergedSpeech);
-        rebuildQueue(mergedDeck, mergedStats);
+        rebuildQueue(mergedDeck, mergedStats, false, targetUser.id);
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setSyncState({ status: 'synced', message: `Синхронизировано • ${time}` });
       } catch (err) {
@@ -253,9 +262,21 @@ export default function App() {
       const { updatedCard, requeueInSession, requeueDelaySlots } = applyCardRating(currentCard, rate);
 
       const nextDeck = deck.map((c) => (c.cardKey === updatedCard.cardKey ? updatedCard : c));
+
+      // Reconcile the persistent active queue: if the rated card is now learned (scheduled for tomorrow+),
+      // drop it and automatically pull in the next waiting card to keep the queue at maxActiveUnknown.
+      const prevActiveSet = new Set(stats.activeCardKeys);
+      const { activeKeys: nextActiveKeys, activeCards: nextActiveCards } = reconcileActiveQueue(
+        nextDeck,
+        stats.activeCardKeys,
+        stats.maxActiveUnknown
+      );
+      const newlyAddedCards = nextActiveCards.filter((c) => !prevActiveSet.has(c.cardKey));
+
       const nextStats: DailyStats = {
         ...stats,
         dailyReviewedCount: stats.dailyReviewedCount + 1,
+        activeCardKeys: nextActiveKeys,
       };
 
       setDeck(nextDeck);
@@ -277,6 +298,13 @@ export default function App() {
         if (requeueInSession) {
           const insertAt = Math.min(next.length, currentIndex + 1 + requeueDelaySlots);
           next.splice(insertAt, 0, updatedCard);
+        }
+        // Append any newly promoted card(s) to the session queue if within daily limit
+        const existingInRemaining = new Set(next.slice(currentIndex + 1).map((c) => c.cardKey));
+        for (const added of newlyAddedCards) {
+          if (!existingInRemaining.has(added.cardKey) && nextStats.dailyReviewedCount < nextStats.dailyLimit) {
+            next.push(added);
+          }
         }
         return next;
       });

@@ -129,39 +129,79 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /**
- * Builds the study queue while capping the number of simultaneously active unknown words
- * (due today + newly introduced) to `maxActiveUnknown`.
+ * Reconciles the persistent active queue of unknown cards (capped at `maxActiveUnknown`).
+ * - Removes cards that are no longer in the deck or are no longer unknown (scheduled for tomorrow+).
+ * - Fills free slots with due-today cards first, then new cards (reps === 0).
+ */
+export function reconcileActiveQueue(
+  deck: Card[],
+  currentActiveKeys: string[],
+  maxActiveUnknown: number,
+  now = Date.now()
+): { activeKeys: string[]; activeCards: Card[] } {
+  const safeMax = Math.max(1, maxActiveUnknown);
+  const deckMap = new Map(deck.map((c) => [c.cardKey, c]));
+  const endOfToday = getEndOfTodayMs(now);
+
+  // Keep still-unknown cards in their existing order (deduplicated)
+  const keptKeys: string[] = [];
+  const seen = new Set<string>();
+  for (const key of currentActiveKeys) {
+    if (seen.has(key)) continue;
+    const card = deckMap.get(key);
+    if (card && isUnknownCard(card, now)) {
+      keptKeys.push(key);
+      seen.add(key);
+      if (keptKeys.length >= safeMax) break;
+    }
+  }
+
+  // Fill remaining slots if under limit: due-today first, then new cards
+  if (keptKeys.length < safeMax) {
+    const dueCandidates = shuffle(
+      deck.filter((c) => !seen.has(c.cardKey) && c.reps > 0 && (!c.nextReview || c.nextReview <= endOfToday))
+    );
+    const newCandidates = shuffle(
+      deck.filter((c) => !seen.has(c.cardKey) && c.reps === 0)
+    );
+    for (const candidate of [...dueCandidates, ...newCandidates]) {
+      if (keptKeys.length >= safeMax) break;
+      keptKeys.push(candidate.cardKey);
+      seen.add(candidate.cardKey);
+    }
+  }
+
+  const activeCards = keptKeys
+    .map((k) => deckMap.get(k))
+    .filter((c): c is Card => Boolean(c));
+
+  return { activeKeys: keptKeys, activeCards };
+}
+
+/**
+ * Builds the study queue from the persistent active unknown queue.
  */
 export function buildSessionQueue(
   deck: Card[],
   dailyLimit: number,
   dailyReviewedCount: number,
   maxActiveUnknown: number,
+  currentActiveKeys: string[] = [],
   forceMore = false,
   now = Date.now()
-): Card[] {
+): { queue: Card[]; activeKeys: string[] } {
   const remainingToday = Math.max(0, dailyLimit - dailyReviewedCount);
   const sessionCap = forceMore ? Math.min(dailyLimit, 20) : remainingToday;
 
-  if (sessionCap <= 0) return [];
+  const { activeKeys, activeCards } = reconcileActiveQueue(deck, currentActiveKeys, maxActiveUnknown, now);
+
+  if (sessionCap <= 0) return { queue: [], activeKeys };
 
   const endOfToday = getEndOfTodayMs(now);
-  const dueToday = shuffle(
-    deck.filter((c) => c.reps > 0 && (!c.nextReview || c.nextReview <= endOfToday))
-  );
-  const newCards = shuffle(deck.filter((c) => c.reps === 0));
   const futureCards = shuffle(deck.filter((c) => c.reps > 0 && c.nextReview > endOfToday));
+  const pool = activeCards.length > 0 ? activeCards : forceMore ? futureCards : [];
 
-  // Cap simultaneously active unknown cards (dueToday + newCards) to maxActiveUnknown
-  const safeMaxUnknown = Math.max(1, maxActiveUnknown);
-  const activeDue = dueToday.slice(0, safeMaxUnknown);
-  const newSlots = Math.max(0, safeMaxUnknown - activeDue.length);
-  const activeNew = newCards.slice(0, newSlots);
-
-  const activePool = [...activeDue, ...activeNew];
-  const pool = activePool.length > 0 ? activePool : forceMore ? futureCards : [];
-
-  return pool.slice(0, sessionCap);
+  return { queue: pool.slice(0, sessionCap), activeKeys };
 }
 
 export function formatNextReview(card: Card, now = Date.now()): string {

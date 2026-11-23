@@ -73,6 +73,8 @@ export async function syncProfileToSupabase(
     daily_limit: stats.dailyLimit,
     today_date: getTodayKey(),
     today_count: stats.dailyReviewedCount,
+    max_active_unknown: stats.maxActiveUnknown,
+    active_card_keys: stats.activeCardKeys,
     updated_at: new Date().toISOString(),
   };
   if (speech) {
@@ -129,6 +131,12 @@ export async function fullSyncWithSupabase(
         mergedStats.dailyReviewedCount,
         Number(profileRes.data.today_count) || 0
       );
+    }
+    if (profileRes.data.max_active_unknown >= 1) {
+      mergedStats.maxActiveUnknown = Number(profileRes.data.max_active_unknown);
+    }
+    if (Array.isArray(profileRes.data.active_card_keys) && profileRes.data.active_card_keys.length > 0) {
+      mergedStats.activeCardKeys = profileRes.data.active_card_keys.map(String);
     }
     if (profileRes.data.google_tts_key && !mergedSpeech.googleApiKey) {
       mergedSpeech.googleApiKey = String(profileRes.data.google_tts_key);
