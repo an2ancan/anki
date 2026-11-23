@@ -124,6 +124,8 @@ erDiagram
     integer daily_limit
     text today_date
     integer today_count
+    integer max_active_unknown
+    text_array active_card_keys
     text tts_engine
     text google_voice
     text google_tts_key
@@ -174,24 +176,22 @@ flowchart TD
   IsUnk -->|"Да"| HardUnk["interval = 0<br/>nextReview = сейчас + 15 мин<br/>Вернуть в очередь (+6 слотов)"]
   IsUnk -->|"Нет (уже знакомое)"| HardKnown["reps += 1<br/>interval = max(1, interval × 1.2) дн.<br/>nextReview = сейчас + interval дн."]
 
-  Check -->|"3. Хорошо (good)"| Good["reps += 1<br/>interval = max(2, interval × 2.0) дн.<br/>nextReview = сейчас + interval дн."]
+  Check -->|"3. Хорошо (good)"| Good["reps += 1<br/>interval = 1 дн. (далее ×2.0)<br/>nextReview = сейчас + interval дн."]
 
   Check -->|"4. Легко (easy)"| Easy["reps += 2<br/>interval = max(4, interval × 2.8) дн.<br/>nextReview = сейчас + interval дн."]
 ```
 
-Подписи времени на самих кнопках (`1 мин`, `15 мин` / `2 дн.`, `4 дн.`) рассчитываются динамически функцией `getRatingPreviewLabels(card)` для каждой конкретной карточки.
+Подписи времени на самих кнопках (`1 мин`, `15 мин` / `1 дн.`, `4 дн.`) рассчитываются динамически функцией `getRatingPreviewLabels(card)` для каждой конкретной карточки.
 
-### Формирование очереди и лимит неизвестных (`buildSessionQueue`)
+### Постоянная очередь активных слов и двустороннее прохождение (`reconcileActiveQueue` + `expandCardsToQueueItems`)
 
-Чтобы при дневном лимите в 60–160 показов не вываливалось сразу 60 новых слов:
-1. Карточки делятся на три группы:
-   - `dueToday` — уже начатые карточки, которые нужно повторить сегодня (`reps > 0 && nextReview <= endOfToday`).
-   - `newCards` — новые карточки (`reps === 0`).
-   - `futureCards` — карточки, запланированные на завтра и позже.
-2. Применяется настраиваемый лимит `maxActiveUnknown` (по умолчанию `10`):
-   - Сначала берутся `dueToday` (до `maxActiveUnknown`).
-   - Оставшиеся слоты (`maxActiveUnknown - activeDue.length`) заполняются из `newCards`.
-   - Итоговый пул ограничивается оставшимся дневным лимитом показов (`dailyLimit - dailyReviewedCount`).
+Чтобы при дневном лимите в 60 показов не вываливалось сразу 60 новых слов и очередь не сбрасывалась при обновлении страницы:
+1. В `user_profiles` в Supabase (и в `localStorage`) хранятся `max_active_unknown` (по умолчанию **`5`**) и точный список **`active_card_keys`** — те самые `5` слов, которые сейчас в работе. При перезагрузке страницы или входе с телефона очередь восстанавливается 1-в-1 из БД.
+2. В режиме **Микс** функция `expandCardsToQueueItems` разворачивает каждые `5` слов в **`10` показов** (`DE → RU` и `RU → DE`), чередуя их так, чтобы две стороны одного слова не шли подряд.
+3. **Продвижение на следующий уровень только после обеих сторон**:
+   - `App.tsx` отслеживает пройденные стороны в `passedSidesRef`.
+   - Пока пройдена только 1 из 2 сторон, карточка не меняет `reps`/`nextReview` и остаётся в `active_card_keys`.
+   - Как только пройдены **обе** стороны (`DE → RU` и `RU → DE`), карточка переходит на следующий интервал (например, `1 дн.`), убирается из `active_card_keys`, а на освободившееся место `reconcileActiveQueue` автоматически добавляет **1 следующее слово** сразу обеими сторонами и синхронизирует `active_card_keys` в Supabase.
 
 ---
 
@@ -250,7 +250,7 @@ flowchart LR
   API -->|"Ошибка / нет сети"| WebSpeech
 ```
 
-- **Серверный мастер-ключ (`supabase/functions/tts/index.ts`)**: хранится в **Supabase Secrets** (`GOOGLE_TTS_API_KEY`) и никогда не передаётся в браузер. Edge Function проверяет JWT-токен пользователя (`auth.getUser()`), пропускает только бесплатные голоса (`de-DE-Neural2-B/C/D/F`, `de-DE-Wavenet-B/C`) и ограничивает длину текста до `300` символов.
+- **Серверный мастер-ключ (`supabase/functions/tts/index.ts`, slug `bright-action`)**: хранится в **Supabase Secrets** (`GOOGLE_TTS_API_KEY`) и никогда не передаётся в браузер. По умолчанию используется **Google Cloud TTS `de-DE-Wavenet-C`**. Edge Function проверяет JWT-токен пользователя (`auth.getUser()`), пропускает только бесплатные голоса (`de-DE-Neural2-B/C/D/F`, `de-DE-Wavenet-B/C`) и ограничивает длину текста до `300` символов.
 - **Онлайн-генерация по требованию**: аудио генерируется строго для тех карточек, которые реально прослушивает пользователь (включая добавленные вручную).
 - **Кэш в `IndexedDB` (`audioCache.ts`)**: ключ кэша = `voice|rate|pitch|text`. Повторное прослушивание карточки не тратит квоту API и работает мгновенно даже офлайн.
 - **Синхронизация настроек TTS**: выбранный движок (`tts_engine`), голос (`google_voice`) и опциональный личный ключ (`google_tts_key`) сохраняются в `user_profiles` под защитой RLS.

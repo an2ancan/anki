@@ -5,6 +5,7 @@ import type {
   DailyStats,
   Direction,
   ProgressFilter,
+  QueueItem,
   Rating,
   SpeechSettings,
   StudyMode,
@@ -13,6 +14,7 @@ import type {
 import {
   applyCardRating,
   buildSessionQueue,
+  expandCardsToQueueItems,
   generateCustomKey,
   normalizeCard,
   reconcileActiveQueue,
@@ -41,11 +43,6 @@ import { AddCardModal } from './components/AddCardModal';
 import { AuthModal } from './components/AuthModal';
 import { ProgressModal } from './components/ProgressModal';
 
-function pickDirection(mode: StudyMode): Direction {
-  if (mode === 'mixed') return Math.random() > 0.5 ? 'de-ru' : 'ru-de';
-  return mode;
-}
-
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [syncState, setSyncState] = useState<SyncState>({
@@ -54,11 +51,11 @@ export default function App() {
   });
   const [deck, setDeck] = useState<Card[]>(() => loadLocalDeck(null));
   const [stats, setStats] = useState<DailyStats>(() => loadLocalDailyStats(null));
-  const [queue, setQueue] = useState<Card[]>([]);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [mode, setMode] = useState<StudyMode>('mixed');
-  const [direction, setDirection] = useState<Direction>('de-ru');
+  const passedSidesRef = useRef<Map<string, Set<Direction>>>(new Map());
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [speechSettings, setSpeechSettings] = useState<SpeechSettings>(() => loadSpeechSettings());
@@ -135,13 +132,21 @@ export default function App() {
   );
 
   const rebuildQueue = useCallback(
-    (nextDeck: Card[], nextStats: DailyStats, forceMore = false, targetUserId?: string | null) => {
+    (
+      nextDeck: Card[],
+      nextStats: DailyStats,
+      forceMore = false,
+      targetUserId?: string | null,
+      targetMode?: StudyMode
+    ) => {
+      const effectiveMode = targetMode ?? modeRef.current;
       const { queue: nextQueue, activeKeys } = buildSessionQueue(
         nextDeck,
         nextStats.dailyLimit,
         nextStats.dailyReviewedCount,
         nextStats.maxActiveUnknown,
         nextStats.activeCardKeys,
+        effectiveMode,
         forceMore
       );
       const updatedStats: DailyStats = { ...nextStats, activeCardKeys: activeKeys };
@@ -151,10 +156,10 @@ export default function App() {
       if (uid) {
         syncProfileToSupabase(uid, updatedStats).catch(() => {});
       }
+      passedSidesRef.current.clear();
       setQueue(nextQueue);
       setCurrentIndex(0);
       setIsFlipped(false);
-      setDirection(pickDirection(modeRef.current));
     },
     []
   );
@@ -244,7 +249,9 @@ export default function App() {
     };
   }, [runSync, rebuildQueue]);
 
-  const currentCard = queue[currentIndex] ?? null;
+  const currentItem = queue[currentIndex] ?? null;
+  const currentCard = currentItem?.card ?? null;
+  const direction: Direction = currentItem?.direction ?? (mode === 'ru-de' ? 'ru-de' : 'de-ru');
 
   // Auto-play audio when card changes
   useEffect(() => {
@@ -264,14 +271,37 @@ export default function App() {
 
   const handleRate = useCallback(
     (rate: Rating) => {
-      if (!isFlipped || !currentCard) return;
+      if (!isFlipped || !currentCard || !currentItem) return;
 
       const { updatedCard, requeueInSession, requeueDelaySlots } = applyCardRating(currentCard, rate);
 
-      const nextDeck = deck.map((c) => (c.cardKey === updatedCard.cardKey ? updatedCard : c));
+      // In 'mixed' mode, a card only advances to the next SRS level once BOTH sides (de-ru & ru-de) pass.
+      const requiresBothSides = mode === 'mixed';
+      let cardToSave = updatedCard;
+      let shouldRequeueThisSide = requeueInSession;
 
-      // Reconcile the persistent active queue: if the rated card is now learned (scheduled for tomorrow+),
-      // drop it and automatically pull in the next waiting card to keep the queue at maxActiveUnknown.
+      if (requiresBothSides) {
+        const sides = passedSidesRef.current.get(currentCard.cardKey) ?? new Set<Direction>();
+        if (rate === 'again') {
+          passedSidesRef.current.delete(currentCard.cardKey);
+        } else if (!requeueInSession) {
+          sides.add(currentItem.direction);
+          passedSidesRef.current.set(currentCard.cardKey, sides);
+          if (sides.size < 2) {
+            // Only 1 side passed so far: do not advance SRS interval/reps yet
+            cardToSave = currentCard;
+          } else {
+            // Both sides passed! Advance card to next level and clear tracker
+            passedSidesRef.current.delete(currentCard.cardKey);
+          }
+        }
+      }
+
+      const cardChanged = cardToSave !== currentCard;
+      const nextDeck = cardChanged
+        ? deck.map((c) => (c.cardKey === cardToSave.cardKey ? cardToSave : c))
+        : deck;
+
       const prevActiveSet = new Set(stats.activeCardKeys);
       const { activeKeys: nextActiveKeys, activeCards: nextActiveCards } = reconcileActiveQueue(
         nextDeck,
@@ -286,40 +316,49 @@ export default function App() {
         activeCardKeys: nextActiveKeys,
       };
 
-      setDeck(nextDeck);
+      if (cardChanged) {
+        setDeck(nextDeck);
+        saveLocalDeck(user?.id ?? null, nextDeck);
+      }
       setStats(nextStats);
-      saveLocalDeck(user?.id ?? null, nextDeck);
       saveLocalDailyStats(user?.id ?? null, nextStats);
 
       if (user) {
-        syncCardsToSupabase(user.id, [updatedCard]).catch((err) =>
-          setSyncState({ status: 'error', message: `Ошибка карточек: ${err.message}` })
-        );
+        if (cardChanged) {
+          syncCardsToSupabase(user.id, [cardToSave]).catch((err) =>
+            setSyncState({ status: 'error', message: `Ошибка карточек: ${err.message}` })
+          );
+        }
         syncProfileToSupabase(user.id, nextStats).catch((err) =>
           setSyncState({ status: 'error', message: `Ошибка профиля: ${err.message}` })
         );
       }
 
       setQueue((prev) => {
-        const next = prev.map((c) => (c.cardKey === updatedCard.cardKey ? updatedCard : c));
-        if (requeueInSession) {
+        const next = prev.map((item) =>
+          item.card.cardKey === cardToSave.cardKey ? { ...item, card: cardToSave } : item
+        );
+        if (shouldRequeueThisSide) {
           const insertAt = Math.min(next.length, currentIndex + 1 + requeueDelaySlots);
-          next.splice(insertAt, 0, updatedCard);
+          next.splice(insertAt, 0, { card: cardToSave, direction: currentItem.direction });
         }
-        // Append any newly promoted card(s) to the session queue if within daily limit
-        const existingInRemaining = new Set(next.slice(currentIndex + 1).map((c) => c.cardKey));
-        for (const added of newlyAddedCards) {
-          if (!existingInRemaining.has(added.cardKey) && nextStats.dailyReviewedCount < nextStats.dailyLimit) {
-            next.push(added);
+        if (newlyAddedCards.length > 0 && nextStats.dailyReviewedCount < nextStats.dailyLimit) {
+          const newItems = expandCardsToQueueItems(newlyAddedCards, mode);
+          const existingPairs = new Set(
+            next.slice(currentIndex + 1).map((it) => `${it.card.cardKey}|${it.direction}`)
+          );
+          for (const it of newItems) {
+            if (!existingPairs.has(`${it.card.cardKey}|${it.direction}`)) {
+              next.push(it);
+            }
           }
         }
         return next;
       });
       setCurrentIndex((i) => i + 1);
       setIsFlipped(false);
-      setDirection(pickDirection(mode));
     },
-    [isFlipped, currentCard, deck, stats, user, currentIndex, mode]
+    [isFlipped, currentCard, currentItem, deck, stats, user, currentIndex, mode]
   );
 
   // Keyboard shortcuts
@@ -381,13 +420,13 @@ export default function App() {
       syncCardsToSupabase(user.id, [newCard]).catch(() => {});
     }
     if (data.studyNow) {
+      const items = expandCardsToQueueItems([newCard], mode);
       setQueue((prev) => {
         const next = [...prev];
-        next.splice(currentIndex, 0, newCard);
+        next.splice(currentIndex, 0, ...items);
         return next;
       });
       setIsFlipped(false);
-      setDirection(pickDirection(mode));
     } else if (queue.length === 0) {
       rebuildQueue(nextDeck, stats, true);
     }
@@ -398,7 +437,7 @@ export default function App() {
     const nextDeck = deck.filter((c) => c.cardKey !== cardKey);
     setDeck(nextDeck);
     saveLocalDeck(user?.id ?? null, nextDeck);
-    setQueue((prev) => prev.filter((c) => c.cardKey !== cardKey));
+    setQueue((prev) => prev.filter((item) => item.card.cardKey !== cardKey));
     if (user) {
       deleteCardFromSupabase(user.id, cardKey).catch(() => {});
     }
@@ -466,14 +505,14 @@ export default function App() {
   const handlePracticeCard = (cardKey: string) => {
     const card = deck.find((c) => c.cardKey === cardKey);
     if (!card) return;
+    const items = expandCardsToQueueItems([card], mode);
     setQueue((prev) => {
-      const filtered = prev.filter((c) => c.cardKey !== cardKey);
+      const filtered = prev.filter((item) => item.card.cardKey !== cardKey);
       const insertIdx = Math.min(currentIndex, filtered.length);
-      filtered.splice(insertIdx, 0, card);
+      filtered.splice(insertIdx, 0, ...items);
       return filtered;
     });
     setIsFlipped(false);
-    setDirection(pickDirection(mode));
     setProgressOpen(false);
     showToast('Карточка открыта для повторения');
   };
@@ -507,7 +546,7 @@ export default function App() {
         mode={mode}
         onModeChange={(nextMode) => {
           setMode(nextMode);
-          setDirection(pickDirection(nextMode));
+          rebuildQueue(deck, stats, false, undefined, nextMode);
         }}
         userEmail={user?.email ?? null}
         syncState={syncState}

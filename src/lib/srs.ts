@@ -1,4 +1,4 @@
-import type { Card, Rating } from '../types';
+import type { Card, QueueItem, Rating, StudyMode } from '../types';
 import { DEFAULT_CORPUS } from '../data/defaultCorpus';
 
 export const MINUTE_MS = 60 * 1000;
@@ -179,7 +179,28 @@ export function reconcileActiveQueue(
 }
 
 /**
+ * Expands cards into QueueItems. In 'mixed' mode, each card gets BOTH sides ('de-ru' and 'ru-de')
+ * shuffled so the two sides of the same word are separated when possible.
+ */
+export function expandCardsToQueueItems(cards: Card[], mode: StudyMode): QueueItem[] {
+  if (mode !== 'mixed') {
+    return cards.map((card) => ({ card, direction: mode }));
+  }
+  const firstPass: QueueItem[] = shuffle(cards).map((card) => ({ card, direction: 'de-ru' }));
+  const secondPass: QueueItem[] = shuffle(cards).map((card) => ({ card, direction: 'ru-de' }));
+  // Interleave so both sides are in the same queue without immediately repeating back-to-back
+  const combined: QueueItem[] = [];
+  for (let i = 0; i < Math.max(firstPass.length, secondPass.length); i++) {
+    if (firstPass[i]) combined.push(firstPass[i]);
+    if (secondPass[i]) combined.push(secondPass[i]);
+  }
+  return combined;
+}
+
+/**
  * Builds the study queue from the persistent active unknown queue.
+ * In 'mixed' mode, `maxActiveUnknown` words (e.g. 5) produce `2 * maxActiveUnknown` items (10)
+ * so both DE->RU and RU->DE sides are practiced in the same queue.
  */
 export function buildSessionQueue(
   deck: Card[],
@@ -187,9 +208,10 @@ export function buildSessionQueue(
   dailyReviewedCount: number,
   maxActiveUnknown: number,
   currentActiveKeys: string[] = [],
+  mode: StudyMode = 'mixed',
   forceMore = false,
   now = Date.now()
-): { queue: Card[]; activeKeys: string[] } {
+): { queue: QueueItem[]; activeKeys: string[] } {
   const remainingToday = Math.max(0, dailyLimit - dailyReviewedCount);
   const sessionCap = forceMore ? Math.min(dailyLimit, 20) : remainingToday;
 
@@ -199,9 +221,10 @@ export function buildSessionQueue(
 
   const endOfToday = getEndOfTodayMs(now);
   const futureCards = shuffle(deck.filter((c) => c.reps > 0 && c.nextReview > endOfToday));
-  const pool = activeCards.length > 0 ? activeCards : forceMore ? futureCards : [];
+  const poolCards = activeCards.length > 0 ? activeCards : forceMore ? futureCards : [];
+  const items = expandCardsToQueueItems(poolCards, mode);
 
-  return { queue: pool.slice(0, sessionCap), activeKeys };
+  return { queue: items.slice(0, sessionCap), activeKeys };
 }
 
 export function formatNextReview(card: Card, now = Date.now()): string {

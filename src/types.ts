@@ -32,6 +32,11 @@ export type StudyMode = 'de-ru' | 'ru-de' | 'mixed';
 export type Direction = 'de-ru' | 'ru-de';
 export type ProgressFilter = 'all' | 'mastered' | 'learning' | 'new' | 'custom';
 
+export interface QueueItem {
+  card: Card;
+  direction: Direction;
+}
+
 export interface SyncState {
   status: 'local' | 'syncing' | 'synced' | 'error';
   message: string;
