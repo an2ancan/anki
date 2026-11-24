@@ -56,6 +56,7 @@ export default function App() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [mode, setMode] = useState<StudyMode>('mixed');
   const passedSidesRef = useRef<Map<string, Set<Direction>>>(new Map());
+  const delayedItemsRef = useRef<Array<{ item: QueueItem; readyAt: number }>>([]);
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [speechSettings, setSpeechSettings] = useState<SpeechSettings>(() => loadSpeechSettings());
@@ -253,6 +254,21 @@ export default function App() {
   const currentCard = currentItem?.card ?? null;
   const direction: Direction = currentItem?.direction ?? (mode === 'ru-de' ? 'ru-de' : 'de-ru');
 
+  // Auto-surface 5-min delayed "Hard" cards if the queue is currently empty
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (delayedItemsRef.current.length === 0) return;
+      const now = Date.now();
+      const readyNow = delayedItemsRef.current.filter((d) => d.readyAt <= now);
+      if (readyNow.length === 0) return;
+      if (currentIndex >= queue.length) {
+        delayedItemsRef.current = delayedItemsRef.current.filter((d) => d.readyAt > now);
+        setQueue((prev) => [...prev, ...readyNow.map((d) => d.item)]);
+      }
+    }, 10000);
+    return () => window.clearInterval(timer);
+  }, [currentIndex, queue.length]);
+
   // Auto-play audio when card changes
   useEffect(() => {
     if (!currentCard || isFlipped) return;
@@ -273,17 +289,23 @@ export default function App() {
     (rate: Rating) => {
       if (!isFlipped || !currentCard || !currentItem) return;
 
-      const { updatedCard, requeueInSession, requeueDelaySlots } = applyCardRating(currentCard, rate);
+      const { updatedCard, requeueInSession, requeueDelaySlots, delayUntilMs } = applyCardRating(currentCard, rate);
 
       // In 'mixed' mode, a card only advances to the next SRS level once BOTH sides (de-ru & ru-de) pass.
       const requiresBothSides = mode === 'mixed';
       let cardToSave = updatedCard;
-      let shouldRequeueThisSide = requeueInSession;
+      const shouldRequeueThisSide = requeueInSession;
 
       if (requiresBothSides) {
         const sides = passedSidesRef.current.get(currentCard.cardKey) ?? new Set<Direction>();
         if (rate === 'again') {
           passedSidesRef.current.delete(currentCard.cardKey);
+        } else if (delayUntilMs) {
+          // Hard on unknown word: remove from queue for 5 min, then return with priority
+          delayedItemsRef.current.push({
+            item: { card: updatedCard, direction: currentItem.direction },
+            readyAt: delayUntilMs,
+          });
         } else if (!requeueInSession) {
           sides.add(currentItem.direction);
           passedSidesRef.current.set(currentCard.cardKey, sides);
@@ -295,6 +317,11 @@ export default function App() {
             passedSidesRef.current.delete(currentCard.cardKey);
           }
         }
+      } else if (delayUntilMs) {
+        delayedItemsRef.current.push({
+          item: { card: updatedCard, direction: currentItem.direction },
+          readyAt: delayUntilMs,
+        });
       }
 
       const cardChanged = cardToSave !== currentCard;
@@ -335,9 +362,18 @@ export default function App() {
       }
 
       setQueue((prev) => {
+        const now = Date.now();
         const next = prev.map((item) =>
           item.card.cardKey === cardToSave.cardKey ? { ...item, card: cardToSave } : item
         );
+
+        // Pull any 5-min delayed "Hard" cards whose cooldown has expired right to the front (priority!)
+        const readyNow = delayedItemsRef.current.filter((d) => d.readyAt <= now);
+        if (readyNow.length > 0) {
+          delayedItemsRef.current = delayedItemsRef.current.filter((d) => d.readyAt > now);
+          next.splice(currentIndex + 1, 0, ...readyNow.map((d) => d.item));
+        }
+
         if (shouldRequeueThisSide) {
           const insertAt = Math.min(next.length, currentIndex + 1 + requeueDelaySlots);
           next.splice(insertAt, 0, { card: cardToSave, direction: currentItem.direction });

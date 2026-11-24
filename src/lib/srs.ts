@@ -3,7 +3,7 @@ import { DEFAULT_CORPUS } from '../data/defaultCorpus';
 
 export const MINUTE_MS = 60 * 1000;
 export const DAY_MS = 24 * 60 * 60 * 1000;
-export const HARD_UNKNOWN_MINUTES = 15;
+export const HARD_UNKNOWN_MINUTES = 5;
 
 export function generateCustomKey(): string {
   if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -78,6 +78,7 @@ export interface RateResult {
   updatedCard: Card;
   requeueInSession: boolean;
   requeueDelaySlots: number;
+  delayUntilMs: number | null;
 }
 
 export function applyCardRating(card: Card, rate: Rating, now = Date.now()): RateResult {
@@ -88,35 +89,36 @@ export function applyCardRating(card: Card, rate: Rating, now = Date.now()): Rat
     updated.reps = 0;
     updated.interval = 0;
     updated.nextReview = now + MINUTE_MS;
-    return { updatedCard: updated, requeueInSession: true, requeueDelaySlots: 3 };
+    return { updatedCard: updated, requeueInSession: true, requeueDelaySlots: 3, delayUntilMs: null };
   }
 
   if (rate === 'hard') {
     if (unknown) {
-      // Unknown word: repeat in 15 minutes today and keep it in the active session
+      // Unknown word: hide from queue for 5 minutes, then return with top priority
+      const readyAt = now + HARD_UNKNOWN_MINUTES * MINUTE_MS;
       updated.reps = Math.max(0, card.reps);
       updated.interval = 0;
-      updated.nextReview = now + HARD_UNKNOWN_MINUTES * MINUTE_MS;
-      return { updatedCard: updated, requeueInSession: true, requeueDelaySlots: 6 };
+      updated.nextReview = readyAt;
+      return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0, delayUntilMs: readyAt };
     }
     updated.reps = (card.reps || 0) + 1;
     updated.interval = Math.max(1, (card.interval || 1) * 1.2);
     updated.nextReview = now + Math.round(updated.interval * DAY_MS);
-    return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0 };
+    return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0, delayUntilMs: null };
   }
 
   if (rate === 'good') {
     updated.reps = (card.reps || 0) + 1;
     updated.interval = card.interval > 0 ? Math.max(2, card.interval * 2.0) : 1;
     updated.nextReview = now + Math.round(updated.interval * DAY_MS);
-    return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0 };
+    return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0, delayUntilMs: null };
   }
 
   // easy
   updated.reps = (card.reps || 0) + 2;
   updated.interval = Math.max(4, (card.interval || 1) * 2.8);
   updated.nextReview = now + Math.round(updated.interval * DAY_MS);
-  return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0 };
+  return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0, delayUntilMs: null };
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -129,9 +131,9 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /**
- * Reconciles the persistent active queue of unknown cards (capped at `maxActiveUnknown`).
- * - Removes cards that are no longer in the deck or are no longer unknown (scheduled for tomorrow+).
- * - Fills free slots with due-today cards first, then new cards (reps === 0).
+ * Reconciles the persistent active queue of new & hard/due-now cards (capped at `maxActiveUnknown`).
+ * - Excludes cards currently on a short cooldown (e.g. 5-min "Hard" delay: nextReview > now).
+ * - Prioritizes hard/due-now cards (nextReview > 0 && nextReview <= now) ahead of brand-new cards.
  */
 export function reconcileActiveQueue(
   deck: Card[],
@@ -141,30 +143,42 @@ export function reconcileActiveQueue(
 ): { activeKeys: string[]; activeCards: Card[] } {
   const safeMax = Math.max(1, maxActiveUnknown);
   const deckMap = new Map(deck.map((c) => [c.cardKey, c]));
-  const endOfToday = getEndOfTodayMs(now);
 
-  // Keep still-unknown cards in their existing order (deduplicated)
+  const isHardDueNow = (c: Card) => c.nextReview > 0 && c.nextReview <= now;
+  const isNewReady = (c: Card) => c.reps === 0 && (!c.nextReview || c.nextReview <= now);
+  const isEligibleNow = (c: Card) => isHardDueNow(c) || isNewReady(c);
+
+  // 1. Always prioritize hard/due-now cards first
+  const priorityDue = deck
+    .filter((c) => isHardDueNow(c))
+    .sort((a, b) => a.nextReview - b.nextReview);
+
   const keptKeys: string[] = [];
   const seen = new Set<string>();
+
+  for (const card of priorityDue) {
+    if (keptKeys.length >= safeMax) break;
+    keptKeys.push(card.cardKey);
+    seen.add(card.cardKey);
+  }
+
+  // 2. Keep previously active eligible cards in their existing order
   for (const key of currentActiveKeys) {
+    if (keptKeys.length >= safeMax) break;
     if (seen.has(key)) continue;
     const card = deckMap.get(key);
-    if (card && isUnknownCard(card, now)) {
+    if (card && isEligibleNow(card)) {
       keptKeys.push(key);
       seen.add(key);
-      if (keptKeys.length >= safeMax) break;
     }
   }
 
-  // Fill remaining slots if under limit: due-today first, then new cards
+  // 3. Fill remaining slots with brand-new cards (reps === 0, not on cooldown)
   if (keptKeys.length < safeMax) {
-    const dueCandidates = shuffle(
-      deck.filter((c) => !seen.has(c.cardKey) && c.reps > 0 && (!c.nextReview || c.nextReview <= endOfToday))
-    );
     const newCandidates = shuffle(
-      deck.filter((c) => !seen.has(c.cardKey) && c.reps === 0)
+      deck.filter((c) => !seen.has(c.cardKey) && isNewReady(c))
     );
-    for (const candidate of [...dueCandidates, ...newCandidates]) {
+    for (const candidate of newCandidates) {
       if (keptKeys.length >= safeMax) break;
       keptKeys.push(candidate.cardKey);
       seen.add(candidate.cardKey);
