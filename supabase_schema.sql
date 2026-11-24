@@ -9,6 +9,10 @@ create table if not exists public.user_profiles (
   today_count integer not null default 0,
   max_active_unknown integer not null default 5,
   active_card_keys text[] not null default '{}',
+  current_streak integer not null default 0,
+  best_streak integer not null default 0,
+  last_study_date text not null default '',
+  review_history jsonb not null default '{}'::jsonb,
   tts_engine text not null default 'google',
   google_voice text not null default 'de-DE-Wavenet-C',
   google_tts_key text not null default '',
@@ -18,6 +22,10 @@ create table if not exists public.user_profiles (
 -- Safe migration for existing installations:
 alter table public.user_profiles add column if not exists max_active_unknown integer not null default 5;
 alter table public.user_profiles add column if not exists active_card_keys text[] not null default '{}';
+alter table public.user_profiles add column if not exists current_streak integer not null default 0;
+alter table public.user_profiles add column if not exists best_streak integer not null default 0;
+alter table public.user_profiles add column if not exists last_study_date text not null default '';
+alter table public.user_profiles add column if not exists review_history jsonb not null default '{}'::jsonb;
 alter table public.user_profiles add column if not exists tts_engine text not null default 'google';
 alter table public.user_profiles add column if not exists google_voice text not null default 'de-DE-Wavenet-C';
 alter table public.user_profiles add column if not exists google_tts_key text not null default '';

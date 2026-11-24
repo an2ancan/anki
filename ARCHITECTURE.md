@@ -73,13 +73,14 @@ anki/
     │   └── defaultCorpus.ts        # 70 встроенных карточек (50 слов + 20 грамматики)
     ├── lib/
     │   ├── srs.ts                  # Алгоритм повторений, лимит неизвестных слов, очередь
+    │   ├── stats.ts                # Расчёт стриков (🔥), история по дням (90 дней) и слияние
     │   ├── storage.ts              # Сохранение/загрузка localStorage с разделением по userId
     │   ├── audioCache.ts           # Кэш MP3-файлов в IndexedDB для Google Cloud TTS
     │   ├── speech.ts               # Движок озвучки: Google Cloud TTS + фолбэк на Web Speech API
     │   └── supabase.ts             # Клиент Supabase и логика fullSync / upsert / delete
     └── components/
         ├── Header.tsx              # Шапка: режим, +, статус входа, настройки, тема
-        ├── StatusRibbon.tsx        # Кликабельная строка статистики и прогресс-бар сессии
+        ├── StatusRibbon.tsx        # Кликабельная строка статистики, бейдж стрика 🔥 и прогресс-бар
         ├── FlashCard.tsx           # Карточка с переворотом и динамическими кнопками оценки
         ├── SettingsModal.tsx       # Голос, лимиты, «Мои карточки», CSV импорт/экспорт
         ├── AddCardModal.tsx        # Форма создания пользовательской карточки
@@ -126,6 +127,10 @@ erDiagram
     integer today_count
     integer max_active_unknown
     text_array active_card_keys
+    integer current_streak
+    integer best_streak
+    text last_study_date
+    jsonb review_history
     text tts_engine
     text google_voice
     text google_tts_key
@@ -173,7 +178,7 @@ flowchart TD
   Check -->|"1. Снова (again)"| Again["reps = 0<br/>interval = 0<br/>nextReview = сейчас + 1 мин<br/>Вернуть в очередь (+3 слота)"]
 
   Check -->|"2. Трудно (hard)"| IsUnk{"Неизвестное слово?<br/>(reps == 0 или на сегодня)"}
-  IsUnk -->|"Да"| HardUnk["interval = 0<br/>nextReview = сейчас + 15 мин<br/>Вернуть в очередь (+6 слотов)"]
+  IsUnk -->|"Да"| HardUnk["interval = 0<br/>nextReview = сейчас + 5 мин<br/>Скрыть на 5 мин → вернуть первым"]
   IsUnk -->|"Нет (уже знакомое)"| HardKnown["reps += 1<br/>interval = max(1, interval × 1.2) дн.<br/>nextReview = сейчас + interval дн."]
 
   Check -->|"3. Хорошо (good)"| Good["reps += 1<br/>interval = 1 дн. (далее ×2.0)<br/>nextReview = сейчас + interval дн."]

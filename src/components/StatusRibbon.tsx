@@ -3,20 +3,24 @@ import type { ProgressFilter } from '../types';
 interface StatusRibbonProps {
   dailyReviewedCount: number;
   dailyLimit: number;
+  streak: number;
   newCount: number;
   learningCount: number;
   masteredCount: number;
   progressPercent: number;
+  onOpenStats: () => void;
   onOpenProgress: (filter: ProgressFilter) => void;
 }
 
 export function StatusRibbon({
   dailyReviewedCount,
   dailyLimit,
+  streak,
   newCount,
   learningCount,
   masteredCount,
   progressPercent,
+  onOpenStats,
   onOpenProgress,
 }: StatusRibbonProps) {
   const goalReached = dailyReviewedCount >= dailyLimit;
@@ -24,28 +28,39 @@ export function StatusRibbon({
   return (
     <div className="flex-none max-w-md w-full mx-auto px-3 pt-2">
       <div className="flex items-center justify-between gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-        <button
-          type="button"
-          onClick={() => onOpenProgress('all')}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded-md font-bold hover:opacity-90 transition ${
-            goalReached
-              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
-              : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-          }`}
-          title="Открыть подробный прогресс"
-        >
-          <span>
-            Сегодня: {dailyReviewedCount} / {dailyLimit}
-          </span>
-          <svg className="w-3 h-3 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onOpenStats}
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-md font-bold hover:opacity-90 transition ${
+              goalReached
+                ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+            }`}
+            title="Открыть статистику и графики"
+          >
+            <span>
+              Сегодня: {dailyReviewedCount}/{dailyLimit}
+            </span>
+            <svg className="w-3 h-3 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenStats}
+            className="px-1.5 py-0.5 rounded-md font-bold bg-orange-100 dark:bg-orange-950/70 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
+            title="Текущий стрик (дней подряд)"
+          >
+            🔥 {streak}
+          </button>
+        </div>
 
         <div className="flex items-center gap-1 text-[10px]">
           <button

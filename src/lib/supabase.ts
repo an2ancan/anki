@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Card, DailyStats, SpeechSettings } from '../types';
 import { DEFAULT_CORPUS } from '../data/defaultCorpus';
 import { getDefaultDeck, normalizeCard } from './srs';
+import { mergeReviewHistories } from './stats';
 import { getTodayKey } from './storage';
 
 export const SUPABASE_URL = 'https://cvvjnztfqsnipldixbzd.supabase.co';
@@ -75,6 +76,10 @@ export async function syncProfileToSupabase(
     today_count: stats.dailyReviewedCount,
     max_active_unknown: stats.maxActiveUnknown,
     active_card_keys: stats.activeCardKeys,
+    current_streak: stats.currentStreak,
+    best_streak: stats.bestStreak,
+    last_study_date: stats.lastStudyDate,
+    review_history: stats.reviewHistory,
     updated_at: new Date().toISOString(),
   };
   if (speech) {
@@ -137,6 +142,26 @@ export async function fullSyncWithSupabase(
     }
     if (Array.isArray(profileRes.data.active_card_keys) && profileRes.data.active_card_keys.length > 0) {
       mergedStats.activeCardKeys = profileRes.data.active_card_keys.map(String);
+    }
+    if (profileRes.data.review_history && typeof profileRes.data.review_history === 'object') {
+      mergedStats.reviewHistory = mergeReviewHistories(
+        mergedStats.reviewHistory,
+        profileRes.data.review_history as Record<string, number>
+      );
+    }
+    mergedStats.bestStreak = Math.max(
+      mergedStats.bestStreak,
+      Number(profileRes.data.best_streak) || 0
+    );
+    const remoteDate = String(profileRes.data.last_study_date || '');
+    if (remoteDate > mergedStats.lastStudyDate) {
+      mergedStats.lastStudyDate = remoteDate;
+      mergedStats.currentStreak = Number(profileRes.data.current_streak) || 0;
+    } else if (remoteDate === mergedStats.lastStudyDate) {
+      mergedStats.currentStreak = Math.max(
+        mergedStats.currentStreak,
+        Number(profileRes.data.current_streak) || 0
+      );
     }
     if (profileRes.data.google_tts_key && !mergedSpeech.googleApiKey) {
       mergedSpeech.googleApiKey = String(profileRes.data.google_tts_key);

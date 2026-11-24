@@ -66,11 +66,30 @@ export function loadLocalDailyStats(userId: string | null): DailyStats {
     activeCardKeys = [];
   }
 
+  let reviewHistory: Record<string, number> = {};
+  try {
+    const rawHistory = localStorage.getItem(`${prefix}review_history`);
+    if (rawHistory) {
+      const parsed = JSON.parse(rawHistory);
+      if (parsed && typeof parsed === 'object') reviewHistory = parsed;
+    }
+  } catch {
+    reviewHistory = {};
+  }
+
+  const currentStreak = parseInt(localStorage.getItem(`${prefix}current_streak`) || '0', 10);
+  const bestStreak = parseInt(localStorage.getItem(`${prefix}best_streak`) || '0', 10);
+  const lastStudyDate = localStorage.getItem(`${prefix}last_study_date`) || '';
+
   return {
     dailyLimit: Number.isNaN(dailyLimit) ? 60 : dailyLimit,
     dailyReviewedCount: Number.isNaN(dailyReviewedCount) ? 0 : dailyReviewedCount,
     maxActiveUnknown: Number.isNaN(maxActiveUnknown) ? 5 : maxActiveUnknown,
     activeCardKeys,
+    currentStreak: Number.isNaN(currentStreak) ? 0 : currentStreak,
+    bestStreak: Number.isNaN(bestStreak) ? 0 : bestStreak,
+    lastStudyDate,
+    reviewHistory,
   };
 }
 
@@ -81,6 +100,10 @@ export function saveLocalDailyStats(userId: string | null, stats: DailyStats): v
   localStorage.setItem(`${prefix}today_count`, String(stats.dailyReviewedCount));
   localStorage.setItem(`${prefix}max_active_unknown`, String(stats.maxActiveUnknown));
   localStorage.setItem(`${prefix}active_card_keys`, JSON.stringify(stats.activeCardKeys || []));
+  localStorage.setItem(`${prefix}current_streak`, String(stats.currentStreak || 0));
+  localStorage.setItem(`${prefix}best_streak`, String(stats.bestStreak || 0));
+  localStorage.setItem(`${prefix}last_study_date`, stats.lastStudyDate || '');
+  localStorage.setItem(`${prefix}review_history`, JSON.stringify(stats.reviewHistory || {}));
 }
 
 export function loadSpeechSettings(): SpeechSettings {

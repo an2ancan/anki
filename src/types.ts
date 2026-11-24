@@ -47,6 +47,10 @@ export interface DailyStats {
   dailyReviewedCount: number;
   maxActiveUnknown: number;
   activeCardKeys: string[];
+  currentStreak: number;
+  bestStreak: number;
+  lastStudyDate: string;
+  reviewHistory: Record<string, number>;
 }
 
 export type TtsEngine = 'system' | 'google';

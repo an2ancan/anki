@@ -35,9 +35,11 @@ import {
   syncCardsToSupabase,
   syncProfileToSupabase,
 } from './lib/supabase';
+import { getEffectiveStreak, recordReviewInStats } from './lib/stats';
 import { Header } from './components/Header';
 import { StatusRibbon } from './components/StatusRibbon';
 import { FlashCard } from './components/FlashCard';
+import { StatsView } from './components/StatsView';
 import { SettingsModal } from './components/SettingsModal';
 import { AddCardModal } from './components/AddCardModal';
 import { AuthModal } from './components/AuthModal';
@@ -67,6 +69,7 @@ export default function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  const [activeView, setActiveView] = useState<'study' | 'stats'>('study');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -338,8 +341,7 @@ export default function App() {
       const newlyAddedCards = nextActiveCards.filter((c) => !prevActiveSet.has(c.cardKey));
 
       const nextStats: DailyStats = {
-        ...stats,
-        dailyReviewedCount: stats.dailyReviewedCount + 1,
+        ...recordReviewInStats(stats),
         activeCardKeys: nextActiveKeys,
       };
 
@@ -596,10 +598,12 @@ export default function App() {
       <StatusRibbon
         dailyReviewedCount={stats.dailyReviewedCount}
         dailyLimit={stats.dailyLimit}
+        streak={getEffectiveStreak(stats)}
         newCount={newCount}
         learningCount={learningCount}
         masteredCount={masteredCount}
         progressPercent={progressPercent}
+        onOpenStats={() => setActiveView((v) => (v === 'stats' ? 'study' : 'stats'))}
         onOpenProgress={(filter) => {
           setProgressFilter(filter);
           setProgressOpen(true);
@@ -607,7 +611,17 @@ export default function App() {
       />
 
       <main className="flex-1 max-w-md w-full mx-auto px-3 py-2 flex flex-col justify-between overflow-hidden">
-        {!currentCard ? (
+        {activeView === 'stats' ? (
+          <StatsView
+            deck={deck}
+            stats={stats}
+            onBackToStudy={() => setActiveView('study')}
+            onOpenProgress={(filter) => {
+              setProgressFilter(filter);
+              setProgressOpen(true);
+            }}
+          />
+        ) : !currentCard ? (
           <div className="my-auto text-center py-8 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
             <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
