@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Card, SpeechSettings, TtsEngine } from '../types';
 import { GOOGLE_DE_VOICES, rankVoice } from '../lib/speech';
 import { clearAudioCache, getAudioCacheCount } from '../lib/audioCache';
+import { InfoTip } from './InfoTip';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -82,9 +83,12 @@ export function SettingsModal({
         <div className="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
           {/* Voice Settings */}
           <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
-            <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
-              <span>Голос и произношение</span>
-              <label className="inline-flex items-center gap-1 font-normal cursor-pointer text-[11px]">
+            <div className="font-bold text-slate-800 dark:text-slate-200 flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <span>Голос и произношение</span>
+                <InfoTip text="«Google Cloud TTS» использует естественные нейронные голоса Google (озвучка кэшируется в IndexedDB браузера и повторно не тратит лимит). «Системный голос» работает офлайн через встроенный синтезатор вашего устройства." />
+              </div>
+              <label className="inline-flex items-center gap-1 font-normal cursor-pointer text-[11px] flex-none">
                 <input
                   type="checkbox"
                   checked={speechSettings.autoPlay}
@@ -225,12 +229,15 @@ export function SettingsModal({
           </div>
 
           {/* Daily Limit */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-            <div>
-              <div className="font-bold text-slate-800 dark:text-slate-200">Дневной лимит показов:</div>
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <div className="font-bold text-slate-800 dark:text-slate-200">
+                Дневной лимит показов:
+                <InfoTip text="Максимальное число оценок карточек за один день. После достижения цели дневная норма считается выполненной, но вы всегда можете продолжить кнопкой «+20 карточек»." />
+              </div>
               <div className="text-[10px] text-slate-400">Рекомендуется 60 для баланса</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-none">
               <input
                 type="number"
                 min={5}
@@ -254,16 +261,17 @@ export function SettingsModal({
           </div>
 
           {/* Max Active Unknown Words Limit */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-            <div>
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
+            <div className="flex-1">
               <div className="font-bold text-slate-800 dark:text-slate-200">
                 Макс. неизвестных слов одновременно:
+                <InfoTip text="Сколько новых и сложных слов одновременно находится в активной очереди (сохраняется в Supabase). В режиме «Микс» каждое слово показывается с обеих сторон (DE→RU и RU→DE), и новое слово добавляется только после прохождения обеих сторон." />
               </div>
               <div className="text-[10px] text-slate-400">
                 Новые + слова на повторении сегодня (по умолчанию 5)
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-none">
               <input
                 type="number"
                 min={1}
@@ -288,12 +296,15 @@ export function SettingsModal({
 
           {/* My Custom Cards */}
           <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="font-bold">Мои карточки ({customCards.length})</div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="font-bold flex-1">
+                Мои карточки ({customCards.length})
+                <InfoTip text="Слова, которые вы добавили вручную (через кнопку «+») или импортировали из CSV. Они синхронизируются с вашим аккаунтом Supabase и доступны на всех устройствах." />
+              </div>
               <button
                 type="button"
                 onClick={onOpenAddCard}
-                className="px-2 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-bold"
+                className="px-2 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-bold flex-none"
               >
                 + Добавить
               </button>
@@ -344,7 +355,10 @@ export function SettingsModal({
 
           {/* CSV Import / Export */}
           <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3">
-            <div className="font-bold mb-2">Импорт / Экспорт CSV</div>
+            <div className="font-bold mb-2">
+              Импорт / Экспорт CSV
+              <InfoTip text="Массовое добавление карточек списком (каждая строка: Немецкий;Русский;Пример DE;Пример RU;Контекст;Теги). Кнопка «Экспорт» скачивает всю вашу колоду в CSV-файл." />
+            </div>
             <textarea
               rows={4}
               value={csvText}
