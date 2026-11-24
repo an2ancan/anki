@@ -148,7 +148,15 @@ export function reconcileActiveQueue(
   const isNewReady = (c: Card) => c.reps === 0 && (!c.nextReview || c.nextReview <= now);
   const isEligibleNow = (c: Card) => isHardDueNow(c) || isNewReady(c);
 
-  // 1. Always prioritize hard/due-now cards first
+  // 1. Reserve 10% of active slots (at least 1 when max >= 2 and new cards exist) for random new words
+  const allNewReady = deck.filter((c) => isNewReady(c));
+  const reservedNewSlots =
+    safeMax >= 2 && allNewReady.length > 0
+      ? Math.min(allNewReady.length, Math.max(1, Math.round(safeMax * 0.1)))
+      : 0;
+  const maxDueSlots = safeMax - reservedNewSlots;
+
+  // Prioritize hard/due-now cards first (largest overdue gap `now - nextReview` first)
   const priorityDue = deck
     .filter((c) => isHardDueNow(c))
     .sort((a, b) => a.nextReview - b.nextReview);
@@ -157,31 +165,44 @@ export function reconcileActiveQueue(
   const seen = new Set<string>();
 
   for (const card of priorityDue) {
-    if (keptKeys.length >= safeMax) break;
+    if (keptKeys.length >= maxDueSlots) break;
     keptKeys.push(card.cardKey);
     seen.add(card.cardKey);
   }
 
-  // 2. Keep previously active eligible cards in their existing order
+  // 2. Keep previously active eligible cards in their existing order (respecting the new-word reserve)
   for (const key of currentActiveKeys) {
     if (keptKeys.length >= safeMax) break;
     if (seen.has(key)) continue;
     const card = deckMap.get(key);
-    if (card && isEligibleNow(card)) {
-      keptKeys.push(key);
-      seen.add(key);
+    if (!card || !isEligibleNow(card)) continue;
+    if (isHardDueNow(card) && keptKeys.filter((k) => {
+      const c = deckMap.get(k);
+      return c ? isHardDueNow(c) : false;
+    }).length >= maxDueSlots) {
+      continue;
     }
+    keptKeys.push(key);
+    seen.add(key);
   }
 
-  // 3. Fill remaining slots with brand-new cards (reps === 0, not on cooldown)
+  // 3. Fill remaining slots with random brand-new cards (at least the 10% reserve)
   if (keptKeys.length < safeMax) {
-    const newCandidates = shuffle(
-      deck.filter((c) => !seen.has(c.cardKey) && isNewReady(c))
-    );
+    const newCandidates = shuffle(allNewReady.filter((c) => !seen.has(c.cardKey)));
     for (const candidate of newCandidates) {
       if (keptKeys.length >= safeMax) break;
       keptKeys.push(candidate.cardKey);
       seen.add(candidate.cardKey);
+    }
+  }
+
+  // 4. If slots are still free (e.g. fewer new cards than reserved), backfill with remaining due cards
+  if (keptKeys.length < safeMax) {
+    for (const card of priorityDue) {
+      if (keptKeys.length >= safeMax) break;
+      if (seen.has(card.cardKey)) continue;
+      keptKeys.push(card.cardKey);
+      seen.add(card.cardKey);
     }
   }
 
@@ -193,26 +214,29 @@ export function reconcileActiveQueue(
 }
 
 /**
- * Expands cards into QueueItems. In 'mixed' mode, each card gets BOTH sides ('de-ru' and 'ru-de')
- * shuffled so the two sides of the same word are separated when possible.
+ * Expands priority-ordered cards into QueueItems while preserving time-based priority
+ * (largest overdue gap `now - nextReview` appears earliest).
+ * In 'mixed' mode, pass 1 shows all cards in priority order with alternating directions,
+ * and pass 2 shows the opposite side in the same priority order so both sides are separated.
  */
 export function expandCardsToQueueItems(cards: Card[], mode: StudyMode): QueueItem[] {
   if (mode !== 'mixed') {
     return cards.map((card) => ({ card, direction: mode }));
   }
-  const firstPass: QueueItem[] = shuffle(cards).map((card) => ({ card, direction: 'de-ru' }));
-  const secondPass: QueueItem[] = shuffle(cards).map((card) => ({ card, direction: 'ru-de' }));
-  // Interleave so both sides are in the same queue without immediately repeating back-to-back
-  const combined: QueueItem[] = [];
-  for (let i = 0; i < Math.max(firstPass.length, secondPass.length); i++) {
-    if (firstPass[i]) combined.push(firstPass[i]);
-    if (secondPass[i]) combined.push(secondPass[i]);
-  }
-  return combined;
+  const firstPass: QueueItem[] = cards.map((card, i) => ({
+    card,
+    direction: i % 2 === 0 ? 'de-ru' : 'ru-de',
+  }));
+  const secondPass: QueueItem[] = cards.map((card, i) => ({
+    card,
+    direction: i % 2 === 0 ? 'ru-de' : 'de-ru',
+  }));
+  return [...firstPass, ...secondPass];
 }
 
 /**
- * Builds the study queue from the persistent active unknown queue.
+ * Builds the study queue from the persistent active unknown queue, ordered by overdue time
+ * (largest `now - nextReview` gap first).
  * In 'mixed' mode, `maxActiveUnknown` words (e.g. 5) produce `2 * maxActiveUnknown` items (10)
  * so both DE->RU and RU->DE sides are practiced in the same queue.
  */
@@ -234,7 +258,9 @@ export function buildSessionQueue(
   if (sessionCap <= 0) return { queue: [], activeKeys };
 
   const endOfToday = getEndOfTodayMs(now);
-  const futureCards = shuffle(deck.filter((c) => c.reps > 0 && c.nextReview > endOfToday));
+  const futureCards = deck
+    .filter((c) => c.reps > 0 && c.nextReview > endOfToday)
+    .sort((a, b) => a.nextReview - b.nextReview);
   const poolCards = activeCards.length > 0 ? activeCards : forceMore ? futureCards : [];
   const items = expandCardsToQueueItems(poolCards, mode);
 

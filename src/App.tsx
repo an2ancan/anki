@@ -369,8 +369,10 @@ export default function App() {
           item.card.cardKey === cardToSave.cardKey ? { ...item, card: cardToSave } : item
         );
 
-        // Pull any 5-min delayed "Hard" cards whose cooldown has expired right to the front (priority!)
-        const readyNow = delayedItemsRef.current.filter((d) => d.readyAt <= now);
+        // Pull any 5-min delayed "Hard" cards whose cooldown has expired right to the front (most overdue first)
+        const readyNow = delayedItemsRef.current
+          .filter((d) => d.readyAt <= now)
+          .sort((a, b) => a.readyAt - b.readyAt);
         if (readyNow.length > 0) {
           delayedItemsRef.current = delayedItemsRef.current.filter((d) => d.readyAt > now);
           next.splice(currentIndex + 1, 0, ...readyNow.map((d) => d.item));

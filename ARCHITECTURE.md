@@ -195,8 +195,8 @@ Button interval previews (`1 мин`, `5 мин` / `1 дн.`, `4 дн.`) are com
 
 ### Persistent Active Queue & Both-Sides Mastery (`reconcileActiveQueue` + `expandCardsToQueueItems`)
 1. `user_profiles` (and `localStorage`) stores `max_active_unknown` (default **`5`**) and the exact **`active_card_keys`** array so the same active words survive page reloads and sync across devices.
-2. Only **hard/due-now** cards (`nextReview <= now`, prioritized first) and **new** cards (`reps === 0`) occupy the active queue; cards on a 5-minute "Hard" cooldown are temporarily hidden until their timer expires, then immediately return to the front of the queue.
-3. In **Mixed** mode, `expandCardsToQueueItems` expands `5` active words into **`10` queue items** (`DE → RU` and `RU → DE`), interleaved so the two sides of a word do not appear back-to-back.
+2. **Time-based priority + 10% random new words**: Only **hard/due-now** cards (`nextReview <= now`) and **new** cards (`reps === 0`) occupy the active queue. Due cards are strictly sorted by `nextReview` ascending — the larger the overdue gap (`now - nextReview`), the earlier the card appears. At the same time, **10% of the queue** (`max(1, round(maxActiveUnknown × 0.1))` when `maxActiveUnknown >= 2` and new cards remain) is reserved for random new words so fresh vocabulary keeps flowing even when many reviews are due. Cards on a 5-minute "Hard" cooldown are temporarily hidden until their timer expires, then immediately return to the front (most overdue first).
+3. In **Mixed** mode, `expandCardsToQueueItems` expands `5` active words into **`10` queue items** (`DE → RU` and `RU → DE`) while preserving time-based priority: pass 1 shows all cards in priority order with alternating directions, and pass 2 shows the opposite side in the same priority order.
 4. **Two-sided promotion**: `App.tsx` tracks completed sides in `passedSidesRef`. A card only advances its SRS level (`reps` / `nextReview`) and gets replaced by the next word in `active_card_keys` once **both** sides have passed.
 
 ---
