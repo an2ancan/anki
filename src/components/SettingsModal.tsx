@@ -47,9 +47,11 @@ export function SettingsModal({
 
   useEffect(() => {
     if (isOpen) {
+      setLimitInput(String(dailyLimit));
+      setUnknownLimitInput(String(maxActiveUnknown));
       getAudioCacheCount().then(setCacheCount);
     }
-  }, [isOpen]);
+  }, [isOpen, dailyLimit, maxActiveUnknown]);
 
   if (!isOpen) return null;
 

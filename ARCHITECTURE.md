@@ -1,114 +1,119 @@
-# Архитектура и разбор кода — Deutsch B1–B2 Anki Mobile
+# Architecture & Code Walkthrough — Deutsch B1–B2 Anki Mobile
 
-Этот документ описывает структуру приложения, алгоритмы интервального повторения (SRS), схему синхронизации с Supabase и устройство ключевых модулей.
+This document describes the application architecture, spaced repetition (SRS) algorithm, Supabase cloud synchronization, speech synthesis pipeline, and key modules.
 
 ---
 
-## 1. Общая архитектура
+## 1. High-Level Architecture
 
-Приложение построено по принципу **Local-First SPA** (React 19 + TypeScript + Vite + Tailwind CSS v4):
-- Все действия пользователя (переворот, оценка карточки, добавление слова) мгновенно сохраняются в `localStorage` — интерфейс работает без задержек и доступен офлайн.
-- При входе в аккаунт **Supabase** включается асинхронная двусторонняя синхронизация прогресса и пользовательских карточек с защитой **Row Level Security (RLS)**.
+The app is built as a **Local-First SPA** using **React 19 + TypeScript + Vite + Tailwind CSS v4**:
+- Every user action (flipping a card, rating, adding/deleting a card, updating limits) is persisted immediately to `localStorage` for instant, zero-latency UX and offline support.
+- Once signed in via **Supabase Auth**, per-card progress, custom cards, streaks, review history, and study preferences synchronize asynchronously with PostgreSQL protected by **Row Level Security (RLS)**.
 
 ```mermaid
 flowchart TD
-  subgraph UI["UI-слой (React Components)"]
-    Header["Header.tsx<br/>(режим, +, профиль, настройки, тема)"]
-    Ribbon["StatusRibbon.tsx<br/>(дневная цель, счётчики, прогресс-бар)"]
-    Card["FlashCard.tsx<br/>(карточка, озвучка, 4 оценки)"]
-    Modals["Модальные окна<br/>SettingsModal / AddCardModal / AuthModal / ProgressModal"]
+  subgraph UI["UI Layer (React Components)"]
+    Header["Header.tsx<br/>(mode, +, profile, settings, theme)"]
+    Ribbon["StatusRibbon.tsx<br/>(daily goal, streak 🔥, counters, progress bar)"]
+    Card["FlashCard.tsx<br/>(card flip, audio, 4 dynamic rating buttons)"]
+    Stats["StatsView.tsx<br/>(streaks, 14-day chart, 7-day forecast)"]
+    Modals["Modals<br/>SettingsModal / AddCardModal / AuthModal / ProgressModal + InfoTip"]
   end
 
-  App["App.tsx<br/>(единый центр состояния и событий)"]
+  App["App.tsx<br/>(central state, keyboard shortcuts, sync orchestration)"]
 
-  subgraph Logic["Бизнес-логика (src/lib)"]
-    SRS["srs.ts<br/>(SRS, лимит неизвестных, очередь)"]
-    Storage["storage.ts<br/>(localStorage + миграция)"]
+  subgraph Logic["Business Logic (src/lib)"]
+    SRS["srs.ts<br/>(SRS, 5-min Hard cooldown, persistent active queue)"]
+    StatsLib["stats.ts<br/>(streaks 🔥, 90-day review history)"]
+    Storage["storage.ts<br/>(user-scoped localStorage + migration)"]
     Speech["speech.ts + audioCache.ts<br/>(Google Cloud TTS + IndexedDB / Web Speech)"]
-    SupaLib["supabase.ts<br/>(Auth + merge-синхронизация)"]
+    SupaLib["supabase.ts<br/>(Auth + bidirectional merge sync)"]
   end
 
-  Data["data/defaultCorpus.ts<br/>(70 встроенных карточек B1–B2)"]
+  Data["data/defaultCorpus.ts<br/>(70 built-in B1–B2 cards)"]
   LS[("Browser localStorage")]
-  IDB[("Browser IndexedDB<br/>(MP3-кэш озвучки)")]
-  EdgeTTS["Supabase Edge Function: tts<br/>(JWT + allowlist + GOOGLE_TTS_API_KEY)"]
-  GoogleTTS[("Google Cloud TTS API<br/>(Neural2 / WaveNet)")]
+  IDB[("Browser IndexedDB<br/>(MP3 audio cache)")]
+  EdgeTTS["Supabase Edge Function: bright-action<br/>(JWT + allowlist + GOOGLE_TTS_API_KEY)"]
+  GoogleTTS[("Google Cloud TTS API<br/>(WaveNet / Neural2)")]
   SupaDB[("Supabase Cloud<br/>Auth + Postgres RLS")]
 
   UI <--> App
   App --> SRS
+  App --> StatsLib
   App --> Storage
   App --> Speech
   App --> SupaLib
   SRS --> Data
   Storage <--> LS
   Speech <--> IDB
-  Speech -.->|"мастер-ключ (по умолчанию)"| EdgeTTS
+  Speech -.->|"master key (default)"| EdgeTTS
   EdgeTTS -.-> GoogleTTS
   SupaLib <--> SupaDB
 ```
 
 ---
 
-## 2. Структура файлов проекта
+## 2. Project Structure
 
 ```text
 anki/
-├── index.html                      # Минимальная HTML-точка входа для Vite
-├── package.json                    # Зависимости (React, Supabase, Vite, Tailwind)
-├── tsconfig.json                   # Строгие настройки TypeScript (strict: true)
-├── vite.config.ts                  # Конфигурация сборки Vite + Tailwind CSS v4
-├── supabase_schema.sql             # SQL-схема таблиц и политик RLS в Supabase
+├── index.html                      # Minimal Vite HTML entry point
+├── package.json                    # Dependencies (React 19, Supabase, Vite, Tailwind v4)
+├── tsconfig.json                   # Strict TypeScript config (strict: true)
+├── vite.config.ts                  # Vite + React + Tailwind CSS v4 config (base: './')
+├── supabase_schema.sql             # PostgreSQL tables, RLS policies, and safe migrations
 ├── supabase/
 │   └── functions/
 │       └── tts/
-│           └── index.ts            # Edge Function: прокси Google Cloud TTS с мастер-ключом
-├── .github/workflows/deploy.yml    # Автоматический билд и деплой на GitHub Pages
+│           └── index.ts            # Edge Function: Google Cloud TTS proxy with master key
+├── .github/workflows/deploy.yml    # Automated Node 24 build & GitHub Pages deployment
 └── src/
-    ├── main.tsx                    # Монтирование React в #root
-    ├── index.css                   # Подключение Tailwind v4 и мобильные safe-area стили
-    ├── types.ts                    # Все TypeScript-интерфейсы и типы
-    ├── App.tsx                     # Главный контейнер состояния, эффектов и горячих клавиш
+    ├── main.tsx                    # React root mount
+    ├── index.css                   # Tailwind v4 import and mobile safe-area styles
+    ├── types.ts                    # Shared TypeScript interfaces and types
+    ├── App.tsx                     # Root state container, effects, and hotkeys
     ├── data/
-    │   └── defaultCorpus.ts        # 70 встроенных карточек (50 слов + 20 грамматики)
+    │   └── defaultCorpus.ts        # 70 built-in cards (50 vocabulary + 20 grammar)
     ├── lib/
-    │   ├── srs.ts                  # Алгоритм повторений, лимит неизвестных слов, очередь
-    │   ├── stats.ts                # Расчёт стриков (🔥), история по дням (90 дней) и слияние
-    │   ├── storage.ts              # Сохранение/загрузка localStorage с разделением по userId
-    │   ├── audioCache.ts           # Кэш MP3-файлов в IndexedDB для Google Cloud TTS
-    │   ├── speech.ts               # Движок озвучки: Google Cloud TTS + фолбэк на Web Speech API
-    │   └── supabase.ts             # Клиент Supabase и логика fullSync / upsert / delete
+    │   ├── srs.ts                  # Spaced repetition, 5-min Hard delay, active queue
+    │   ├── stats.ts                # Streak tracking (🔥), 90-day review history & merge
+    │   ├── storage.ts              # User-scoped localStorage persistence
+    │   ├── audioCache.ts           # IndexedDB MP3 blob cache for Google Cloud TTS
+    │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
+    │   └── supabase.ts             # Supabase client and fullSync / upsert / delete logic
     └── components/
-        ├── Header.tsx              # Шапка: режим, +, статус входа, настройки, тема
-        ├── StatusRibbon.tsx        # Кликабельная строка статистики, бейдж стрика 🔥 и прогресс-бар
-        ├── FlashCard.tsx           # Карточка с переворотом и динамическими кнопками оценки
-        ├── SettingsModal.tsx       # Голос, лимиты, «Мои карточки», CSV импорт/экспорт
-        ├── AddCardModal.tsx        # Форма создания пользовательской карточки
-        ├── AuthModal.tsx           # Вход / регистрация / ручная синхронизация / выход
-        └── ProgressModal.tsx       # Детальный прогресс, фильтры, поиск, сброс карточки
+        ├── Header.tsx              # Top bar: mode, +, auth status, settings, theme
+        ├── StatusRibbon.tsx        # Daily goal, clickable streak 🔥, counters, progress bar
+        ├── FlashCard.tsx           # Interactive card with dynamic rating interval labels
+        ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
+        ├── SettingsModal.tsx       # Voice, limits (synced with profile), custom cards, CSV
+        ├── AddCardModal.tsx        # Form to create a new custom card
+        ├── AuthModal.tsx           # Sign in / sign up / manual sync / sign out
+        ├── ProgressModal.tsx       # Card-by-card progress list, filters, search, reset
+        └── InfoTip.tsx             # Tap/click "?" in-app help popover component
 ```
 
 ---
 
-## 3. Модель данных и база Supabase
+## 3. Data Model & Supabase Schema
 
-### Структура карточки (`src/types.ts`)
+### Card Model (`src/types.ts`)
 
-Каждая карточка (как встроенная, так и добавленная пользователем) приводится к единому формату `Card`:
+Both built-in and user-created cards share the same `Card` interface:
 
-| Поле | Тип | Назначение |
+| Field | Type | Description |
 | :--- | :--- | :--- |
-| `cardKey` | `string` | Уникальный ключ: `default_1`…`default_70` для встроенных, `custom_<uuid>` для пользовательских |
-| `german`, `russian` | `string` | Основное слово/конструкция и перевод |
-| `example_de`, `example_ru` | `string` | Контекстный пример и его перевод |
-| `context`, `tags` | `string` | Грамматическая пометка (`Verb (+ Dat.)`) и теги |
-| `isCustom` | `boolean` | Отличает пользовательскую карточку от базовой (влияет на возможность удаления и фильтр «Мои») |
-| `reps` | `number` | Количество успешных повторений: `0` — Новая, `1–2` — Учим, `≥ 3` — Выучена |
-| `interval` | `number` | Текущий интервал повторения в днях |
-| `nextReview` | `number` | Unix-timestamp (мс), когда карточку нужно показать снова |
-| `updatedAt` | `number` | Unix-timestamp (мс) последнего изменения — используется при слиянии конфликтов с облаком |
+| `cardKey` | `string` | Unique key: `default_1`…`default_70` for built-in cards, `custom_<uuid>` for user cards |
+| `german`, `russian` | `string` | German term/structure and Russian translation |
+| `example_de`, `example_ru` | `string` | Contextual example sentence and translation |
+| `context`, `tags` | `string` | Grammar note (e.g. `Verb (+ Dat.)`) and tags |
+| `isCustom` | `boolean` | Distinguishes user-created cards from built-in cards |
+| `reps` | `number` | Successful repetitions: `0` = New, `1–2` = Learning, `≥ 3` = Mastered |
+| `interval` | `number` | Current review interval in days |
+| `nextReview` | `number` | Unix timestamp (ms) for the next scheduled review |
+| `updatedAt` | `number` | Unix timestamp (ms) of last modification (used for cloud conflict resolution) |
 
-### Схема таблиц в PostgreSQL (`supabase_schema.sql`)
+### PostgreSQL Schema (`supabase_schema.sql`)
 
 ```mermaid
 erDiagram
@@ -155,116 +160,100 @@ erDiagram
   }
 ```
 
-> **Почему в `user_cards` не загружаются сразу все 70 базовых карточек?**
-> Базовый словарь вшит в `defaultCorpus.ts`. В БД записываются только те карточки, по которым есть прогресс (`reps > 0` / `updatedAt > 0`) или которые создал сам пользователь (`is_custom = true`). Это экономит запросы и трафик, а при синхронизации на новом устройстве базовые карточки автоматически объединяются с записями из БД.
+> **Why aren't all 70 built-in cards inserted into `user_cards` on first login?**
+> The base corpus ships inside `defaultCorpus.ts`. Only cards with progress (`reps > 0` or `updatedAt > 0`) or custom cards (`is_custom = true`) are written to Supabase. On any new device, the client merges `defaultCorpus.ts` with rows from `user_cards`.
 
 ---
 
-## 4. Алгоритм интервального повторения (SRS) и лимит неизвестных слов
+## 4. Spaced Repetition (SRS) & Active Queue
 
-Вся математика вынесена в чистые функции в `src/lib/srs.ts` (их легко тестировать отдельно от UI).
+All scheduling logic lives as pure functions in `src/lib/srs.ts`.
 
-### Что такое «неизвестное слово» (`isUnknownCard`)
-Слово считается **неизвестным**, если выполняется хотя бы одно условие:
-1. `card.reps === 0` — вы его ещё не учили (новая карточка или нажали «Снова»).
-2. `card.nextReview <= endOfToday` — карточка всё ещё запланирована к повторению **сегодня** (не «ушла» на завтра и далее).
+### Definition of an "Unknown Word" (`isUnknownCard`)
+A card is considered **unknown** if:
+1. `card.reps === 0` (never learned or reset via "Again"), OR
+2. `card.nextReview <= endOfToday` (still scheduled for review today, not yet promoted to tomorrow+).
 
-### Логика 4 кнопок оценки (`applyCardRating`)
+### Rating Rules (`applyCardRating`)
 
 ```mermaid
 flowchart TD
-  Start["Пользователь оценил карточку"] --> Check{"Какая оценка?"}
+  Start["User rates a card"] --> Check{"Rating?"}
 
-  Check -->|"1. Снова (again)"| Again["reps = 0<br/>interval = 0<br/>nextReview = сейчас + 1 мин<br/>Вернуть в очередь (+3 слота)"]
+  Check -->|"1. Again"| Again["reps = 0<br/>interval = 0<br/>nextReview = now + 1 min<br/>Requeue in session (+3 slots)"]
 
-  Check -->|"2. Трудно (hard)"| IsUnk{"Неизвестное слово?<br/>(reps == 0 или на сегодня)"}
-  IsUnk -->|"Да"| HardUnk["interval = 0<br/>nextReview = сейчас + 5 мин<br/>Скрыть на 5 мин → вернуть первым"]
-  IsUnk -->|"Нет (уже знакомое)"| HardKnown["reps += 1<br/>interval = max(1, interval × 1.2) дн.<br/>nextReview = сейчас + interval дн."]
+  Check -->|"2. Hard"| IsUnk{"Unknown word?<br/>(reps == 0 or due today)"}
+  IsUnk -->|"Yes"| HardUnk["interval = 0<br/>nextReview = now + 5 min<br/>Hide for 5 min → return first with priority"]
+  IsUnk -->|"No (known word)"| HardKnown["reps += 1<br/>interval = max(1, interval × 1.2) days<br/>nextReview = now + interval days"]
 
-  Check -->|"3. Хорошо (good)"| Good["reps += 1<br/>interval = 1 дн. (далее ×2.0)<br/>nextReview = сейчас + interval дн."]
+  Check -->|"3. Good"| Good["reps += 1<br/>interval = 1 day (then ×2.0)<br/>nextReview = now + interval days"]
 
-  Check -->|"4. Легко (easy)"| Easy["reps += 2<br/>interval = max(4, interval × 2.8) дн.<br/>nextReview = сейчас + interval дн."]
+  Check -->|"4. Easy"| Easy["reps += 2<br/>interval = max(4, interval × 2.8) days<br/>nextReview = now + interval days"]
 ```
 
-Подписи времени на самих кнопках (`1 мин`, `15 мин` / `1 дн.`, `4 дн.`) рассчитываются динамически функцией `getRatingPreviewLabels(card)` для каждой конкретной карточки.
+Button interval previews (`1 мин`, `5 мин` / `1 дн.`, `4 дн.`) are computed dynamically per card via `getRatingPreviewLabels(card)`.
 
-### Постоянная очередь активных слов и двустороннее прохождение (`reconcileActiveQueue` + `expandCardsToQueueItems`)
-
-Чтобы при дневном лимите в 60 показов не вываливалось сразу 60 новых слов и очередь не сбрасывалась при обновлении страницы:
-1. В `user_profiles` в Supabase (и в `localStorage`) хранятся `max_active_unknown` (по умолчанию **`5`**) и точный список **`active_card_keys`** — те самые `5` слов, которые сейчас в работе. При перезагрузке страницы или входе с телефона очередь восстанавливается 1-в-1 из БД.
-2. В режиме **Микс** функция `expandCardsToQueueItems` разворачивает каждые `5` слов в **`10` показов** (`DE → RU` и `RU → DE`), чередуя их так, чтобы две стороны одного слова не шли подряд.
-3. **Продвижение на следующий уровень только после обеих сторон**:
-   - `App.tsx` отслеживает пройденные стороны в `passedSidesRef`.
-   - Пока пройдена только 1 из 2 сторон, карточка не меняет `reps`/`nextReview` и остаётся в `active_card_keys`.
-   - Как только пройдены **обе** стороны (`DE → RU` и `RU → DE`), карточка переходит на следующий интервал (например, `1 дн.`), убирается из `active_card_keys`, а на освободившееся место `reconcileActiveQueue` автоматически добавляет **1 следующее слово** сразу обеими сторонами и синхронизирует `active_card_keys` в Supabase.
+### Persistent Active Queue & Both-Sides Mastery (`reconcileActiveQueue` + `expandCardsToQueueItems`)
+1. `user_profiles` (and `localStorage`) stores `max_active_unknown` (default **`5`**) and the exact **`active_card_keys`** array so the same active words survive page reloads and sync across devices.
+2. Only **hard/due-now** cards (`nextReview <= now`, prioritized first) and **new** cards (`reps === 0`) occupy the active queue; cards on a 5-minute "Hard" cooldown are temporarily hidden until their timer expires, then immediately return to the front of the queue.
+3. In **Mixed** mode, `expandCardsToQueueItems` expands `5` active words into **`10` queue items** (`DE → RU` and `RU → DE`), interleaved so the two sides of a word do not appear back-to-back.
+4. **Two-sided promotion**: `App.tsx` tracks completed sides in `passedSidesRef`. A card only advances its SRS level (`reps` / `nextReview`) and gets replaced by the next word in `active_card_keys` once **both** sides have passed.
 
 ---
 
-## 5. Поток авторизации и синхронизации с Supabase
-
-Реализовано в `src/lib/supabase.ts` и вызывается из `src/App.tsx`:
+## 5. Authentication & Sync Flow (`src/lib/supabase.ts`)
 
 ```mermaid
 sequenceDiagram
-  actor User as Пользователь
+  actor User
   participant App as App.tsx + storage.ts
   participant Supa as Supabase Auth & Postgres
 
-  User->>App: Вход (Email + Password)
+  User->>App: Sign In (Email + Password)
   App->>Supa: auth.signInWithPassword()
   Supa-->>App: Session (user.id + JWT)
   App->>App: loadLocalDeck(user.id)
 
   App->>Supa: SELECT user_profiles & user_cards (RLS: auth.uid() = user_id)
-  Supa-->>App: Облачные данные пользователя
+  Supa-->>App: Cloud profile, streaks, active queue & cards
 
-  App->>App: Слияние (Merge):<br/>defaultCorpus + local + remote<br/>(побеждает более новый updatedAt)
-  App->>App: saveLocalDeck(user.id, mergedDeck)
-  App->>Supa: UPSERT только изменённых локально карточек и профиля
-  Supa-->>App: OK → статус "Синхронизировано"
+  App->>App: Merge defaultCorpus + local + remote<br/>(newest updatedAt wins, reviewHistory takes max per day)
+  App->>App: Persist merged state to localStorage & sync SettingsModal inputs
+  App->>Supa: UPSERT locally newer cards & profile
+  Supa-->>App: OK → status "Synced"
 
-  Note over User,Supa: Во время обучения (оценка / добавление / удаление)
-  User->>App: Оценивает карточку
-  App->>App: Мгновенно обновляет state и localStorage
-  App--)Supa: Асинхронный UPSERT 1 карточки и профиля
+  Note over User,Supa: During study (rate / add / delete)
+  User->>App: Rates a card
+  App->>App: Instantly updates React state, streaks & localStorage
+  App--)Supa: Async UPSERT of 1 card + user_profiles
 ```
-
-### Изоляция локальных данных (`src/lib/storage.ts`)
-- В гостевом режиме используется префикс `anki_guest_*` (с автоматическим подхватом старых ключей `anki_de_corpus_v3`).
-- После входа используется префикс `anki_u_<userId>_*`. При выходе из аккаунта локальные данные разных пользователей не смешиваются.
 
 ---
 
-## 6. Разбор остальных модулей
-
-### Движок озвучки (`src/lib/speech.ts`, `src/lib/audioCache.ts` и `supabase/functions/tts/index.ts`)
-
-Поддерживаются два движка с возможностью переключения в **Настройках (⚙)**:
+## 6. Speech Engine & Edge Function (`src/lib/speech.ts`, `src/lib/audioCache.ts`, `supabase/functions/tts/index.ts`)
 
 ```mermaid
 flowchart LR
-  Play["Запрос озвучки карточки"] --> Clean["cleanGermanSpeechText()<br/>(удаление скобок и тегов)"]
-  Clean --> Engine{"Движок?"}
-  Engine -->|"Системный (default)"| WebSpeech["Web Speech API<br/>(лучший системный голос)"]
-  Engine -->|"Google Cloud TTS"| Cache{"Есть MP3 в<br/>IndexedDB?"}
-  Cache -->|"Да"| Audio["HTMLAudioElement.play()"]
-  Cache -->|"Нет"| KeyMode{"Личный ключ<br/>указан?"}
-  KeyMode -->|"Нет (мастер-ключ)"| Edge["Supabase Edge Function: tts<br/>(JWT + allowlist + 300 симв.)"] --> API["Google Cloud TTS API"]
-  KeyMode -->|"Да"| API
-  API -->|"OK"| Save["Сохранить MP3 в IndexedDB"] --> Audio
-  API -->|"Ошибка / нет сети"| WebSpeech
+  Play["Speak card request"] --> Clean["cleanGermanSpeechText()<br/>(strip grammar notes)"]
+  Clean --> Engine{"Engine?"}
+  Engine -->|"System (fallback)"| WebSpeech["Web Speech API<br/>(highest-ranked German voice)"]
+  Engine -->|"Google Cloud TTS (default)"| Cache{"MP3 in<br/>IndexedDB?"}
+  Cache -->|"Yes"| Audio["HTMLAudioElement.play()"]
+  Cache -->|"No"| KeyMode{"Personal key<br/>provided?"}
+  KeyMode -->|"No (master key)"| Edge["Supabase Edge Function: bright-action<br/>(JWT + allowlist + 300-char limit)"] --> API["Google Cloud TTS API"]
+  KeyMode -->|"Yes"| API
+  API -->|"OK"| Save["Save MP3 blob to IndexedDB"] --> Audio
+  API -->|"Error / offline"| WebSpeech
 ```
 
-- **Серверный мастер-ключ (`supabase/functions/tts/index.ts`, slug `bright-action`)**: хранится в **Supabase Secrets** (`GOOGLE_TTS_API_KEY`) и никогда не передаётся в браузер. По умолчанию используется **Google Cloud TTS `de-DE-Wavenet-C`**. Edge Function проверяет JWT-токен пользователя (`auth.getUser()`), пропускает только бесплатные голоса (`de-DE-Neural2-B/C/D/F`, `de-DE-Wavenet-B/C`) и ограничивает длину текста до `300` символов.
-- **Онлайн-генерация по требованию**: аудио генерируется строго для тех карточек, которые реально прослушивает пользователь (включая добавленные вручную).
-- **Кэш в `IndexedDB` (`audioCache.ts`)**: ключ кэша = `voice|rate|pitch|text`. Повторное прослушивание карточки не тратит квоту API и работает мгновенно даже офлайн.
-- **Синхронизация настроек TTS**: выбранный движок (`tts_engine`), голос (`google_voice`) и опциональный личный ключ (`google_tts_key`) сохраняются в `user_profiles` под защитой RLS.
-- **Автоматический фолбэк**: если пользователь не вошёл в аккаунт (и личного ключа нет), пропал интернет или произошла ошибка — приложение без паузы переключается на системный `Web Speech API`.
+- **Server-side master key (`supabase/functions/tts/index.ts`, deployed slug `bright-action`)**: reads `GOOGLE_TTS_API_KEY` from **Supabase Secrets** (never exposed to the browser), verifies the user's JWT (`auth.getUser()`), enforces a strict free-tier allowlist (`de-DE-Wavenet-B/C`, `de-DE-Neural2-B/C/D/F`, default `de-DE-Wavenet-C`), and caps text length at `300` characters.
+- **IndexedDB MP3 cache (`audioCache.ts`)**: caches generated MP3 blobs locally under `voice|rate|pitch|text` so repeated card reviews cost zero API quota and work offline.
+- **Automatic fallback**: if unauthenticated (without a personal key), offline, or on API error, playback seamlessly falls back to `Web Speech API`.
 
-### Главный контейнер (`src/App.tsx`)
-- Хранит состояние колоды (`deck`), текущей очереди (`queue`, `currentIndex`, `isFlipped`), дневной статистики (`stats`), настроек озвучки (`speechSettings`) и открытых модальных окон.
-- Обрабатывает глобальные горячие клавиши (`Space` — показать ответ, `1`–`4` — оценки, `Esc` — закрыть любое окно), автоматически отключая их, когда открыто модальное окно или фокус находится в поле ввода.
+---
 
-### Сборка и автодеплой
-- `vite.config.ts` задаёт `base: './'`, благодаря чему собранные бандлы корректно открываются по любому пути (включая `https://<user>.github.io/anki/`).
-- `.github/workflows/deploy.yml` при каждом `git push` в ветку `main` автоматически запускает `npm ci && npm run build` (`tsc -b && vite build`) и публикует папку `dist/` на GitHub Pages.
+## 7. Streaks, Statistics & Deployment
+
+- **Streaks & History (`src/lib/stats.ts` + `src/components/StatsView.tsx`)**: tracks `currentStreak`, `bestStreak`, `lastStudyDate`, and a rolling 90-day `reviewHistory` map (`YYYY-MM-DD → count`). `StatsView` renders a 14-day activity bar chart, deck mastery breakdown, and a 7-day upcoming review forecast.
+- **In-App Help (`src/components/InfoTip.tsx`)**: tap/click `?` popovers inside `SettingsModal` explain each setting on both mobile and desktop.
+- **Build & Deploy**: `vite.config.ts` sets `base: './'`, and `.github/workflows/deploy.yml` runs `npm ci && npm run build` on Node 24 to publish `dist/` to GitHub Pages on every push to `main`.
