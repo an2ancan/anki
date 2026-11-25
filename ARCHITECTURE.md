@@ -61,7 +61,9 @@ anki/
 ├── index.html                      # Minimal Vite HTML entry point
 ├── package.json                    # Dependencies (React 19, Supabase, Vite, Tailwind v4)
 ├── tsconfig.json                   # Strict TypeScript config (strict: true)
-├── vite.config.ts                  # Vite + React + Tailwind CSS v4 config (base: './')
+├── vite.config.ts                  # Vite + React + Tailwind CSS v4 config (base: '/')
+├── public/
+│   └── CNAME                       # Custom GitHub Pages domain (larecall.org)
 ├── supabase_schema.sql                  # PostgreSQL tables, RLS policies, and safe migrations
 ├── supabase_migration_decks.sql         # Migration: user_decks & moving cards to 'default' deck
 ├── supabase_migration_orig_learning.sql # Migration: language-agnostic orig <-> learning schema
@@ -287,4 +289,4 @@ flowchart LR
 - **Daily Progress Bar (`StatusRibbon.tsx`)**: reflects `dailyReviewedCount / dailyLimit` (matching the `Today: x/y` badge and turning green once the daily goal is met).
 - **Streaks & History (`src/lib/stats.ts` + `src/components/StatsView.tsx`)**: tracks `currentStreak`, `bestStreak`, `lastStudyDate`, and a rolling 90-day `reviewHistory` map (`YYYY-MM-DD → count`). `StatsView` renders a 14-day activity bar chart, deck mastery breakdown, and a 7-day upcoming review forecast.
 - **In-App Help (`src/components/InfoTip.tsx`)**: tap/click `?` popovers inside `SettingsModal` explain each setting on both mobile and desktop.
-- **Build & Deploy**: `vite.config.ts` sets `base: './'`, and `.github/workflows/deploy.yml` runs `npm ci && npm run build` on Node 24 to publish `dist/` to GitHub Pages on every push to `main`.
+- **Build & Deploy**: `vite.config.ts` sets `base: '/'`, `public/CNAME` preserves the custom domain (`larecall.org`), and `.github/workflows/deploy.yml` runs `npm ci && npm run build` on Node 24 to publish `dist/` to GitHub Pages on every push to `main`.
