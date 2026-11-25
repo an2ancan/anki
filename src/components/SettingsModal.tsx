@@ -17,6 +17,8 @@ interface SettingsModalProps {
   onClose: () => void;
   decks: Deck[];
   learningLang: string;
+  isAuthenticated: boolean;
+  onOpenAuth: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
   voices: SpeechSynthesisVoice[];
@@ -42,6 +44,8 @@ export function SettingsModal({
   onClose,
   decks,
   learningLang,
+  isAuthenticated,
+  onOpenAuth,
   isDark,
   onToggleTheme,
   voices,
@@ -171,24 +175,35 @@ export function SettingsModal({
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
-              {(['system', 'google'] as TtsEngine[]).map((eng) => (
-                <button
-                  key={eng}
-                  type="button"
-                  onClick={() => onUpdateSpeech({ ...speechSettings, engine: eng })}
-                  className={`py-1.5 rounded-lg text-[11px] font-bold transition ${
-                    speechSettings.engine === eng
-                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400'
-                  }`}
-                >
-                  {eng === 'system' ? t.engineSystem : t.engineGoogle}
-                </button>
-              ))}
-            </div>
+            {isAuthenticated || Boolean(speechSettings.googleApiKey.trim()) ? (
+              <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
+                {(['system', 'google'] as TtsEngine[]).map((eng) => (
+                  <button
+                    key={eng}
+                    type="button"
+                    onClick={() => onUpdateSpeech({ ...speechSettings, engine: eng })}
+                    className={`py-1.5 rounded-lg text-[11px] font-bold transition ${
+                      speechSettings.engine === eng
+                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    {eng === 'system' ? t.engineSystem : t.engineGoogle}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="w-full py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-[11px] font-semibold text-left hover:bg-blue-100 dark:hover:bg-blue-950/70 transition"
+              >
+                {t.googleTtsLoginHint}
+              </button>
+            )}
 
-            {speechSettings.engine === 'system' ? (
+            {speechSettings.engine === 'system' ||
+            (!isAuthenticated && !speechSettings.googleApiKey.trim()) ? (
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">{t.selectSystemVoice}</label>
                 <select

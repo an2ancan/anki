@@ -927,6 +927,11 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         decks={decks}
         learningLang={activeLearningLang}
+        isAuthenticated={Boolean(user)}
+        onOpenAuth={() => {
+          setSettingsOpen(false);
+          setAuthOpen(true);
+        }}
         isDark={isDark}
         onToggleTheme={() => setIsDark((d) => !d)}
         voices={voices}

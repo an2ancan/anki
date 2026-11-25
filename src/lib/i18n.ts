@@ -102,6 +102,7 @@ export const translations = {
     autoPlay: 'Автоозвучка',
     engineSystem: 'Системный голос',
     engineGoogle: 'Google Cloud TTS',
+    googleTtsLoginHint: 'Войдите в аккаунт для Google Cloud TTS →',
     selectSystemVoice: 'Выбор системного голоса (приоритет отдан нейросетям):',
     selectGoogleVoice: 'Голос Google Cloud TTS (онлайн для ваших карточек + кэш):',
     personalKeyLabel:
@@ -338,6 +339,7 @@ export const translations = {
     autoPlay: 'Autoplay',
     engineSystem: 'System voice',
     engineGoogle: 'Google Cloud TTS',
+    googleTtsLoginHint: 'Sign in to unlock Google Cloud TTS →',
     selectSystemVoice: 'System voice (natural/neural voices prioritized):',
     selectGoogleVoice: 'Google Cloud TTS voice (on-demand + local cache):',
     personalKeyLabel:
