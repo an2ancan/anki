@@ -1,7 +1,10 @@
 import type { StudyMode, SyncState } from '../types';
+import { useI18n } from '../lib/I18nContext';
 
 interface HeaderProps {
   activeDeckName: string;
+  origLang: string;
+  learningLang: string;
   voiceLabel: string;
   mode: StudyMode;
   onModeChange: (mode: StudyMode) => void;
@@ -18,6 +21,8 @@ interface HeaderProps {
 
 export function Header({
   activeDeckName,
+  origLang,
+  learningLang,
   voiceLabel,
   mode,
   onModeChange,
@@ -31,6 +36,8 @@ export function Header({
   onOpenSettings,
   onToggleTheme,
 }: HeaderProps) {
+  const { locale, setLocale, t } = useI18n();
+
   const dotClass = !userEmail
     ? 'bg-slate-400'
     : syncState.status === 'syncing'
@@ -39,11 +46,11 @@ export function Header({
         ? 'bg-rose-500'
         : 'bg-emerald-500';
 
-  const authLabel = userEmail ? userEmail.split('@')[0] : 'Войти';
+  const authLabel = userEmail ? userEmail.split('@')[0] : t.signInShort;
 
   return (
     <header className="w-full flex-none bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 py-2 z-20">
-      <div className="max-w-md mx-auto flex items-center justify-between gap-2">
+      <div className="max-w-md mx-auto flex items-center justify-between gap-1.5">
         <button
           type="button"
           onClick={onToggleDecks}
@@ -52,19 +59,19 @@ export function Header({
               ? 'bg-blue-50 dark:bg-blue-950/60'
               : 'hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
-          title="Личный кабинет: мои колоды"
+          title={t.decksCabinetTitle}
         >
           <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-xs shadow-sm flex-none">
-            DE
+            {learningLang.slice(0, 2)}
           </div>
           <div className="min-w-0">
-            <h1 className="text-xs font-bold leading-none tracking-tight flex items-center gap-1 max-w-[105px]">
+            <h1 className="text-xs font-bold leading-none tracking-tight flex items-center gap-1 max-w-[92px]">
               <span className="truncate">{activeDeckName}</span>
               <svg className="w-3 h-3 text-slate-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
               </svg>
             </h1>
-            <span className="text-[10px] text-slate-400 font-medium block truncate max-w-[105px]">
+            <span className="text-[10px] text-slate-400 font-medium block truncate max-w-[92px]">
               {voiceLabel}
             </span>
           </div>
@@ -74,19 +81,32 @@ export function Header({
           <select
             value={mode}
             onChange={(e) => onModeChange(e.target.value as StudyMode)}
-            className="text-[11px] bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 font-semibold focus:outline-none"
+            className="text-[11px] bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-1 py-1 font-semibold focus:outline-none"
           >
-            <option value="de-ru">DE → RU</option>
-            <option value="ru-de">RU → DE</option>
-            <option value="mixed">Микс</option>
+            <option value="learning-orig">
+              {learningLang}→{origLang}
+            </option>
+            <option value="orig-learning">
+              {origLang}→{learningLang}
+            </option>
+            <option value="mixed">{t.mixedMode}</option>
           </select>
+
+          <button
+            type="button"
+            onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
+            className="px-1.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-[10px] font-black text-slate-600 dark:text-slate-300 transition"
+            title={t.interfaceLang}
+          >
+            {locale.toUpperCase()}
+          </button>
 
           <button
             type="button"
             onClick={onOpenAddCard}
             className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-sm"
-            title="Добавить карточку"
-            aria-label="Добавить карточку"
+            title={t.addCardTitle}
+            aria-label={t.addCardTitle}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -96,19 +116,19 @@ export function Header({
           <button
             type="button"
             onClick={onOpenAuth}
-            className="relative flex items-center gap-1 px-2 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition text-[11px] font-semibold text-slate-700 dark:text-slate-200"
-            title="Профиль и синхронизация Supabase"
+            className="relative flex items-center gap-1 px-1.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition text-[11px] font-semibold text-slate-700 dark:text-slate-200"
+            title={t.profileTitle}
           >
             <span className={`w-2 h-2 rounded-full ${dotClass}`} />
-            <span className="max-w-[64px] truncate">{authLabel}</span>
+            <span className="max-w-[52px] truncate">{authLabel}</span>
           </button>
 
           <button
             type="button"
             onClick={onOpenSettings}
             className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition"
-            title="Настройки и словарь"
-            aria-label="Настройки и словарь"
+            title={t.settingsTitle}
+            aria-label={t.settingsTitle}
           >
             <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -120,8 +140,8 @@ export function Header({
             type="button"
             onClick={onToggleTheme}
             className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300"
-            title="Сменить тему"
-            aria-label="Сменить тему"
+            title={t.themeTitle}
+            aria-label={t.themeTitle}
           >
             {isDark ? (
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

@@ -62,8 +62,9 @@ anki/
 ├── package.json                    # Dependencies (React 19, Supabase, Vite, Tailwind v4)
 ├── tsconfig.json                   # Strict TypeScript config (strict: true)
 ├── vite.config.ts                  # Vite + React + Tailwind CSS v4 config (base: './')
-├── supabase_schema.sql             # PostgreSQL tables, RLS policies, and safe migrations
-├── supabase_migration_decks.sql    # One-time migration moving existing cards to 'default' deck
+├── supabase_schema.sql                  # PostgreSQL tables, RLS policies, and safe migrations
+├── supabase_migration_decks.sql         # Migration: user_decks & moving cards to 'default' deck
+├── supabase_migration_orig_learning.sql # Migration: language-agnostic orig <-> learning schema
 ├── supabase/
 │   └── functions/
 │       └── tts/
@@ -79,6 +80,8 @@ anki/
     ├── lib/
     │   ├── srs.ts                  # Spaced repetition, 5-min Hard delay, active queue
     │   ├── stats.ts                # Streak tracking (🔥), 90-day review history & merge
+    │   ├── i18n.ts                 # RU/EN UI translation dictionary
+    │   ├── I18nContext.tsx         # React i18n context & useI18n() hook (persisted in localStorage)
     │   ├── storage.ts              # User-scoped localStorage persistence
     │   ├── audioCache.ts           # IndexedDB MP3 blob cache for Google Cloud TTS
     │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
@@ -107,8 +110,9 @@ Both built-in and user-created cards share the same `Card` interface:
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `cardKey` | `string` | Unique key: `default_1`…`default_70` for built-in cards, `custom_<uuid>` for user cards |
-| `german`, `russian` | `string` | German term/structure and Russian translation |
-| `example_de`, `example_ru` | `string` | Contextual example sentence and translation |
+| `deckKey` | `string` | Parent deck key (`'default'` or `deck_<uuid>`) |
+| `learning`, `orig` | `string` | Target term/phrase being learned and source/native translation (language-agnostic) |
+| `example_learning`, `example_orig` | `string` | Contextual example sentence in the learning language and its translation |
 | `context`, `tags` | `string` | Grammar note (e.g. `Verb (+ Dat.)`) and tags |
 | `isCustom` | `boolean` | Distinguishes user-created cards from built-in cards |
 | `reps` | `number` | Successful repetitions: `0` = New, `1–2` = Learning, `≥ 3` = Mastered |
@@ -153,6 +157,8 @@ erDiagram
     text deck_key "UNIQUE (user_id, deck_key)"
     text name
     text description
+    text orig_lang "default: 'RU'"
+    text learning_lang "default: 'DE'"
     boolean is_default
     timestamptz created_at
     timestamptz updated_at
@@ -163,10 +169,10 @@ erDiagram
     uuid user_id FK
     text deck_key "default: 'default'"
     text card_key "UNIQUE (user_id, card_key)"
-    text german
-    text russian
-    text example_de
-    text example_ru
+    text learning
+    text orig
+    text example_learning
+    text example_orig
     text context
     text tags
     boolean is_custom
@@ -271,6 +277,8 @@ flowchart LR
 
 ## 7. Streaks, Statistics & Deployment
 
+- **UI Internationalization (`src/lib/i18n.ts` + `src/lib/I18nContext.tsx`)**: full live RU/EN switching via the header `RU/EN` button or `SettingsModal`, persisted in `localStorage` (`anki_ui_lang`).
+- **Daily Progress Bar (`StatusRibbon.tsx`)**: reflects `dailyReviewedCount / dailyLimit` (matching the `Today: x/y` badge and turning green once the daily goal is met).
 - **Streaks & History (`src/lib/stats.ts` + `src/components/StatsView.tsx`)**: tracks `currentStreak`, `bestStreak`, `lastStudyDate`, and a rolling 90-day `reviewHistory` map (`YYYY-MM-DD → count`). `StatsView` renders a 14-day activity bar chart, deck mastery breakdown, and a 7-day upcoming review forecast.
 - **In-App Help (`src/components/InfoTip.tsx`)**: tap/click `?` popovers inside `SettingsModal` explain each setting on both mobile and desktop.
 - **Build & Deploy**: `vite.config.ts` sets `base: './'`, and `.github/workflows/deploy.yml` runs `npm ci && npm run build` on Node 24 to publish `dist/` to GitHub Pages on every push to `main`.

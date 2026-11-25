@@ -1,4 +1,5 @@
 import type { ProgressFilter } from '../types';
+import { useI18n } from '../lib/I18nContext';
 
 interface StatusRibbonProps {
   dailyReviewedCount: number;
@@ -7,7 +8,6 @@ interface StatusRibbonProps {
   newCount: number;
   learningCount: number;
   masteredCount: number;
-  progressPercent: number;
   onOpenStats: () => void;
   onOpenProgress: (filter: ProgressFilter) => void;
 }
@@ -19,11 +19,13 @@ export function StatusRibbon({
   newCount,
   learningCount,
   masteredCount,
-  progressPercent,
   onOpenStats,
   onOpenProgress,
 }: StatusRibbonProps) {
+  const { t } = useI18n();
   const goalReached = dailyReviewedCount >= dailyLimit;
+  const dailyProgressPercent =
+    dailyLimit > 0 ? Math.min(100, Math.round((dailyReviewedCount / dailyLimit) * 100)) : 100;
 
   return (
     <div className="flex-none max-w-md w-full mx-auto px-3 pt-2">
@@ -37,10 +39,10 @@ export function StatusRibbon({
                 ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
                 : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
             }`}
-            title="Открыть статистику и графики"
+            title={t.openStatsTitle}
           >
             <span>
-              Сегодня: {dailyReviewedCount}/{dailyLimit}
+              {t.today}: {dailyReviewedCount}/{dailyLimit}
             </span>
             <svg className="w-3 h-3 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -56,7 +58,7 @@ export function StatusRibbon({
             type="button"
             onClick={onOpenStats}
             className="px-1.5 py-0.5 rounded-md font-bold bg-orange-100 dark:bg-orange-950/70 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
-            title="Текущий стрик (дней подряд)"
+            title={t.streakTitle}
           >
             🔥 {streak}
           </button>
@@ -68,7 +70,7 @@ export function StatusRibbon({
             onClick={() => onOpenProgress('new')}
             className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
           >
-            Новые: {newCount}
+            {t.newLabel}: {newCount}
           </button>
           <span>•</span>
           <button
@@ -76,7 +78,7 @@ export function StatusRibbon({
             onClick={() => onOpenProgress('learning')}
             className="text-amber-600 dark:text-amber-400 hover:underline font-semibold"
           >
-            Учим: {learningCount}
+            {t.learningLabel}: {learningCount}
           </button>
           <span>•</span>
           <button
@@ -84,15 +86,15 @@ export function StatusRibbon({
             onClick={() => onOpenProgress('mastered')}
             className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
           >
-            Выучено: {masteredCount}
+            {t.masteredLabel}: {masteredCount}
           </button>
         </div>
       </div>
 
-      <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden">
+      <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
         <div
-          className="bg-blue-600 h-1 transition-all duration-300"
-          style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+          className={`h-1.5 transition-all duration-300 ${goalReached ? 'bg-emerald-500' : 'bg-blue-600'}`}
+          style={{ width: `${dailyProgressPercent}%` }}
         />
       </div>
     </div>

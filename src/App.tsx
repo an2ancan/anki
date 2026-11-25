@@ -43,6 +43,7 @@ import {
   syncProfileToSupabase,
 } from './lib/supabase';
 import { getEffectiveStreak, recordReviewInStats } from './lib/stats';
+import { useI18n } from './lib/I18nContext';
 import { Header } from './components/Header';
 import { StatusRibbon } from './components/StatusRibbon';
 import { FlashCard } from './components/FlashCard';
@@ -54,10 +55,14 @@ import { AuthModal } from './components/AuthModal';
 import { ProgressModal } from './components/ProgressModal';
 
 export default function App() {
+  const { t } = useI18n();
+  const tRef = useRef(t);
+  tRef.current = t;
+
   const [user, setUser] = useState<User | null>(null);
   const [syncState, setSyncState] = useState<SyncState>({
     status: 'local',
-    message: 'Режим: локально (без входа)',
+    message: t.syncLocal,
   });
   const [deck, setDeck] = useState<Card[]>(() => loadLocalDeck(null));
   const [decks, setDecks] = useState<Deck[]>(() => loadLocalDecks(null));
@@ -132,14 +137,14 @@ export default function App() {
       const short = speechSettings.googleVoiceName.replace('de-DE-', '');
       return `Google: ${short}`;
     }
-    if (!('speechSynthesis' in window)) return 'Звук недоступен';
-    return chosenVoice ? `Голос: ${chosenVoice.name.split(' ')[0]}` : 'Голос: авто';
-  }, [chosenVoice, speechSettings.engine, speechSettings.googleApiKey, speechSettings.googleVoiceName, user]);
+    if (!('speechSynthesis' in window)) return t.voiceUnavailable;
+    return chosenVoice ? `${t.voicePrefix} ${chosenVoice.name.split(' ')[0]}` : t.voiceAuto;
+  }, [chosenVoice, speechSettings.engine, speechSettings.googleApiKey, speechSettings.googleVoiceName, user, t]);
 
   const speak = useCallback(
     (text: string) => {
       speakGermanText(text, speechSettings, chosenVoice, Boolean(user), () => {
-        showToast('Google TTS недоступен, включён системный голос');
+        showToast(tRef.current.toastGoogleFallback);
       });
     },
     [chosenVoice, speechSettings, user, showToast]
@@ -192,7 +197,7 @@ export default function App() {
     async (targetUser: User, localDeck: Card[], localDecks: Deck[], localStats: DailyStats) => {
       if (isSyncingRef.current) return;
       isSyncingRef.current = true;
-      setSyncState({ status: 'syncing', message: 'Синхронизация с Supabase...' });
+      setSyncState({ status: 'syncing', message: tRef.current.syncSyncing });
       try {
         const { mergedDeck, mergedDecks, mergedStats, mergedSpeech } = await fullSyncWithSupabase(
           targetUser.id,
@@ -211,11 +216,11 @@ export default function App() {
         setSpeechSettings(mergedSpeech);
         rebuildQueue(mergedDeck, mergedStats, false, targetUser.id);
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setSyncState({ status: 'synced', message: `Синхронизировано • ${time}` });
+        setSyncState({ status: 'synced', message: tRef.current.syncSynced(time) });
       } catch (err) {
         setSyncState({
           status: 'error',
-          message: `Ошибка синхронизации: ${err instanceof Error ? err.message : String(err)}`,
+          message: tRef.current.syncError(err instanceof Error ? err.message : String(err)),
         });
       } finally {
         isSyncingRef.current = false;
@@ -265,7 +270,7 @@ export default function App() {
         setDecks(gDecks);
         setStats(gStats);
         rebuildQueue(gDeck, gStats, false, null);
-        setSyncState({ status: 'local', message: 'Режим: локально (без входа)' });
+        setSyncState({ status: 'local', message: tRef.current.syncLocal });
       }
     });
 
@@ -277,7 +282,8 @@ export default function App() {
 
   const currentItem = queue[currentIndex] ?? null;
   const currentCard = currentItem?.card ?? null;
-  const direction: Direction = currentItem?.direction ?? (mode === 'ru-de' ? 'ru-de' : 'de-ru');
+  const direction: Direction =
+    currentItem?.direction ?? (mode === 'orig-learning' ? 'orig-learning' : 'learning-orig');
 
   // Auto-surface 5-min delayed "Hard" cards if the queue is currently empty
   useEffect(() => {
@@ -298,8 +304,8 @@ export default function App() {
   useEffect(() => {
     stopActiveAudio();
     if (activeView !== 'study' || !currentCard || isFlipped) return;
-    if (direction === 'de-ru' && speechSettings.autoPlay) {
-      speak(`${currentCard.german}. ${currentCard.example_de || ''}`);
+    if (direction === 'learning-orig' && speechSettings.autoPlay) {
+      speak(`${currentCard.learning}. ${currentCard.example_learning || ''}`);
     }
     return () => {
       stopActiveAudio();
@@ -309,8 +315,8 @@ export default function App() {
   const handleFlip = useCallback(() => {
     if (!currentCard || isFlipped) return;
     setIsFlipped(true);
-    if (direction === 'ru-de' && speechSettings.autoPlay) {
-      speak(`${currentCard.german}. ${currentCard.example_de || ''}`);
+    if (direction === 'orig-learning' && speechSettings.autoPlay) {
+      speak(`${currentCard.learning}. ${currentCard.example_learning || ''}`);
     }
   }, [currentCard, isFlipped, direction, speechSettings.autoPlay, speak]);
 
@@ -485,12 +491,19 @@ export default function App() {
     setActiveView('study');
   };
 
-  const handleCreateDeck = (name: string, description: string) => {
+  const handleCreateDeck = (
+    name: string,
+    description: string,
+    origLang: string,
+    learningLang: string
+  ) => {
     const now = Date.now();
     const newDeck: Deck = {
       deckKey: generateDeckKey(),
       name,
       description,
+      origLang,
+      learningLang,
       isDefault: false,
       createdAt: now,
       updatedAt: now,
@@ -501,7 +514,7 @@ export default function App() {
     if (user) {
       syncDeckToSupabase(user.id, newDeck).catch(() => {});
     }
-    showToast(`Колода «${name}» создана!`);
+    showToast(t.toastDeckCreated(name));
   };
 
   const handleDeleteDeck = (deckKey: string) => {
@@ -519,15 +532,15 @@ export default function App() {
       const nextStats: DailyStats = { ...stats, activeDeckKey: DEFAULT_DECK_KEY, activeCardKeys: [] };
       rebuildQueue(nextCards, nextStats);
     }
-    showToast('Колода удалена');
+    showToast(t.toastDeckDeleted);
   };
 
   const handleAddCard = (data: {
     deckKey: string;
-    german: string;
-    russian: string;
-    example_de: string;
-    example_ru: string;
+    learning: string;
+    orig: string;
+    example_learning: string;
+    example_orig: string;
     context: string;
     tags: string;
     studyNow: boolean;
@@ -537,10 +550,10 @@ export default function App() {
       id: Date.now(),
       deckKey: targetDeckKey,
       cardKey: generateCustomKey(),
-      german: data.german,
-      russian: data.russian,
-      example_de: data.example_de,
-      example_ru: data.example_ru,
+      learning: data.learning,
+      orig: data.orig,
+      example_learning: data.example_learning,
+      example_orig: data.example_orig,
       context: data.context,
       tags: data.tags,
       isCustom: true,
@@ -569,7 +582,7 @@ export default function App() {
         rebuildQueue(nextDeck, stats, true);
       }
     }
-    showToast('Карточка добавлена!');
+    showToast(t.toastCardAdded);
   };
 
   const handleDeleteCustomCard = (cardKey: string) => {
@@ -580,7 +593,7 @@ export default function App() {
     if (user) {
       deleteCardFromSupabase(user.id, cardKey).catch(() => {});
     }
-    showToast('Карточка удалена');
+    showToast(t.toastCardDeleted);
   };
 
   const handleImportCsv = (targetDeckKey: string, rawCsv: string) => {
@@ -590,16 +603,17 @@ export default function App() {
     let idCounter = Date.now();
     lines.forEach((line) => {
       const parts = line.split(';').map((p) => p.trim().replace(/^"|"$/g, ''));
-      if (parts.length >= 2 && parts[0] && parts[1] && parts[0].toLowerCase() !== 'german') {
+      const firstLower = (parts[0] || '').toLowerCase();
+      if (parts.length >= 2 && parts[0] && parts[1] && firstLower !== 'german' && firstLower !== 'learning') {
         added.push(
           normalizeCard({
             id: idCounter++,
             deckKey: resolvedDeckKey,
             cardKey: generateCustomKey(),
-            german: parts[0],
-            russian: parts[1],
-            example_de: parts[2] || '',
-            example_ru: parts[3] || '',
+            learning: parts[0],
+            orig: parts[1],
+            example_learning: parts[2] || '',
+            example_orig: parts[3] || '',
             context: parts[4] || '',
             tags: parts[5] || 'custom',
             isCustom: true,
@@ -612,7 +626,7 @@ export default function App() {
       }
     });
     if (added.length === 0) {
-      showToast('Не найдено валидных строк CSV');
+      showToast(t.toastCsvInvalid);
       return;
     }
     const nextDeck = [...deck, ...added];
@@ -624,7 +638,7 @@ export default function App() {
     if (resolvedDeckKey === stats.activeDeckKey) {
       rebuildQueue(nextDeck, stats);
     }
-    showToast(`Добавлено карточек: ${added.length}`);
+    showToast(t.toastCsvAdded(added.length));
   };
 
   const handleExportCsv = (targetDeckKey: string) => {
@@ -633,10 +647,10 @@ export default function App() {
     const cardsToExport = deck.filter((c) => c.deckKey === resolvedDeckKey);
     const esc = (v: string) => String(v || '').replace(/"/g, '""');
     const rows = [
-      'German;Russian;Example_DE;Example_RU;Context;Tags',
+      'Learning;Orig;Example_Learning;Example_Orig;Context;Tags',
       ...cardsToExport.map(
         (c) =>
-          `"${esc(c.german)}";"${esc(c.russian)}";"${esc(c.example_de)}";"${esc(c.example_ru)}";"${esc(c.context)}";"${esc(c.tags)}"`
+          `"${esc(c.learning)}";"${esc(c.orig)}";"${esc(c.example_learning)}";"${esc(c.example_orig)}";"${esc(c.context)}";"${esc(c.tags)}"`
       ),
     ];
     const safeName = (targetDeckMeta?.name || 'deck').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '_');
@@ -646,7 +660,7 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('CSV успешно экспортирован');
+    showToast(t.toastCsvExported);
   };
 
   const handlePracticeCard = (cardKey: string) => {
@@ -661,7 +675,7 @@ export default function App() {
     });
     setIsFlipped(false);
     setProgressOpen(false);
-    showToast('Карточка открыта для повторения');
+    showToast(t.toastCardOpened);
   };
 
   const handleResetCard = (cardKey: string) => {
@@ -677,7 +691,7 @@ export default function App() {
     if (user && changed) {
       syncCardsToSupabase(user.id, [changed]).catch(() => {});
     }
-    showToast('Прогресс карточки сброшен');
+    showToast(t.toastCardReset);
   };
 
   const activeDeckKey = stats.activeDeckKey || DEFAULT_DECK_KEY;
@@ -703,12 +717,13 @@ export default function App() {
     () => activeDeckCards.filter((c) => c.isCustom),
     [activeDeckCards]
   );
-  const progressPercent = queue.length > 0 ? (currentIndex / queue.length) * 100 : 100;
 
   return (
     <div className="h-[100dvh] bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
       <Header
         activeDeckName={activeDeckMeta?.name || 'Deutsch B1–B2'}
+        origLang={activeDeckMeta?.origLang || 'RU'}
+        learningLang={activeDeckMeta?.learningLang || 'DE'}
         voiceLabel={voiceLabel}
         mode={mode}
         onModeChange={(nextMode) => {
@@ -736,7 +751,6 @@ export default function App() {
         newCount={newCount}
         learningCount={learningCount}
         masteredCount={masteredCount}
-        progressPercent={progressPercent}
         onOpenStats={() => setActiveView((v) => (v === 'stats' ? 'study' : 'stats'))}
         onOpenProgress={(filter) => {
           setProgressFilter(filter);
@@ -780,17 +794,17 @@ export default function App() {
             </div>
             <h2 className="text-base font-bold mb-1">
               {activeDeckCards.length === 0
-                ? 'В этой колоде пока нет карточек'
+                ? t.emptyDeckTitle
                 : stats.dailyReviewedCount >= stats.dailyLimit
-                  ? 'Дневная норма выполнена!'
-                  : 'Очередь завершена!'}
+                  ? t.dailyDoneTitle
+                  : t.queueDoneTitle}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
               {activeDeckCards.length === 0
-                ? 'Добавьте первое слово вручную или импортируйте список через CSV.'
+                ? t.emptyDeckDesc
                 : stats.dailyReviewedCount >= stats.dailyLimit
-                  ? `Вы повторили ${stats.dailyReviewedCount} из ${stats.dailyLimit} карточек. Отличная работа!`
-                  : `Вы повторили ${stats.dailyReviewedCount} карточек за сегодня.`}
+                  ? t.dailyDoneDesc(stats.dailyReviewedCount, stats.dailyLimit)
+                  : t.queueDoneDesc(stats.dailyReviewedCount)}
             </p>
             {activeDeckCards.length === 0 ? (
               <button
@@ -801,7 +815,7 @@ export default function App() {
                 }}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
               >
-                + Добавить первую карточку
+                {t.addFirstCard}
               </button>
             ) : (
               <button
@@ -809,20 +823,22 @@ export default function App() {
                 onClick={() => rebuildQueue(deck, stats, true)}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
               >
-                Продолжить ещё 20 карточек
+                {t.continue20}
               </button>
             )}
           </div>
         ) : (
           <FlashCard
             card={currentCard}
+            origLang={activeDeckMeta?.origLang || 'RU'}
+            learningLang={activeDeckMeta?.learningLang || 'DE'}
             direction={direction}
             isFlipped={isFlipped}
             onFlip={handleFlip}
             onRate={handleRate}
-            onSpeakAll={() => speak(`${currentCard.german}. ${currentCard.example_de || ''}`)}
-            onSpeakTerm={() => speak(currentCard.german)}
-            onSpeakExample={() => speak(currentCard.example_de || '')}
+            onSpeakAll={() => speak(`${currentCard.learning}. ${currentCard.example_learning || ''}`)}
+            onSpeakTerm={() => speak(currentCard.learning)}
+            onSpeakExample={() => speak(currentCard.example_learning || '')}
           />
         )}
       </main>
@@ -850,14 +866,14 @@ export default function App() {
           saveLocalDailyStats(user?.id ?? null, nextStats);
           if (user) syncProfileToSupabase(user.id, nextStats).catch(() => {});
           rebuildQueue(deck, nextStats);
-          showToast(`Дневной лимит: ${limit}`);
+          showToast(t.toastDailyLimit(limit));
         }}
         onSaveMaxActiveUnknown={(max) => {
           const nextStats = { ...stats, maxActiveUnknown: max };
           setStats(nextStats);
           saveLocalDailyStats(user?.id ?? null, nextStats);
           rebuildQueue(deck, nextStats);
-          showToast(`Макс. неизвестных слов: ${max}`);
+          showToast(t.toastMaxUnknown(max));
         }}
         customCards={customCards}
         onOpenAddCard={() => {
@@ -890,12 +906,12 @@ export default function App() {
         onSyncNow={async () => {
           if (user) {
             await runSync(user, deck, decks, stats);
-            showToast('Синхронизация завершена');
+            showToast(t.toastSynced);
           }
         }}
         onSignOut={async () => {
           await supabase.auth.signOut();
-          showToast('Вы вышли из аккаунта');
+          showToast(t.toastSignedOut);
         }}
         onToast={showToast}
       />

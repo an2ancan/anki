@@ -39,24 +39,28 @@ create table if not exists public.user_decks (
   deck_key text not null,
   name text not null,
   description text not null default '',
+  orig_lang text not null default 'RU',
+  learning_lang text not null default 'DE',
   is_default boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint user_decks_user_deck_key_unique unique (user_id, deck_key)
 );
 
+alter table public.user_decks add column if not exists orig_lang text not null default 'RU';
+alter table public.user_decks add column if not exists learning_lang text not null default 'DE';
 create index if not exists idx_user_decks_user_id on public.user_decks(user_id);
 
--- 2. User cards (both progress on built-in cards and custom user-created cards)
+-- 2. User cards (language-agnostic: learning <-> orig)
 create table if not exists public.user_cards (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   deck_key text not null default 'default',
   card_key text not null,
-  german text not null,
-  russian text not null,
-  example_de text not null default '',
-  example_ru text not null default '',
+  learning text not null,
+  orig text not null,
+  example_learning text not null default '',
+  example_orig text not null default '',
   context text not null default '',
   tags text not null default '',
   is_custom boolean not null default false,

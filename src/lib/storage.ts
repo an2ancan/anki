@@ -46,6 +46,8 @@ export function loadLocalDecks(userId: string | null): Deck[] {
           deckKey: String(d.deckKey || DEFAULT_DECK_KEY),
           name: String(d.name || 'Deck'),
           description: String(d.description || ''),
+          origLang: String(d.origLang || 'RU').toUpperCase(),
+          learningLang: String(d.learningLang || 'DE').toUpperCase(),
           isDefault: Boolean(d.isDefault || d.deckKey === DEFAULT_DECK_KEY),
           createdAt: Number(d.createdAt) || 0,
           updatedAt: Number(d.updatedAt) || 0,

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { SyncState } from '../types';
 import { supabase } from '../lib/supabase';
+import { useI18n } from '../lib/I18nContext';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function AuthModal({
   onSignOut,
   onToast,
 }: AuthModalProps) {
+  const { t } = useI18n();
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +53,7 @@ export function AuthModal({
         setEmail('');
         setPassword('');
         onClose();
-        onToast('Вход выполнен!');
+        onToast(t.toastSignedIn);
       } else {
         const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
         if (error) throw error;
@@ -59,13 +61,13 @@ export function AuthModal({
           setEmail('');
           setPassword('');
           onClose();
-          onToast('Аккаунт создан и подключён!');
+          onToast(t.toastAccountCreated);
         } else {
-          setInfoMsg('Аккаунт создан! Проверьте почту для подтверждения email, затем войдите.');
+          setInfoMsg(t.accountCreatedConfirm);
         }
       }
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Ошибка авторизации');
+      setErrorMsg(err instanceof Error ? err.message : t.authErrorDefault);
     } finally {
       setLoading(false);
     }
@@ -83,11 +85,11 @@ export function AuthModal({
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
           <div>
             <h3 id="authModalTitle" className="text-sm font-bold">
-              Профиль и облако (Supabase)
+              {t.authHeader}
             </h3>
             <p className="text-[10px] text-slate-400">{syncState.message}</p>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label="Закрыть">
+          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label={t.close}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -99,13 +101,13 @@ export function AuthModal({
             <div className="space-y-3">
               <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-3.5">
                 <div className="text-[10px] uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-300 mb-0.5">
-                  Вы вошли как
+                  {t.loggedInAs}
                 </div>
                 <div className="text-sm font-bold text-slate-900 dark:text-white break-all">
                   {userEmail}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Карточек: {totalCards} (своих: {customCards}) • Сегодня: {dailyReviewedCount}/{dailyLimit}
+                  {t.authUserStats(totalCards, customCards, dailyReviewedCount, dailyLimit)}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -114,14 +116,14 @@ export function AuthModal({
                   onClick={onSyncNow}
                   className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition"
                 >
-                  Синхронизировать
+                  {t.syncBtn}
                 </button>
                 <button
                   type="button"
                   onClick={onSignOut}
                   className="px-4 py-2.5 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-200 rounded-xl font-bold transition"
                 >
-                  Выйти
+                  {t.signOutBtn}
                 </button>
               </div>
             </div>
@@ -141,7 +143,7 @@ export function AuthModal({
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  Вход
+                  {t.signInTab}
                 </button>
                 <button
                   type="button"
@@ -156,7 +158,7 @@ export function AuthModal({
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  Регистрация
+                  {t.signUpTab}
                 </button>
               </div>
 
@@ -177,7 +179,7 @@ export function AuthModal({
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    Пароль (минимум 6 символов)
+                    {t.passwordLabel}
                   </label>
                   <input
                     type="password"
@@ -207,7 +209,7 @@ export function AuthModal({
                     loading ? 'opacity-60' : ''
                   }`}
                 >
-                  {authMode === 'signin' ? 'Войти' : 'Создать аккаунт'}
+                  {authMode === 'signin' ? t.signInSubmit : t.signUpSubmit}
                 </button>
               </form>
             </div>

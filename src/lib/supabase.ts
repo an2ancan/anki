@@ -15,6 +15,8 @@ interface SupabaseDeckRow {
   deck_key: string;
   name: string;
   description: string;
+  orig_lang?: string;
+  learning_lang?: string;
   is_default: boolean;
   created_at?: string;
   updated_at: string;
@@ -25,10 +27,15 @@ interface SupabaseCardRow {
   user_id: string;
   deck_key?: string;
   card_key: string;
-  german: string;
-  russian: string;
-  example_de: string;
-  example_ru: string;
+  learning?: string;
+  orig?: string;
+  example_learning?: string;
+  example_orig?: string;
+  // Legacy fallback fields if migration hasn't run yet
+  german?: string;
+  russian?: string;
+  example_de?: string;
+  example_ru?: string;
   context: string;
   tags: string;
   is_custom: boolean;
@@ -44,6 +51,8 @@ function deckToRow(userId: string, deck: Deck): SupabaseDeckRow {
     deck_key: deck.deckKey,
     name: deck.name,
     description: deck.description || '',
+    orig_lang: deck.origLang || 'RU',
+    learning_lang: deck.learningLang || 'DE',
     is_default: Boolean(deck.isDefault),
     updated_at: new Date(deck.updatedAt || Date.now()).toISOString(),
   };
@@ -54,6 +63,8 @@ function rowToDeck(row: SupabaseDeckRow): Deck {
     deckKey: row.deck_key,
     name: row.name,
     description: row.description || '',
+    origLang: String(row.orig_lang || 'RU').toUpperCase(),
+    learningLang: String(row.learning_lang || 'DE').toUpperCase(),
     isDefault: Boolean(row.is_default || row.deck_key === DEFAULT_DECK_KEY),
     createdAt: row.created_at ? Date.parse(row.created_at) : Date.now(),
     updatedAt: row.updated_at ? Date.parse(row.updated_at) : Date.now(),
@@ -65,10 +76,10 @@ function cardToRow(userId: string, card: Card): SupabaseCardRow {
     user_id: userId,
     deck_key: card.deckKey || DEFAULT_DECK_KEY,
     card_key: card.cardKey,
-    german: card.german,
-    russian: card.russian,
-    example_de: card.example_de || '',
-    example_ru: card.example_ru || '',
+    learning: card.learning,
+    orig: card.orig,
+    example_learning: card.example_learning || '',
+    example_orig: card.example_orig || '',
     context: card.context || '',
     tags: card.tags || '',
     is_custom: Boolean(card.isCustom),
@@ -85,10 +96,10 @@ function rowToCard(row: SupabaseCardRow): Card {
     id: defaultMatch ? defaultMatch.id : row.id,
     deckKey: row.deck_key || DEFAULT_DECK_KEY,
     cardKey: row.card_key,
-    german: row.german,
-    russian: row.russian,
-    example_de: row.example_de,
-    example_ru: row.example_ru,
+    learning: row.learning ?? row.german ?? '',
+    orig: row.orig ?? row.russian ?? '',
+    example_learning: row.example_learning ?? row.example_de ?? '',
+    example_orig: row.example_orig ?? row.example_ru ?? '',
     context: row.context,
     tags: row.tags,
     isCustom: row.is_custom,

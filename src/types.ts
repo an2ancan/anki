@@ -17,6 +17,8 @@ export interface Deck {
   deckKey: string;
   name: string;
   description: string;
+  origLang: string;
+  learningLang: string;
   isDefault: boolean;
   createdAt: number;
   updatedAt: number;
@@ -26,10 +28,10 @@ export interface Card {
   id: number | string;
   deckKey: string;
   cardKey: string;
-  german: string;
-  russian: string;
-  example_de: string;
-  example_ru: string;
+  learning: string;
+  orig: string;
+  example_learning: string;
+  example_orig: string;
   context: string;
   tags: string;
   isCustom: boolean;
@@ -40,8 +42,8 @@ export interface Card {
 }
 
 export type Rating = 'again' | 'hard' | 'good' | 'easy';
-export type StudyMode = 'de-ru' | 'ru-de' | 'mixed';
-export type Direction = 'de-ru' | 'ru-de';
+export type StudyMode = 'learning-orig' | 'orig-learning' | 'mixed';
+export type Direction = 'learning-orig' | 'orig-learning';
 export type ProgressFilter = 'all' | 'mastered' | 'learning' | 'new' | 'custom';
 
 export interface QueueItem {

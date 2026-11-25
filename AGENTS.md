@@ -8,10 +8,11 @@ A local-first mobile web app for learning German vocabulary and grammar (B1–B2
 - **Documentation Language**: Keep all documentation (`README.md`, `ARCHITECTURE.md`, `AGENTS.md`) in **English**.
 
 ## Key Modules
-- `src/types.ts` — Core data types (`Deck`, `Card`, `QueueItem`, `DailyStats`, `SpeechSettings`).
-- `src/data/defaultCorpus.ts` — 70 built-in B1–B2 vocabulary & grammar cards (assigned to `default` deck).
+- `src/types.ts` — Language-agnostic data types (`Deck` with `origLang`/`learningLang`, `Card` with `learning`/`orig`/`example_learning`/`example_orig`, `QueueItem`, `DailyStats`, `SpeechSettings`).
+- `src/data/defaultCorpus.ts` — 70 built-in B1–B2 vocabulary & grammar cards (assigned to `default` deck, `origLang: 'RU'`, `learningLang: 'DE'`).
 - `src/lib/srs.ts` — SRS rating rules (`Again` = `-2 reps` & stays in queue; `Hard` = no progress change & 5-min removal; first `Good` = 10-min removal; subsequent `Good`/`Easy` = day intervals), time-priority queue with 10% random new-word reserve, two-sided `mixed` expansion.
 - `src/lib/stats.ts` — Streak calculation (`currentStreak`, `bestStreak`) and 90-day `reviewHistory`.
+- `src/lib/i18n.ts` & `src/lib/I18nContext.tsx` — Live RU/EN UI localization (`useI18n()`, persisted in `anki_ui_lang`).
 - `src/lib/storage.ts` — User-scoped `localStorage` persistence (`anki_guest_*` / `anki_u_<id>_*`), including `decks_v1` and `active_deck_key`.
 - `src/lib/audioCache.ts` & `src/lib/speech.ts` — Google Cloud TTS (default `de-DE-Wavenet-C` via Edge Function `bright-action`) with `IndexedDB` MP3 cache, `Web Speech API` fallback, and request-ID audio cancellation on card switch.
 - `src/lib/supabase.ts` — Supabase client and bidirectional merge sync (`user_profiles`, `user_decks`, `user_cards`).
@@ -20,5 +21,6 @@ A local-first mobile web app for learning German vocabulary and grammar (B1–B2
 
 ## Mandatory Agent Workflow (Run on Every Code Change)
 1. **Update `ARCHITECTURE.md`**: Whenever code, data models, SRS rules, sync flows, or components change, update `ARCHITECTURE.md` (in English) to stay 100% in sync with the implementation.
-2. **Run Linter & Build**: Always run `npm run lint` and `npm run build` after edits and fix all reported errors before finishing.
-3. **Update `AGENTS.md`**: Keep this `AGENTS.md` file updated whenever project structure, scripts, conventions, or core rules change.
+2. **Update `README.md`**: Whenever user-facing features, setup steps, migrations, or scripts change, update `README.md` (in English) accordingly.
+3. **Run Linter & Build**: Always run `npm run lint` and `npm run build` after edits and fix all reported errors before finishing.
+4. **Update `AGENTS.md`**: Keep this `AGENTS.md` file updated whenever project structure, scripts, conventions, or core rules change.

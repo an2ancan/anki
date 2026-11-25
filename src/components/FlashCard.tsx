@@ -1,8 +1,11 @@
 import type { Card, Direction, Rating } from '../types';
 import { getRatingPreviewLabels } from '../lib/srs';
+import { useI18n } from '../lib/I18nContext';
 
 interface FlashCardProps {
   card: Card;
+  origLang: string;
+  learningLang: string;
   direction: Direction;
   isFlipped: boolean;
   onFlip: () => void;
@@ -14,6 +17,8 @@ interface FlashCardProps {
 
 export function FlashCard({
   card,
+  origLang,
+  learningLang,
   direction,
   isFlipped,
   onFlip,
@@ -22,11 +27,16 @@ export function FlashCard({
   onSpeakTerm,
   onSpeakExample,
 }: FlashCardProps) {
-  const promptText = direction === 'de-ru' ? card.german : card.russian;
-  const promptExample = direction === 'de-ru' ? card.example_de : card.example_ru;
-  const answerText = direction === 'de-ru' ? card.russian : card.german;
-  const answerExample = direction === 'de-ru' ? card.example_ru : card.example_de;
-  const labels = getRatingPreviewLabels(card);
+  const { locale, t } = useI18n();
+  const promptText = direction === 'learning-orig' ? card.learning : card.orig;
+  const promptExample = direction === 'learning-orig' ? card.example_learning : card.example_orig;
+  const answerText = direction === 'learning-orig' ? card.orig : card.learning;
+  const answerExample = direction === 'learning-orig' ? card.example_orig : card.example_learning;
+  const labels = getRatingPreviewLabels(card, locale);
+  const directionBadge =
+    direction === 'learning-orig'
+      ? `learning (${learningLang}) → orig (${origLang})`
+      : `orig (${origLang}) → learning (${learningLang})`;
 
   return (
     <div className="flex-1 flex flex-col justify-between overflow-hidden">
@@ -38,11 +48,11 @@ export function FlashCard({
         className="flex-1 flex flex-col justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-md active:scale-[0.99] transition duration-150 cursor-pointer overflow-y-auto"
       >
         <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-          <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-            {direction === 'de-ru' ? 'DE → RU' : 'RU → DE'}
+          <span className="text-[10px] font-black tracking-wide px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            {directionBadge}
           </span>
           <span className="text-[11px] text-slate-400 font-medium truncate max-w-[190px]">
-            {card.context || (card.isCustom ? 'Моя карточка' : '')}
+            {card.context || (card.isCustom ? t.myCardBadge : '')}
           </span>
           <button
             type="button"
@@ -51,7 +61,7 @@ export function FlashCard({
               onSpeakAll();
             }}
             className="p-1.5 text-blue-600 dark:text-blue-400 rounded-full hover:bg-blue-50 dark:hover:bg-slate-800 transition"
-            title="Произнести"
+            title={t.speakTitle}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -75,7 +85,7 @@ export function FlashCard({
           )}
           {!isFlipped && (
             <div className="mt-4 text-[10px] text-slate-400 font-semibold uppercase tracking-wider animate-pulse">
-              Нажмите на карточку для ответа
+              {t.tapToFlip}
             </div>
           )}
         </div>
@@ -92,7 +102,9 @@ export function FlashCard({
         )}
 
         <div className="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <span>Повторений: {card.reps || 0}</span>
+          <span>
+            {t.repsLabel}: {card.reps || 0}
+          </span>
           <span className="truncate max-w-[140px]">
             {card.tags ? `#${card.tags.split(' ')[0]}` : ''}
           </span>
@@ -110,7 +122,7 @@ export function FlashCard({
               <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
               </svg>
-              Слово
+              {t.wordBtn}
             </button>
             <button
               type="button"
@@ -120,7 +132,7 @@ export function FlashCard({
               <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
               </svg>
-              Пример
+              {t.exampleBtn}
             </button>
           </div>
         )}
@@ -131,7 +143,7 @@ export function FlashCard({
             onClick={onFlip}
             className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-500/25 active:scale-95 transition flex items-center justify-center gap-2"
           >
-            Показать ответ
+            {t.showAnswer}
           </button>
         ) : (
           <div className="grid grid-cols-4 gap-1.5 w-full">
@@ -140,7 +152,7 @@ export function FlashCard({
               onClick={() => onRate('again')}
               className="h-12 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-rose-300/40"
             >
-              <span>Снова</span>
+              <span>{t.rateAgain}</span>
               <span className="text-[9px] opacity-70">{labels.again}</span>
             </button>
             <button
@@ -148,7 +160,7 @@ export function FlashCard({
               onClick={() => onRate('hard')}
               className="h-12 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-amber-300/40"
             >
-              <span>Трудно</span>
+              <span>{t.rateHard}</span>
               <span className="text-[9px] opacity-70">{labels.hard}</span>
             </button>
             <button
@@ -156,7 +168,7 @@ export function FlashCard({
               onClick={() => onRate('good')}
               className="h-12 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-blue-300/40"
             >
-              <span>Хорошо</span>
+              <span>{t.rateGood}</span>
               <span className="text-[9px] opacity-70">{labels.good}</span>
             </button>
             <button
@@ -164,7 +176,7 @@ export function FlashCard({
               onClick={() => onRate('easy')}
               className="h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-200 font-bold text-xs flex flex-col items-center justify-center active:scale-95 transition border border-emerald-300/40"
             >
-              <span>Легко</span>
+              <span>{t.rateEasy}</span>
               <span className="text-[9px] opacity-70">{labels.easy}</span>
             </button>
           </div>

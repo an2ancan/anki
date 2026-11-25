@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Card, Deck, SpeechSettings, TtsEngine } from '../types';
 import { GOOGLE_DE_VOICES, rankVoice } from '../lib/speech';
 import { clearAudioCache, getAudioCacheCount } from '../lib/audioCache';
+import { useI18n } from '../lib/I18nContext';
 import { InfoTip } from './InfoTip';
 
 interface SettingsModalProps {
@@ -43,6 +44,7 @@ export function SettingsModal({
   onImportCsv,
   onExportCsv,
 }: SettingsModalProps) {
+  const { locale, setLocale, t } = useI18n();
   const [limitInput, setLimitInput] = useState(String(dailyLimit));
   const [unknownLimitInput, setUnknownLimitInput] = useState(String(maxActiveUnknown));
   const [csvDeckKey, setCsvDeckKey] = useState(activeDeckKey);
@@ -65,8 +67,8 @@ export function SettingsModal({
   const filteredCustom = query
     ? customCards.filter(
         (c) =>
-          c.german.toLowerCase().includes(query) ||
-          c.russian.toLowerCase().includes(query) ||
+          c.learning.toLowerCase().includes(query) ||
+          c.orig.toLowerCase().includes(query) ||
           c.tags.toLowerCase().includes(query)
       )
     : customCards;
@@ -80,8 +82,8 @@ export function SettingsModal({
     >
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[88dvh] overflow-hidden">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-sm font-bold">Настройки и словарь</h3>
-          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label="Закрыть">
+          <h3 className="text-sm font-bold">{t.settingsHeader}</h3>
+          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label={t.close}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -89,12 +91,41 @@ export function SettingsModal({
         </div>
 
         <div className="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+          {/* UI Language Switcher */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+            <div className="font-bold text-slate-800 dark:text-slate-200">{t.interfaceLang}</div>
+            <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setLocale('ru')}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
+                  locale === 'ru'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                Русский
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale('en')}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
+                  locale === 'en'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                English
+              </button>
+            </div>
+          </div>
+
           {/* Voice Settings */}
           <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
             <div className="font-bold text-slate-800 dark:text-slate-200 flex items-start justify-between gap-2">
               <div className="flex-1">
-                <span>Голос и произношение</span>
-                <InfoTip text="«Google Cloud TTS» использует естественные нейронные голоса Google (озвучка кэшируется в IndexedDB браузера и повторно не тратит лимит). «Системный голос» работает офлайн через встроенный синтезатор вашего устройства." />
+                <span>{t.voiceSection}</span>
+                <InfoTip text={t.voiceTip} />
               </div>
               <label className="inline-flex items-center gap-1 font-normal cursor-pointer text-[11px] flex-none">
                 <input
@@ -103,10 +134,10 @@ export function SettingsModal({
                   onChange={(e) => onUpdateSpeech({ ...speechSettings, autoPlay: e.target.checked })}
                   className="rounded text-blue-600"
                 />
-                <span>Автоозвучка</span>
+                <span>{t.autoPlay}</span>
               </label>
             </div>
-            {/* Engine Switcher */}
+
             <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
               {(['system', 'google'] as TtsEngine[]).map((eng) => (
                 <button
@@ -119,16 +150,14 @@ export function SettingsModal({
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  {eng === 'system' ? 'Системный голос' : 'Google Cloud TTS'}
+                  {eng === 'system' ? t.engineSystem : t.engineGoogle}
                 </button>
               ))}
             </div>
 
             {speechSettings.engine === 'system' ? (
               <div>
-                <label className="text-[10px] text-slate-400 block mb-1">
-                  Выбор системного голоса (приоритет отдан нейросетям):
-                </label>
+                <label className="text-[10px] text-slate-400 block mb-1">{t.selectSystemVoice}</label>
                 <select
                   value={speechSettings.voiceName}
                   onChange={(e) => onUpdateSpeech({ ...speechSettings, voiceName: e.target.value })}
@@ -145,9 +174,7 @@ export function SettingsModal({
             ) : (
               <div className="space-y-2">
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1">
-                    Голос Google Cloud TTS (онлайн для ваших карточек + кэш):
-                  </label>
+                  <label className="text-[10px] text-slate-400 block mb-1">{t.selectGoogleVoice}</label>
                   <select
                     value={speechSettings.googleVoiceName}
                     onChange={(e) =>
@@ -163,21 +190,19 @@ export function SettingsModal({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1">
-                    Свой API Key (необязательно — если пусто, используется общий серверный ключ Supabase после входа):
-                  </label>
+                  <label className="text-[10px] text-slate-400 block mb-1">{t.personalKeyLabel}</label>
                   <input
                     type="password"
                     value={speechSettings.googleApiKey}
                     onChange={(e) =>
                       onUpdateSpeech({ ...speechSettings, googleApiKey: e.target.value })
                     }
-                    placeholder="Оставьте пустым для общего ключа..."
+                    placeholder={t.personalKeyPlaceholder}
                     className="w-full p-2 font-mono text-[11px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl"
                   />
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
-                  <span>В кэше браузера: {cacheCount} фраз</span>
+                  <span>{t.cachedPhrases(cacheCount)}</span>
                   {cacheCount > 0 && (
                     <button
                       type="button"
@@ -187,16 +212,17 @@ export function SettingsModal({
                       }}
                       className="text-rose-600 dark:text-rose-400 font-semibold hover:underline"
                     >
-                      Очистить кэш
+                      {t.clearCache}
                     </button>
                   )}
                 </div>
               </div>
             )}
+
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">
-                  Скорость: <span>{speechSettings.rate.toFixed(2)}x</span>
+                  {t.speedLabel}: <span>{speechSettings.rate.toFixed(2)}x</span>
                 </label>
                 <input
                   type="range"
@@ -212,7 +238,7 @@ export function SettingsModal({
               </div>
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">
-                  Тон (Pitch): <span>{speechSettings.pitch.toFixed(2)}</span>
+                  {t.pitchLabel}: <span>{speechSettings.pitch.toFixed(2)}</span>
                 </label>
                 <input
                   type="range"
@@ -232,7 +258,7 @@ export function SettingsModal({
               onClick={onTestVoice}
               className="w-full py-1.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded-lg text-xs font-semibold"
             >
-              Прослушать образец голоса
+              {t.testVoiceBtn}
             </button>
           </div>
 
@@ -240,10 +266,10 @@ export function SettingsModal({
           <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
             <div className="flex-1">
               <div className="font-bold text-slate-800 dark:text-slate-200">
-                Дневной лимит показов:
-                <InfoTip text="Максимальное число оценок карточек за один день. После достижения цели дневная норма считается выполненной, но вы всегда можете продолжить кнопкой «+20 карточек»." />
+                {t.dailyLimitTitle}
+                <InfoTip text={t.dailyLimitTip} />
               </div>
-              <div className="text-[10px] text-slate-400">Рекомендуется 60 для баланса</div>
+              <div className="text-[10px] text-slate-400">{t.dailyLimitHint}</div>
             </div>
             <div className="flex items-center gap-2 flex-none">
               <input
@@ -272,12 +298,10 @@ export function SettingsModal({
           <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
             <div className="flex-1">
               <div className="font-bold text-slate-800 dark:text-slate-200">
-                Макс. неизвестных слов одновременно:
-                <InfoTip text="Сколько новых и сложных слов одновременно находится в активной очереди (сохраняется в Supabase). В режиме «Микс» каждое слово показывается с обеих сторон (DE→RU и RU→DE), и новое слово добавляется только после прохождения обеих сторон." />
+                {t.maxUnknownTitle}
+                <InfoTip text={t.maxUnknownTip} />
               </div>
-              <div className="text-[10px] text-slate-400">
-                Новые + слова на повторении сегодня (по умолчанию 5)
-              </div>
+              <div className="text-[10px] text-slate-400">{t.maxUnknownHint}</div>
             </div>
             <div className="flex items-center gap-2 flex-none">
               <input
@@ -306,30 +330,28 @@ export function SettingsModal({
           <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="font-bold flex-1">
-                Мои карточки ({customCards.length})
-                <InfoTip text="Слова, которые вы добавили вручную (через кнопку «+») или импортировали из CSV. Они синхронизируются с вашим аккаунтом Supabase и доступны на всех устройствах." />
+                {t.myCustomCards} ({customCards.length})
+                <InfoTip text={t.myCustomCardsTip} />
               </div>
               <button
                 type="button"
                 onClick={onOpenAddCard}
                 className="px-2 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-bold flex-none"
               >
-                + Добавить
+                {t.addBtnShort}
               </button>
             </div>
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Поиск по моим карточкам..."
+              placeholder={t.searchMyCardsPlaceholder}
               className="w-full text-xs p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-blue-500"
             />
             <div className="max-h-40 overflow-y-auto space-y-1.5">
               {filteredCustom.length === 0 ? (
                 <div className="text-[11px] text-slate-400 text-center py-3">
-                  {customCards.length === 0
-                    ? 'Вы ещё не добавили своих карточек.'
-                    : 'Ничего не найдено.'}
+                  {customCards.length === 0 ? t.noCustomCardsYet : t.nothingFound}
                 </div>
               ) : (
                 filteredCustom
@@ -342,10 +364,10 @@ export function SettingsModal({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="font-bold text-slate-800 dark:text-slate-100 truncate">
-                          {card.german}
+                          {card.learning}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                          {card.russian}
+                          {card.orig}
                         </div>
                       </div>
                       <button
@@ -353,7 +375,7 @@ export function SettingsModal({
                         onClick={() => onDeleteCustomCard(card.cardKey)}
                         className="px-2 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950 rounded-lg transition flex-none"
                       >
-                        Удалить
+                        {t.delete}
                       </button>
                     </div>
                   ))
@@ -364,8 +386,8 @@ export function SettingsModal({
           {/* CSV Import / Export */}
           <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
             <div className="font-bold">
-              Импорт / Экспорт CSV
-              <InfoTip text="Массовое добавление карточек списком в выбранную колоду (каждая строка: Немецкий;Русский;Пример DE;Пример RU;Контекст;Теги). Кнопка «Экспорт» скачивает карточки выбранной колоды в CSV-файл." />
+              {t.csvSection}
+              <InfoTip text={t.csvTip} />
             </div>
             <select
               value={csvDeckKey}
@@ -374,7 +396,7 @@ export function SettingsModal({
             >
               {decks.map((d) => (
                 <option key={d.deckKey} value={d.deckKey}>
-                  Колода: {d.name}
+                  {t.deckPrefix}: {d.name}
                 </option>
               ))}
             </select>
@@ -382,7 +404,7 @@ export function SettingsModal({
               rows={4}
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
-              placeholder="German;Russian;Example_DE;Example_RU;Context;Tags"
+              placeholder="Learning;Orig;Example_Learning;Example_Orig;Context;Tags"
               className="w-full font-mono text-[11px] p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950"
             />
             <div className="flex gap-2">
@@ -396,14 +418,14 @@ export function SettingsModal({
                 }}
                 className="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold"
               >
-                Добавить
+                {t.importAddBtn}
               </button>
               <button
                 type="button"
                 onClick={() => onExportCsv(csvDeckKey)}
                 className="flex-1 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold"
               >
-                Экспорт
+                {t.exportBtn}
               </button>
             </div>
           </div>

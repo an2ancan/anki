@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Card, ProgressFilter } from '../types';
 import { formatNextReview, getEndOfTodayMs } from '../lib/srs';
+import { useI18n } from '../lib/I18nContext';
 
 interface ProgressModalProps {
   isOpen: boolean;
@@ -13,14 +14,6 @@ interface ProgressModalProps {
   onResetCard: (cardKey: string) => void;
 }
 
-const FILTER_LABELS: Record<ProgressFilter, string> = {
-  all: 'Все',
-  mastered: 'Выучены',
-  learning: 'Учим',
-  new: 'Не выучены',
-  custom: 'Мои',
-};
-
 export function ProgressModal({
   isOpen,
   onClose,
@@ -31,9 +24,18 @@ export function ProgressModal({
   onPracticeCard,
   onResetCard,
 }: ProgressModalProps) {
+  const { locale, t } = useI18n();
   const [search, setSearch] = useState('');
 
   if (!isOpen) return null;
+
+  const filterLabels: Record<ProgressFilter, string> = {
+    all: t.filterAll,
+    mastered: t.filterMastered,
+    learning: t.filterLearning,
+    new: t.filterNew,
+    custom: t.filterCustom,
+  };
 
   const total = deck.length;
   const masteredCards = deck.filter((c) => c.reps >= 3);
@@ -64,8 +66,8 @@ export function ProgressModal({
   if (query) {
     list = list.filter(
       (c) =>
-        c.german.toLowerCase().includes(query) ||
-        c.russian.toLowerCase().includes(query) ||
+        c.learning.toLowerCase().includes(query) ||
+        c.orig.toLowerCase().includes(query) ||
         c.tags.toLowerCase().includes(query) ||
         c.context.toLowerCase().includes(query)
     );
@@ -85,14 +87,13 @@ export function ProgressModal({
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
           <div>
             <h3 id="progressModalTitle" className="text-sm font-bold">
-              Прогресс обучения
+              {t.progressTitle}
             </h3>
             <p className="text-[10px] text-slate-400">
-              Всего: {total} • Выучено: {masteredCards.length} ({masteredPct}%) • Осталось:{' '}
-              {total - masteredCards.length}
+              {t.progressSubtitle(total, masteredCards.length, masteredPct)}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label="Закрыть">
+          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label={t.close}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -110,7 +111,7 @@ export function ProgressModal({
                 {masteredCards.length}
               </div>
               <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
-                Выучено
+                {t.masteredLabel}
               </div>
             </button>
             <button
@@ -122,7 +123,7 @@ export function ProgressModal({
                 {learningCards.length}
               </div>
               <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">
-                В процессе
+                {t.inProgressLabel}
               </div>
             </button>
             <button
@@ -134,17 +135,15 @@ export function ProgressModal({
                 {newCards.length}
               </div>
               <div className="text-[10px] font-semibold text-blue-700 dark:text-blue-300">
-                Не выучено
+                {t.unlearnedLabel}
               </div>
             </button>
           </div>
 
           <div>
             <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mb-1">
-              <span>
-                Освоено: {masteredPct}% ({masteredCards.length}/{total})
-              </span>
-              <span>К повторению сегодня: {dueCount}</span>
+              <span>{t.masteredPctLabel(masteredPct, masteredCards.length, total)}</span>
+              <span>{t.dueTodayLabel(dueCount)}</span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
               <div className="bg-emerald-500 h-full transition-all duration-300" style={{ width: `${masteredPct}%` }} />
@@ -167,7 +166,7 @@ export function ProgressModal({
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
-                {FILTER_LABELS[f]} ({counts[f]})
+                {filterLabels[f]} ({counts[f]})
               </button>
             ))}
           </div>
@@ -176,16 +175,14 @@ export function ProgressModal({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Поиск слова, перевода или тега..."
+            placeholder={t.searchProgressPlaceholder}
             className="w-full text-xs p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-blue-500"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-1.5 pr-0.5 text-xs">
           {sorted.length === 0 ? (
-            <div className="text-center text-slate-400 py-8 text-xs">
-              В этой категории пока нет карточек.
-            </div>
+            <div className="text-center text-slate-400 py-8 text-xs">{t.emptyCategory}</div>
           ) : (
             sorted.map((card) => (
               <div
@@ -196,38 +193,38 @@ export function ProgressModal({
                   <div className="flex items-center gap-1.5 mb-0.5">
                     {card.reps >= 3 ? (
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex-none">
-                        Выучено ×{card.reps}
+                        {t.masteredLabel} ×{card.reps}
                       </span>
                     ) : card.reps > 0 ? (
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex-none">
-                        Учим ×{card.reps}
+                        {t.learningLabel} ×{card.reps}
                       </span>
                     ) : (
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex-none">
-                        Новая
+                        {t.badgeNew}
                       </span>
                     )}
                     {card.isCustom && (
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex-none">
-                        Моя
+                        {t.badgeCustom}
                       </span>
                     )}
                     <span className="text-[10px] text-slate-400 truncate">
-                      {formatNextReview(card)}
+                      {formatNextReview(card, locale)}
                     </span>
                   </div>
-                  <div className="font-bold text-slate-900 dark:text-white truncate">{card.german}</div>
+                  <div className="font-bold text-slate-900 dark:text-white truncate">{card.learning}</div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {card.russian}
+                    {card.orig}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 flex-none">
                   <button
                     type="button"
-                    onClick={() => onSpeak(card.german)}
+                    onClick={() => onSpeak(card.learning)}
                     className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition"
-                    title="Озвучить"
+                    title={t.speakTitle}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -243,14 +240,14 @@ export function ProgressModal({
                     onClick={() => onPracticeCard(card.cardKey)}
                     className="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition"
                   >
-                    Учить
+                    {t.studyBtn}
                   </button>
                   {card.reps > 0 && (
                     <button
                       type="button"
                       onClick={() => onResetCard(card.cardKey)}
                       className="px-1.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950 dark:hover:text-rose-300 transition"
-                      title="Сбросить прогресс карточки"
+                      title={t.resetCardTitle}
                     >
                       ↺
                     </button>

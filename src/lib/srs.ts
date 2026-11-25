@@ -1,5 +1,6 @@
 import { DEFAULT_DECK_KEY, type Card, type Deck, type QueueItem, type Rating, type StudyMode } from '../types';
 import { DEFAULT_CORPUS } from '../data/defaultCorpus';
+import { translations, type Locale } from './i18n';
 
 export const MINUTE_MS = 60 * 1000;
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -10,7 +11,9 @@ export function createDefaultDeckMeta(): Deck {
   return {
     deckKey: DEFAULT_DECK_KEY,
     name: 'Deutsch B1–B2',
-    description: 'Встроенный словарь и грамматика B1–B2',
+    description: 'Built-in B1–B2 vocabulary & grammar',
+    origLang: 'RU',
+    learningLang: 'DE',
     isDefault: true,
     createdAt: 0,
     updatedAt: 0,
@@ -31,7 +34,15 @@ export function generateCustomKey(): string {
   return `custom_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function normalizeCard(card: Partial<Card> & { id?: number | string }, fallbackIndex = 0): Card {
+type LegacyCardInput = Partial<Card> & {
+  id?: number | string;
+  german?: string;
+  russian?: string;
+  example_de?: string;
+  example_ru?: string;
+};
+
+export function normalizeCard(card: LegacyCardInput, fallbackIndex = 0): Card {
   const isDefaultId =
     typeof card.id === 'number' &&
     card.id >= 1 &&
@@ -42,10 +53,10 @@ export function normalizeCard(card: Partial<Card> & { id?: number | string }, fa
     id: card.id ?? Date.now() + fallbackIndex,
     deckKey: String(card.deckKey || DEFAULT_DECK_KEY).trim() || DEFAULT_DECK_KEY,
     cardKey: card.cardKey || (isDefaultId ? `default_${card.id}` : generateCustomKey()),
-    german: String(card.german || '').trim(),
-    russian: String(card.russian || '').trim(),
-    example_de: String(card.example_de || '').trim(),
-    example_ru: String(card.example_ru || '').trim(),
+    learning: String(card.learning ?? card.german ?? '').trim(),
+    orig: String(card.orig ?? card.russian ?? '').trim(),
+    example_learning: String(card.example_learning ?? card.example_de ?? '').trim(),
+    example_orig: String(card.example_orig ?? card.example_ru ?? '').trim(),
     context: String(card.context || '').trim(),
     tags: String(card.tags || '').trim(),
     isCustom: Boolean(card.isCustom ?? !isDefaultId),
@@ -77,19 +88,20 @@ export function isUnknownCard(card: Card, now = Date.now()): boolean {
   return false;
 }
 
-export function getRatingPreviewLabels(card: Card): Record<Rating, string> {
+export function getRatingPreviewLabels(card: Card, locale: Locale = 'ru'): Record<Rating, string> {
+  const t = translations[locale];
   const baseInterval = card.interval || 1;
   const goodLabel =
     card.reps === 0
-      ? `${GOOD_FIRST_MINUTES} мин`
-      : `${card.interval > 0 ? Math.max(2, Math.round(card.interval * 2.0)) : 1} дн.`;
+      ? `${GOOD_FIRST_MINUTES} ${t.unitMin}`
+      : `${card.interval > 0 ? Math.max(2, Math.round(card.interval * 2.0)) : 1} ${t.unitDay}`;
   const easyDays = Math.max(4, Math.round(baseInterval * 2.8));
 
   return {
-    again: '1 мин',
-    hard: `${HARD_COOLDOWN_MINUTES} мин`,
+    again: `1 ${t.unitMin}`,
+    hard: `${HARD_COOLDOWN_MINUTES} ${t.unitMin}`,
     good: goodLabel,
-    easy: `${easyDays} дн.`,
+    easy: `${easyDays} ${t.unitDay}`,
   };
 }
 
@@ -247,11 +259,11 @@ export function expandCardsToQueueItems(cards: Card[], mode: StudyMode): QueueIt
   }
   const firstPass: QueueItem[] = cards.map((card, i) => ({
     card,
-    direction: i % 2 === 0 ? 'de-ru' : 'ru-de',
+    direction: i % 2 === 0 ? 'learning-orig' : 'orig-learning',
   }));
   const secondPass: QueueItem[] = cards.map((card, i) => ({
     card,
-    direction: i % 2 === 0 ? 'ru-de' : 'de-ru',
+    direction: i % 2 === 0 ? 'orig-learning' : 'learning-orig',
   }));
   return [...firstPass, ...secondPass];
 }
@@ -289,13 +301,14 @@ export function buildSessionQueue(
   return { queue: items.slice(0, sessionCap), activeKeys };
 }
 
-export function formatNextReview(card: Card, now = Date.now()): string {
-  if (!card.reps && !card.nextReview) return 'Ещё не начато';
-  if (!card.nextReview || card.nextReview <= now) return 'Повторить сейчас';
+export function formatNextReview(card: Card, locale: Locale = 'ru', now = Date.now()): string {
+  const t = translations[locale];
+  if (!card.reps && !card.nextReview) return t.notStarted;
+  if (!card.nextReview || card.nextReview <= now) return t.reviewNow;
   const diffMinutes = Math.ceil((card.nextReview - now) / MINUTE_MS);
-  if (diffMinutes < 60) return `Через ${diffMinutes} мин.`;
+  if (diffMinutes < 60) return t.inTime(diffMinutes, t.unitMin);
   const diffHours = Math.ceil(diffMinutes / 60);
-  if (diffHours < 24) return `Через ${diffHours} ч.`;
+  if (diffHours < 24) return t.inTime(diffHours, t.unitHour);
   const diffDays = Math.ceil(diffHours / 24);
-  return `Через ${diffDays} дн.`;
+  return t.inTime(diffDays, t.unitDay);
 }
