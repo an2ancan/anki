@@ -14,7 +14,6 @@ export interface StarterPair {
 
 export interface LevelInfo {
   level: CefrLevel;
-  wordCount: number;
   descRu: string;
   descEn: string;
 }
@@ -22,25 +21,21 @@ export interface LevelInfo {
 export const STARTER_LEVELS: readonly LevelInfo[] = [
   {
     level: 'A1-A2',
-    wordCount: 199,
     descRu: 'Базовая лексика: дом, еда, транспорт, работа, числа и время',
     descEn: 'Core essentials: home, food, travel, work, time & daily verbs',
   },
   {
     level: 'B1',
-    wordCount: 200,
     descRu: 'Повседневное общение, учёба, планы, мнения и союзы',
     descEn: 'Everyday communication, study, opinions, plans & connectors',
   },
   {
     level: 'B2',
-    wordCount: 180,
     descRu: 'Работа, бизнес, глаголы с предлогами, NVV и сложные союзы',
     descEn: 'Work, business, prepositional verbs, NVV & complex connectors',
   },
   {
     level: 'C1',
-    wordCount: 140,
     descRu: 'Академическая, деловая и аналитическая лексика',
     descEn: 'Academic, formal, analytical & nuanced vocabulary',
   },
@@ -96,6 +91,31 @@ function parseCsvToTuples(csvContent: string): CsvTuple[] {
     ]);
   }
   return tuples;
+}
+
+/**
+ * Fetches starter deck word counts from Supabase (`public.catalog_corpora`).
+ */
+export async function fetchStarterCatalogCounts(): Promise<Partial<Record<CefrLevel, number>>> {
+  const { data, error } = await supabase
+    .from('catalog_corpora')
+    .select('level, word_count');
+
+  if (error || !Array.isArray(data)) {
+    return {};
+  }
+
+  const counts: Partial<Record<CefrLevel, number>> = {};
+  for (const row of data) {
+    if (
+      typeof row.level === 'string' &&
+      typeof row.word_count === 'number' &&
+      row.word_count > 0
+    ) {
+      counts[row.level as CefrLevel] = row.word_count;
+    }
+  }
+  return counts;
 }
 
 /**

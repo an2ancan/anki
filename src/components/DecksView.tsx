@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { Card, Deck } from '../types';
 import {
   STARTER_LEVELS,
   STARTER_PAIRS,
+  fetchStarterCatalogCounts,
   type CatalogLang,
   type CefrLevel,
 } from '../data/starterDecks';
@@ -51,6 +52,17 @@ export function DecksView({
   const [pairFilter, setPairFilter] = useState<'all' | 'ru-en' | 'ru-de' | 'en-de'>('all');
   const [levelFilter, setLevelFilter] = useState<'all' | CefrLevel>('all');
   const [loadingPresetId, setLoadingPresetId] = useState<string | null>(null);
+  const [catalogCounts, setCatalogCounts] = useState<Partial<Record<CefrLevel, number>>>({});
+
+  useEffect(() => {
+    let active = true;
+    fetchStarterCatalogCounts().then((counts) => {
+      if (active) setCatalogCounts(counts);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleCreate = (e: FormEvent) => {
     e.preventDefault();
@@ -228,9 +240,11 @@ export function DecksView({
                             <span className="font-bold text-slate-900 dark:text-white text-[11px]">
                               {presetName}
                             </span>
-                            <span className="text-[10px] text-slate-400">
-                              • {t.starterWordsCount(info.wordCount)}
-                            </span>
+                            {typeof catalogCounts[level] === 'number' && catalogCounts[level]! > 0 && (
+                              <span className="text-[10px] text-slate-400">
+                                • {t.starterWordsCount(catalogCounts[level]!)}
+                              </span>
+                            )}
                           </div>
                           <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                             {desc}
