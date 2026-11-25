@@ -1,5 +1,5 @@
 import { DEFAULT_DECK_KEY, type Card, type DailyStats, type Deck, type SpeechSettings } from '../types';
-import { createDefaultDeckMeta, getDefaultDeck, normalizeCard } from './srs';
+import { normalizeCard } from './srs';
 
 export function getTodayKey(): string {
   const d = new Date();
@@ -19,16 +19,16 @@ export function loadLocalDeck(userId: string | null): Card[] {
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((c, idx) => normalizeCard(c, idx));
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((c, idx) => normalizeCard(c, idx))
+          .filter((c) => c.isCustom || c.reps > 0 || c.updatedAt > 0);
       }
     } catch {
-      // Fallback to default corpus
+      // Fallback to empty deck
     }
   }
-  const defaults = getDefaultDeck();
-  saveLocalDeck(userId, defaults);
-  return defaults;
+  return [];
 }
 
 export function saveLocalDeck(userId: string | null, deck: Card[]): void {
@@ -41,29 +41,25 @@ export function loadLocalDecks(userId: string | null): Deck[] {
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const list: Deck[] = parsed.map((d) => ({
-          deckKey: String(d.deckKey || DEFAULT_DECK_KEY),
-          name: String(d.name || 'Deck'),
-          description: String(d.description || ''),
-          origLang: String(d.origLang || 'RU').toUpperCase(),
-          learningLang: String(d.learningLang || 'DE').toUpperCase(),
-          isDefault: Boolean(d.isDefault || d.deckKey === DEFAULT_DECK_KEY),
-          createdAt: Number(d.createdAt) || 0,
-          updatedAt: Number(d.updatedAt) || 0,
-        }));
-        if (!list.some((d) => d.deckKey === DEFAULT_DECK_KEY)) {
-          list.unshift(createDefaultDeckMeta());
-        }
-        return list;
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((d) => !(d.isDefault && Number(d.updatedAt || 0) === 0))
+          .map((d) => ({
+            deckKey: String(d.deckKey || DEFAULT_DECK_KEY),
+            name: String(d.name || 'Deck'),
+            description: String(d.description || ''),
+            origLang: String(d.origLang || 'RU').toUpperCase(),
+            learningLang: String(d.learningLang || 'DE').toUpperCase(),
+            isDefault: Boolean(d.isDefault),
+            createdAt: Number(d.createdAt) || 0,
+            updatedAt: Number(d.updatedAt) || 0,
+          }));
       }
     } catch {
       // Fallback below
     }
   }
-  const initial = [createDefaultDeckMeta()];
-  saveLocalDecks(userId, initial);
-  return initial;
+  return [];
 }
 
 export function saveLocalDecks(userId: string | null, decks: Deck[]): void {
@@ -112,7 +108,7 @@ export function loadLocalDailyStats(userId: string | null): DailyStats {
     reviewHistory = {};
   }
 
-  const activeDeckKey = localStorage.getItem(`${prefix}active_deck_key`) || DEFAULT_DECK_KEY;
+  const activeDeckKey = localStorage.getItem(`${prefix}active_deck_key`) || '';
   const currentStreak = parseInt(localStorage.getItem(`${prefix}current_streak`) || '0', 10);
   const bestStreak = parseInt(localStorage.getItem(`${prefix}best_streak`) || '0', 10);
   const lastStudyDate = localStorage.getItem(`${prefix}last_study_date`) || '';
@@ -135,7 +131,7 @@ export function saveLocalDailyStats(userId: string | null, stats: DailyStats): v
   localStorage.setItem(`${prefix}daily_limit`, String(stats.dailyLimit));
   localStorage.setItem(`${prefix}today_date`, getTodayKey());
   localStorage.setItem(`${prefix}today_count`, String(stats.dailyReviewedCount));
-  localStorage.setItem(`${prefix}active_deck_key`, stats.activeDeckKey || DEFAULT_DECK_KEY);
+  localStorage.setItem(`${prefix}active_deck_key`, stats.activeDeckKey || '');
   localStorage.setItem(`${prefix}max_active_unknown`, String(stats.maxActiveUnknown));
   localStorage.setItem(`${prefix}active_card_keys`, JSON.stringify(stats.activeCardKeys || []));
   localStorage.setItem(`${prefix}current_streak`, String(stats.currentStreak || 0));

@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { DEFAULT_DECK_KEY, type Card, type DailyStats, type Deck, type SpeechSettings } from '../types';
-import { DEFAULT_CORPUS } from '../data/defaultCorpus';
-import { createDefaultDeckMeta, getDefaultDeck, normalizeCard } from './srs';
+import { normalizeCard } from './srs';
 import { mergeReviewHistories } from './stats';
 import { getTodayKey } from './storage';
 
@@ -65,7 +64,7 @@ function rowToDeck(row: SupabaseDeckRow): Deck {
     description: row.description || '',
     origLang: String(row.orig_lang || 'RU').toUpperCase(),
     learningLang: String(row.learning_lang || 'DE').toUpperCase(),
-    isDefault: Boolean(row.is_default || row.deck_key === DEFAULT_DECK_KEY),
+    isDefault: Boolean(row.is_default),
     createdAt: row.created_at ? Date.parse(row.created_at) : Date.now(),
     updatedAt: row.updated_at ? Date.parse(row.updated_at) : Date.now(),
   };
@@ -91,9 +90,8 @@ function cardToRow(userId: string, card: Card): SupabaseCardRow {
 }
 
 function rowToCard(row: SupabaseCardRow): Card {
-  const defaultMatch = DEFAULT_CORPUS.find((c) => `default_${c.id}` === row.card_key);
   return normalizeCard({
-    id: defaultMatch ? defaultMatch.id : row.id,
+    id: row.id,
     deckKey: row.deck_key || DEFAULT_DECK_KEY,
     cardKey: row.card_key,
     learning: row.learning ?? row.german ?? '',
@@ -210,7 +208,6 @@ export async function fullSyncWithSupabase(
 
   // Merge decks
   const mergedDecksMap = new Map<string, Deck>();
-  mergedDecksMap.set(DEFAULT_DECK_KEY, createDefaultDeckMeta());
   localDecks.forEach((d) => {
     const existing = mergedDecksMap.get(d.deckKey);
     if (!existing || d.updatedAt > existing.updatedAt) {
@@ -294,15 +291,17 @@ export async function fullSyncWithSupabase(
       }
     }
   }
+  if (!mergedDecksMap.has(mergedStats.activeDeckKey)) {
+    mergedStats.activeDeckKey = Array.from(mergedDecksMap.keys())[0] || '';
+  }
   await syncProfileToSupabase(userId, mergedStats, mergedSpeech);
 
   const mergedMap = new Map<string, Card>();
-  getDefaultDeck().forEach((c) => mergedMap.set(c.cardKey, c));
 
   localDeck.forEach((localCard) => {
     const normalized = normalizeCard(localCard);
     const existing = mergedMap.get(normalized.cardKey);
-    if (!existing || normalized.isCustom || normalized.reps > 0 || normalized.updatedAt > existing.updatedAt) {
+    if (!existing || normalized.updatedAt > existing.updatedAt) {
       mergedMap.set(normalized.cardKey, normalized);
     }
   });

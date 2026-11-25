@@ -67,6 +67,7 @@ anki/
 ├── supabase_migration_orig_learning.sql # Migration: language-agnostic orig <-> learning schema
 ├── supabase_migration_catalog.sql       # Migration: public.catalog_corpora table (CSV in Supabase)
 ├── supabase_seed_catalog.sql            # SQL seed inserting A1-A2, B1, B2, C1 CSVs into Supabase
+├── supabase_migrate_default_cards.sql   # One-off migration moving legacy 70 default cards to user profile
 ├── supabase/
 │   └── functions/
 │       └── tts/
@@ -78,8 +79,7 @@ anki/
     ├── types.ts                    # Shared TypeScript interfaces and types
     ├── App.tsx                     # Root state container, effects, and hotkeys
     ├── data/
-    │   ├── defaultCorpus.ts        # 70 built-in cards (50 vocabulary + 20 grammar)
-    │   └── starterDecks.ts         # Starter deck metadata & Supabase CSV loader (catalog_corpora)
+    │   └── starterDecks.ts         # Starter deck metadata & Supabase CSV/count loader (catalog_corpora)
     ├── lib/
     │   ├── srs.ts                  # Spaced repetition, 5-min Hard delay, active queue
     │   ├── stats.ts                # Streak tracking (🔥), 90-day review history & merge

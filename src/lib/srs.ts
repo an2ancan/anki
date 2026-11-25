@@ -1,24 +1,10 @@
-import { DEFAULT_DECK_KEY, type Card, type Deck, type QueueItem, type Rating, type StudyMode } from '../types';
-import { DEFAULT_CORPUS } from '../data/defaultCorpus';
+import { DEFAULT_DECK_KEY, type Card, type QueueItem, type Rating, type StudyMode } from '../types';
 import { translations, type Locale } from './i18n';
 
 export const MINUTE_MS = 60 * 1000;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const HARD_COOLDOWN_MINUTES = 5;
 export const GOOD_FIRST_MINUTES = 10;
-
-export function createDefaultDeckMeta(): Deck {
-  return {
-    deckKey: DEFAULT_DECK_KEY,
-    name: 'Deutsch B1–B2',
-    description: 'Built-in B1–B2 vocabulary & grammar',
-    origLang: 'RU',
-    learningLang: 'DE',
-    isDefault: true,
-    createdAt: 0,
-    updatedAt: 0,
-  };
-}
 
 export function generateDeckKey(): string {
   if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -43,34 +29,22 @@ type LegacyCardInput = Partial<Card> & {
 };
 
 export function normalizeCard(card: LegacyCardInput, fallbackIndex = 0): Card {
-  const isDefaultId =
-    typeof card.id === 'number' &&
-    card.id >= 1 &&
-    card.id <= DEFAULT_CORPUS.length &&
-    !card.isCustom;
-
   return {
     id: card.id ?? Date.now() + fallbackIndex,
     deckKey: String(card.deckKey || DEFAULT_DECK_KEY).trim() || DEFAULT_DECK_KEY,
-    cardKey: card.cardKey || (isDefaultId ? `default_${card.id}` : generateCustomKey()),
+    cardKey: card.cardKey || generateCustomKey(),
     learning: String(card.learning ?? card.german ?? '').trim(),
     orig: String(card.orig ?? card.russian ?? '').trim(),
     example_learning: String(card.example_learning ?? card.example_de ?? '').trim(),
     example_orig: String(card.example_orig ?? card.example_ru ?? '').trim(),
     context: String(card.context || '').trim(),
     tags: String(card.tags || '').trim(),
-    isCustom: Boolean(card.isCustom ?? !isDefaultId),
+    isCustom: Boolean(card.isCustom ?? true),
     reps: Number(card.reps) || 0,
     interval: Number(card.interval) || 0,
     nextReview: Number(card.nextReview) || 0,
     updatedAt: Number(card.updatedAt) || 0,
   };
-}
-
-export function getDefaultDeck(): Card[] {
-  return DEFAULT_CORPUS.map((c, idx) =>
-    normalizeCard({ ...c, cardKey: `default_${c.id}`, isCustom: false, updatedAt: 0 }, idx)
-  );
 }
 
 export function getEndOfTodayMs(now = Date.now()): number {

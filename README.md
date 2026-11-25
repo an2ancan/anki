@@ -1,6 +1,6 @@
 # Anki Mobile — Spaced Repetition Flashcards
 
-A local-first mobile web app for language learning (shipped with a 70-card German B1–B2 default deck) built with **React 19, TypeScript, Vite, and Tailwind CSS v4**, featuring a personal deck cabinet, language-agnostic `orig ↔ learning` cards, spaced repetition (SRS), streaks & statistics, live **RU/EN** UI localization, **Supabase** cloud sync, and **Google Cloud TTS** via a Supabase Edge Function with `IndexedDB` MP3 caching.
+A local-first mobile web app for language learning built with **React 19, TypeScript, Vite, and Tailwind CSS v4**, featuring a personal deck cabinet, starter deck catalog fetched from Supabase, language-agnostic `orig ↔ learning` cards, spaced repetition (SRS), streaks & statistics, live **RU/EN** UI localization, **Supabase** cloud sync, and **Google Cloud TTS** via a Supabase Edge Function with `IndexedDB` MP3 caching.
 
 > For a detailed technical breakdown and Mermaid diagrams, see [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
@@ -9,7 +9,7 @@ A local-first mobile web app for language learning (shipped with a 70-card Germa
 ## Features
 
 - **Personal Deck Cabinet & Starter Catalog**: Create and delete custom decks with any language pair (`origLang` → `learningLang`), or add ready-made starter decks for **RU ↔ EN**, **RU ↔ DE**, and **EN ↔ DE** across **A1–A2, B1, B2, and C1** levels (short descriptions in UI, CSV corpora fetched from Supabase `catalog_corpora`).
-- **Language-Agnostic Cards (`orig ↔ learning`)**: Cards display `learning (DE) → orig (RU)` or `orig (RU) → learning (DE)` based on the active deck's language pair. Includes 70 built-in B1–B2 German cards in the `default` deck.
+- **Language-Agnostic Cards (`orig ↔ learning`)**: Cards display `learning (DE) → orig (RU)` or `orig (RU) → learning (DE)` based on the active deck's language pair. All decks and cards live in your personal cabinet and Supabase cloud (no hardcoded built-in cards).
 - **Smart Spaced Repetition (SRS)**:
   - **Again**: reduces progress (`-2 reps`) without wiping it to 0 and keeps the card in the active queue.
   - **Hard**: keeps progress unchanged and removes the card from the queue for **5 minutes**, then returns it first with priority.

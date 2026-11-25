@@ -512,6 +512,10 @@ export default function App() {
     const nextDecks = [...decks, newDeck];
     setDecks(nextDecks);
     saveLocalDecks(user?.id ?? null, nextDecks);
+    if (!stats.activeDeckKey || !decks.some((d) => d.deckKey === stats.activeDeckKey)) {
+      const nextStats: DailyStats = { ...stats, activeDeckKey: newDeck.deckKey, activeCardKeys: [] };
+      rebuildQueue(deck, nextStats);
+    }
     if (user) {
       syncDeckToSupabase(user.id, newDeck).catch(() => {});
     }
@@ -544,6 +548,10 @@ export default function App() {
       setDeck(nextCards);
       saveLocalDecks(user?.id ?? null, nextDecks);
       saveLocalDeck(user?.id ?? null, nextCards);
+      if (!stats.activeDeckKey || !decks.some((d) => d.deckKey === stats.activeDeckKey)) {
+        const nextStats: DailyStats = { ...stats, activeDeckKey: deckKey, activeCardKeys: [] };
+        rebuildQueue(nextCards, nextStats);
+      }
       if (user) {
         syncDeckToSupabase(user.id, newDeck)
           .then(() => syncCardsToSupabase(user.id, starterCards))
@@ -556,7 +564,6 @@ export default function App() {
   };
 
   const handleDeleteDeck = (deckKey: string) => {
-    if (deckKey === DEFAULT_DECK_KEY) return;
     const nextDecks = decks.filter((d) => d.deckKey !== deckKey);
     const nextCards = deck.filter((c) => c.deckKey !== deckKey);
     setDecks(nextDecks);
@@ -567,7 +574,8 @@ export default function App() {
       deleteDeckFromSupabase(user.id, deckKey).catch(() => {});
     }
     if (stats.activeDeckKey === deckKey) {
-      const nextStats: DailyStats = { ...stats, activeDeckKey: DEFAULT_DECK_KEY, activeCardKeys: [] };
+      const nextActiveKey = nextDecks[0]?.deckKey || '';
+      const nextStats: DailyStats = { ...stats, activeDeckKey: nextActiveKey, activeCardKeys: [] };
       rebuildQueue(nextCards, nextStats);
     }
     showToast(t.toastDeckDeleted);
@@ -732,7 +740,9 @@ export default function App() {
     showToast(t.toastCardReset);
   };
 
-  const activeDeckKey = stats.activeDeckKey || DEFAULT_DECK_KEY;
+  const activeDeckKey = decks.some((d) => d.deckKey === stats.activeDeckKey)
+    ? stats.activeDeckKey
+    : decks[0]?.deckKey || '';
   const activeDeckMeta = useMemo(
     () => decks.find((d) => d.deckKey === activeDeckKey) || decks[0],
     [decks, activeDeckKey]
@@ -759,7 +769,7 @@ export default function App() {
   return (
     <div className="h-[100dvh] bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
       <Header
-        activeDeckName={activeDeckMeta?.name || 'Deutsch B1–B2'}
+        activeDeckName={activeDeckMeta?.name || t.myDecks}
         origLang={activeDeckMeta?.origLang || 'RU'}
         learningLang={activeDeckMeta?.learningLang || 'DE'}
         voiceLabel={voiceLabel}
@@ -845,7 +855,15 @@ export default function App() {
                   ? t.dailyDoneDesc(stats.dailyReviewedCount, stats.dailyLimit)
                   : t.queueDoneDesc(stats.dailyReviewedCount)}
             </p>
-            {activeDeckCards.length === 0 ? (
+            {decks.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => setActiveView('decks')}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition"
+              >
+                {t.myDecks}
+              </button>
+            ) : activeDeckCards.length === 0 ? (
               <button
                 type="button"
                 onClick={() => {
