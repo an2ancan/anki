@@ -8,12 +8,39 @@ const CORS_HEADERS = {
 
 // Strict allowlist of Google Cloud TTS voices covered by the 1M chars/month free tier
 const ALLOWED_VOICES = new Set([
+  // German
   'de-DE-Neural2-C',
   'de-DE-Neural2-B',
   'de-DE-Neural2-F',
   'de-DE-Neural2-D',
   'de-DE-Wavenet-C',
   'de-DE-Wavenet-B',
+  // English
+  'en-US-Neural2-C',
+  'en-US-Neural2-D',
+  'en-US-Neural2-F',
+  'en-GB-Neural2-A',
+  'en-GB-Neural2-B',
+  'en-US-Wavenet-C',
+  // French
+  'fr-FR-Neural2-A',
+  'fr-FR-Neural2-B',
+  'fr-FR-Neural2-C',
+  'fr-FR-Neural2-D',
+  'fr-FR-Wavenet-C',
+  'fr-FR-Wavenet-B',
+  // Russian
+  'ru-RU-Wavenet-C',
+  'ru-RU-Wavenet-B',
+  'ru-RU-Wavenet-A',
+  'ru-RU-Wavenet-D',
+  // Spanish & Italian
+  'es-ES-Neural2-A',
+  'es-ES-Neural2-B',
+  'es-ES-Wavenet-C',
+  'it-IT-Neural2-A',
+  'it-IT-Neural2-C',
+  'it-IT-Wavenet-A',
 ]);
 
 const MAX_TEXT_LENGTH = 300;
@@ -79,6 +106,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4. Synthesize speech via Google Cloud TTS
+    const languageCode = voice.split('-').slice(0, 2).join('-') || 'de-DE';
     const semitonePitch = Math.round((pitch - 1.0) * 10 * 10) / 10;
     const googleRes = await fetch(
       `https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(googleApiKey)}`,
@@ -87,7 +115,7 @@ Deno.serve(async (req: Request) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           input: { text },
-          voice: { languageCode: 'de-DE', name: voice },
+          voice: { languageCode, name: voice },
           audioConfig: {
             audioEncoding: 'MP3',
             speakingRate: rate,

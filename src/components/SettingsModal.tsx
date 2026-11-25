@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { Card, Deck, SpeechSettings, TtsEngine } from '../types';
-import { GOOGLE_DE_VOICES, rankVoice } from '../lib/speech';
+import {
+  getBcp47ForLang,
+  getGoogleVoicesForLang,
+  rankVoice,
+  resolveGoogleVoiceForLang,
+} from '../lib/speech';
 import { clearAudioCache, getAudioCacheCount } from '../lib/audioCache';
 import { useI18n } from '../lib/I18nContext';
 import { InfoTip } from './InfoTip';
-import { AiPromptBuilder } from './AiPromptBuilder';
 import { StarterDecksCatalog } from './StarterDecksCatalog';
 import type { CatalogLang, CefrLevel } from '../data/starterDecks';
 
@@ -12,7 +16,9 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   decks: Deck[];
-  activeDeckKey: string;
+  learningLang: string;
+  isDark: boolean;
+  onToggleTheme: () => void;
   voices: SpeechSynthesisVoice[];
   speechSettings: SpeechSettings;
   onUpdateSpeech: (next: SpeechSettings) => void;
@@ -24,8 +30,6 @@ interface SettingsModalProps {
   customCards: Card[];
   onOpenAddCard: () => void;
   onDeleteCustomCard: (cardKey: string) => void;
-  onImportCsv: (deckKey: string, rawCsv: string) => void;
-  onExportCsv: (deckKey: string) => void;
   onAddStarterDeck: (
     level: CefrLevel,
     origLang: CatalogLang,
@@ -37,7 +41,9 @@ export function SettingsModal({
   isOpen,
   onClose,
   decks,
-  activeDeckKey,
+  learningLang,
+  isDark,
+  onToggleTheme,
   voices,
   speechSettings,
   onUpdateSpeech,
@@ -49,28 +55,30 @@ export function SettingsModal({
   customCards,
   onOpenAddCard,
   onDeleteCustomCard,
-  onImportCsv,
-  onExportCsv,
   onAddStarterDeck,
 }: SettingsModalProps) {
   const { locale, setLocale, t } = useI18n();
   const [limitInput, setLimitInput] = useState(String(dailyLimit));
   const [unknownLimitInput, setUnknownLimitInput] = useState(String(maxActiveUnknown));
-  const [csvDeckKey, setCsvDeckKey] = useState(activeDeckKey);
   const [search, setSearch] = useState('');
-  const [csvText, setCsvText] = useState('');
   const [cacheCount, setCacheCount] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
       setLimitInput(String(dailyLimit));
       setUnknownLimitInput(String(maxActiveUnknown));
-      setCsvDeckKey(activeDeckKey);
       getAudioCacheCount().then(setCacheCount);
     }
-  }, [isOpen, dailyLimit, maxActiveUnknown, activeDeckKey]);
+  }, [isOpen, dailyLimit, maxActiveUnknown]);
 
   if (!isOpen) return null;
+
+  const googleVoiceOptions = getGoogleVoicesForLang(learningLang);
+  const resolvedGoogleVoice = resolveGoogleVoiceForLang(
+    speechSettings.googleVoiceName,
+    learningLang
+  );
+  const targetBcp47 = getBcp47ForLang(learningLang);
 
   const query = search.trim().toLowerCase();
   const filteredCustom = query
@@ -100,31 +108,45 @@ export function SettingsModal({
         </div>
 
         <div className="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
-          {/* UI Language Switcher */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-            <div className="font-bold text-slate-800 dark:text-slate-200">{t.interfaceLang}</div>
-            <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
+          {/* UI Language & Theme Switcher */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-bold text-slate-800 dark:text-slate-200">{t.interfaceLang}</div>
+              <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setLocale('ru')}
+                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
+                    locale === 'ru'
+                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  Русский
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale('en')}
+                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
+                    locale === 'en'
+                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  English
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
+              <div className="font-bold text-slate-800 dark:text-slate-200">{t.themeTitle}</div>
               <button
                 type="button"
-                onClick={() => setLocale('ru')}
-                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
-                  locale === 'ru'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
+                onClick={onToggleTheme}
+                className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
               >
-                Русский
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocale('en')}
-                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
-                  locale === 'en'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                English
+                <span>{isDark ? '🌙' : '☀️'}</span>
+                <span>{isDark ? 'Dark' : 'Light'}</span>
               </button>
             </div>
           </div>
@@ -133,7 +155,9 @@ export function SettingsModal({
           <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
             <div className="font-bold text-slate-800 dark:text-slate-200 flex items-start justify-between gap-2">
               <div className="flex-1">
-                <span>{t.voiceSection}</span>
+                <span>
+                  {t.voiceSection} ({learningLang})
+                </span>
                 <InfoTip text={t.voiceTip} />
               </div>
               <label className="inline-flex items-center gap-1 font-normal cursor-pointer text-[11px] flex-none">
@@ -168,13 +192,17 @@ export function SettingsModal({
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">{t.selectSystemVoice}</label>
                 <select
-                  value={speechSettings.voiceName}
+                  value={
+                    voices.some((v) => v.name === speechSettings.voiceName)
+                      ? speechSettings.voiceName
+                      : voices[0]?.name || ''
+                  }
                   onChange={(e) => onUpdateSpeech({ ...speechSettings, voiceName: e.target.value })}
                   className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"
                 >
                   {voices.map((v) => (
                     <option key={v.name} value={v.name}>
-                      {rankVoice(v) >= 60 ? '★ ' : ''}
+                      {rankVoice(v, targetBcp47) >= 60 ? '★ ' : ''}
                       {v.name} ({v.lang})
                     </option>
                   ))}
@@ -185,13 +213,13 @@ export function SettingsModal({
                 <div>
                   <label className="text-[10px] text-slate-400 block mb-1">{t.selectGoogleVoice}</label>
                   <select
-                    value={speechSettings.googleVoiceName}
+                    value={resolvedGoogleVoice}
                     onChange={(e) =>
                       onUpdateSpeech({ ...speechSettings, googleVoiceName: e.target.value })
                     }
                     className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"
                   >
-                    {GOOGLE_DE_VOICES.map((v) => (
+                    {googleVoiceOptions.map((v) => (
                       <option key={v.id} value={v.id}>
                         {v.label}
                       </option>
@@ -392,57 +420,6 @@ export function SettingsModal({
                     </div>
                   ))
               )}
-            </div>
-          </div>
-
-          {/* CSV Import / Export */}
-          <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
-            <div className="font-bold">
-              {t.csvSection}
-              <InfoTip text={t.csvTip} />
-            </div>
-            <select
-              value={csvDeckKey}
-              onChange={(e) => setCsvDeckKey(e.target.value)}
-              className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold"
-            >
-              {decks.map((d) => (
-                <option key={d.deckKey} value={d.deckKey}>
-                  {t.deckPrefix}: {d.name}
-                </option>
-              ))}
-            </select>
-            <AiPromptBuilder
-              defaultOrigLang={decks.find((d) => d.deckKey === csvDeckKey)?.origLang || 'RU'}
-              defaultLearningLang={decks.find((d) => d.deckKey === csvDeckKey)?.learningLang || 'DE'}
-            />
-            <textarea
-              rows={4}
-              value={csvText}
-              onChange={(e) => setCsvText(e.target.value)}
-              placeholder="Learning;Orig;Example_Learning;Example_Orig;Context;Tags"
-              className="w-full font-mono text-[11px] p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950"
-            />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!csvText.trim()) return;
-                  onImportCsv(csvDeckKey, csvText);
-                  setCsvText('');
-                  onClose();
-                }}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold"
-              >
-                {t.importAddBtn}
-              </button>
-              <button
-                type="button"
-                onClick={() => onExportCsv(csvDeckKey)}
-                className="flex-1 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold"
-              >
-                {t.exportBtn}
-              </button>
             </div>
           </div>
         </div>

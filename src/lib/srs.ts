@@ -222,31 +222,37 @@ export function reconcileActiveQueue(
 }
 
 /**
- * Expands priority-ordered cards into QueueItems while preserving time-based priority
- * (largest overdue gap `now - nextReview` appears earliest).
- * In 'mixed' mode, pass 1 shows all cards in priority order with alternating directions,
- * and pass 2 shows the opposite side in the same priority order so both sides are separated.
+ * Expands active cards into randomized QueueItems so words are drawn in random order.
+ * In 'mixed' mode, pass 1 shuffles all cards with alternating directions, and pass 2
+ * shuffles the opposite sides independently while avoiding the same word back-to-back
+ * across the pass boundary.
  */
 export function expandCardsToQueueItems(cards: Card[], mode: StudyMode): QueueItem[] {
   if (mode !== 'mixed') {
-    return cards.map((card) => ({ card, direction: mode }));
+    return shuffle(cards).map((card) => ({ card, direction: mode }));
   }
-  const firstPass: QueueItem[] = cards.map((card, i) => ({
+  const shuffledFirst = shuffle(cards);
+  const firstPass: QueueItem[] = shuffledFirst.map((card, i) => ({
     card,
     direction: i % 2 === 0 ? 'learning-orig' : 'orig-learning',
   }));
-  const secondPass: QueueItem[] = cards.map((card, i) => ({
-    card,
-    direction: i % 2 === 0 ? 'orig-learning' : 'learning-orig',
-  }));
+  const secondPass: QueueItem[] = shuffle(
+    shuffledFirst.map((card, i) => ({
+      card,
+      direction: i % 2 === 0 ? 'orig-learning' : 'learning-orig',
+    }))
+  );
+  if (cards.length > 1 && firstPass[firstPass.length - 1].card.cardKey === secondPass[0].card.cardKey) {
+    [secondPass[0], secondPass[1]] = [secondPass[1], secondPass[0]];
+  }
   return [...firstPass, ...secondPass];
 }
 
 /**
- * Builds the study queue from the persistent active unknown queue, ordered by overdue time
- * (largest `now - nextReview` gap first).
+ * Builds the study queue from the persistent active unknown queue (selected by overdue
+ * priority + 10% random new-word reserve) and shuffles the resulting session items.
  * In 'mixed' mode, `maxActiveUnknown` words (e.g. 5) produce `2 * maxActiveUnknown` items (10)
- * so both DE->RU and RU->DE sides are practiced in the same queue.
+ * so both learning->orig and orig->learning sides are practiced in random order.
  */
 export function buildSessionQueue(
   deck: Card[],

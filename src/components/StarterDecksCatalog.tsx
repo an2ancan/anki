@@ -4,8 +4,10 @@ import {
   STARTER_LEVELS,
   STARTER_PAIRS,
   fetchStarterCatalogCounts,
+  getCatalogCorpusKey,
   type CatalogLang,
   type CefrLevel,
+  type PairGroup,
 } from '../data/starterDecks';
 import { useI18n } from '../lib/I18nContext';
 
@@ -25,10 +27,10 @@ export function StarterDecksCatalog({
   defaultOpen = false,
 }: StarterDecksCatalogProps) {
   const { locale, t } = useI18n();
-  const [pairFilter, setPairFilter] = useState<'all' | 'ru-en' | 'ru-de' | 'en-de'>('all');
+  const [pairFilter, setPairFilter] = useState<'all' | PairGroup>('all');
   const [levelFilter, setLevelFilter] = useState<'all' | CefrLevel>('all');
   const [loadingPresetId, setLoadingPresetId] = useState<string | null>(null);
-  const [catalogCounts, setCatalogCounts] = useState<Partial<Record<CefrLevel, number>>>({});
+  const [catalogCounts, setCatalogCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let active = true;
@@ -61,6 +63,9 @@ export function StarterDecksCatalog({
               ['ru-en', 'RU ↔ EN'],
               ['ru-de', 'RU ↔ DE'],
               ['en-de', 'EN ↔ DE'],
+              ['ru-fr', 'RU ↔ FR'],
+              ['en-fr', 'EN ↔ FR'],
+              ['de-fr', 'DE ↔ FR'],
             ] as const
           ).map(([val, label]) => (
             <button
@@ -114,6 +119,8 @@ export function StarterDecksCatalog({
               STARTER_LEVELS.filter((info) => levelFilter === 'all' || info.level === levelFilter).map(
                 (info) => {
                   const level = info.level;
+                  const corpusKey = getCatalogCorpusKey(level, pair.origLang, pair.learningLang);
+                  const count = catalogCounts[corpusKey];
                   const presetId = `${pair.id}_${level}`;
                   const presetName = `${pair.origLang} → ${pair.learningLang} • ${level}`;
                   const desc = locale === 'ru' ? info.descRu : info.descEn;
@@ -135,9 +142,9 @@ export function StarterDecksCatalog({
                           <span className="font-bold text-slate-900 dark:text-white text-[11px]">
                             {presetName}
                           </span>
-                          {typeof catalogCounts[level] === 'number' && catalogCounts[level]! > 0 && (
+                          {typeof count === 'number' && count > 0 && (
                             <span className="text-[10px] text-slate-400">
-                              • {t.starterWordsCount(catalogCounts[level]!)}
+                              • {t.starterWordsCount(count)}
                             </span>
                           )}
                         </div>

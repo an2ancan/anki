@@ -1,6 +1,6 @@
-# Anki Mobile — Spaced Repetition Flashcards
+# Total Recall — Spaced Repetition Flashcards
 
-A local-first mobile web app for language learning built with **React 19, TypeScript, Vite, and Tailwind CSS v4**, featuring a personal deck cabinet, starter deck catalog fetched from Supabase, language-agnostic `orig ↔ learning` cards, spaced repetition (SRS), streaks & statistics, live **RU/EN** UI localization, **Supabase** cloud sync, and **Google Cloud TTS** via a Supabase Edge Function with `IndexedDB` MP3 caching.
+A local-first mobile web app for language learning built with **React 19, TypeScript, Vite, and Tailwind CSS v4**, featuring a personal deck cabinet, starter deck catalog fetched from Supabase (**RU/EN/DE/FR**), language-agnostic `orig ↔ learning` cards, spaced repetition (SRS), streaks & statistics, live **RU/EN** UI localization, **Supabase** cloud sync, and language-aware **Google Cloud TTS** via a Supabase Edge Function with `IndexedDB` MP3 caching.
 
 > For a detailed technical breakdown and Mermaid diagrams, see [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
@@ -8,7 +8,7 @@ A local-first mobile web app for language learning built with **React 19, TypeSc
 
 ## Features
 
-- **Personal Deck Cabinet & Starter Catalog**: Create and delete custom decks with any language pair (`origLang` → `learningLang`), or add ready-made starter decks for **RU ↔ EN**, **RU ↔ DE**, and **EN ↔ DE** across **A1–A2, B1, B2, and C1** levels (short descriptions in UI, CSV corpora fetched from Supabase `catalog_corpora`).
+- **Personal Deck Cabinet & Starter Catalog**: Create and delete custom decks with any language pair (`origLang` → `learningLang`), import/export CSV per deck, or add ready-made starter decks for **RU ↔ EN**, **RU ↔ DE**, **EN ↔ DE**, **RU ↔ FR**, **EN ↔ FR**, and **DE ↔ FR** across **A1–A2, B1, B2, and C1** levels (short descriptions in UI, CSV corpora & word counts fetched from Supabase `catalog_corpora`).
 - **Language-Agnostic Cards (`orig ↔ learning`)**: Cards display `learning (DE) → orig (RU)` or `orig (RU) → learning (DE)` based on the active deck's language pair. All decks and cards live in your personal cabinet and Supabase cloud (no hardcoded built-in cards).
 - **Smart Spaced Repetition (SRS)**:
   - **Again**: reduces progress (`-2 reps`) without wiping it to 0 and keeps the card in the active queue.
@@ -39,7 +39,7 @@ npm run build    # Type-check & production build to dist/
 ### 1. Database Schema & Migrations
 - **Fresh setup**: Open **Supabase Dashboard → SQL Editor → New query**, paste [`supabase_schema.sql`](./supabase_schema.sql), and click **Run**.
 - **Upgrading an existing database**: Run [`supabase_migration_decks.sql`](./supabase_migration_decks.sql), [`supabase_migration_orig_learning.sql`](./supabase_migration_orig_learning.sql), and [`supabase_migration_catalog.sql`](./supabase_migration_catalog.sql).
-- **Starter Decks CSV Seed (Required for Starter Catalog)**: Run [`supabase_seed_catalog.sql`](./supabase_seed_catalog.sql) in **SQL Editor** to store the `A1-A2`, `B1`, `B2`, and `C1` CSV corpora in `public.catalog_corpora`.
+- **Starter Decks CSV Seeds (Required for Starter Catalog)**: Run [`supabase_seed_catalog.sql`](./supabase_seed_catalog.sql) (DE/EN/RU) and [`supabase_seed_catalog_fr.sql`](./supabase_seed_catalog_fr.sql) (FR/EN/RU/DE) in **SQL Editor** to store the starter CSV corpora in `public.catalog_corpora`.
 
 ### 2. Authentication (Email, Password Reset & Google OAuth)
 1. Go to **Authentication → Sign In / Providers → Email** and ensure Email is enabled.

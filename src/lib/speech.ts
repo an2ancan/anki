@@ -7,14 +7,105 @@ export interface GoogleVoiceOption {
   label: string;
 }
 
-export const GOOGLE_DE_VOICES: GoogleVoiceOption[] = [
-  { id: 'de-DE-Neural2-C', label: '★ Neural2-C (Женский, естественный)' },
-  { id: 'de-DE-Neural2-B', label: '★ Neural2-B (Мужской, естественный)' },
-  { id: 'de-DE-Neural2-F', label: '★ Neural2-F (Женский, мягкий)' },
-  { id: 'de-DE-Neural2-D', label: '★ Neural2-D (Мужской, глубокий)' },
-  { id: 'de-DE-Wavenet-C', label: 'WaveNet-C (Женский)' },
-  { id: 'de-DE-Wavenet-B', label: 'WaveNet-B (Мужской)' },
-];
+export const GOOGLE_VOICES_BY_LANG: Record<string, GoogleVoiceOption[]> = {
+  DE: [
+    { id: 'de-DE-Neural2-C', label: '★ Neural2-C (Женский, естественный)' },
+    { id: 'de-DE-Neural2-B', label: '★ Neural2-B (Мужской, естественный)' },
+    { id: 'de-DE-Neural2-F', label: '★ Neural2-F (Женский, мягкий)' },
+    { id: 'de-DE-Neural2-D', label: '★ Neural2-D (Мужской, глубокий)' },
+    { id: 'de-DE-Wavenet-C', label: 'WaveNet-C (Женский)' },
+    { id: 'de-DE-Wavenet-B', label: 'WaveNet-B (Мужской)' },
+  ],
+  EN: [
+    { id: 'en-US-Neural2-C', label: '★ US Neural2-C (Female, natural)' },
+    { id: 'en-US-Neural2-D', label: '★ US Neural2-D (Male, natural)' },
+    { id: 'en-US-Neural2-F', label: '★ US Neural2-F (Female, warm)' },
+    { id: 'en-GB-Neural2-A', label: '★ UK Neural2-A (Female, British)' },
+    { id: 'en-GB-Neural2-B', label: '★ UK Neural2-B (Male, British)' },
+    { id: 'en-US-Wavenet-C', label: 'US WaveNet-C (Female)' },
+  ],
+  FR: [
+    { id: 'fr-FR-Neural2-A', label: '★ FR Neural2-A (Féminin, naturel)' },
+    { id: 'fr-FR-Neural2-B', label: '★ FR Neural2-B (Masculin, naturel)' },
+    { id: 'fr-FR-Neural2-C', label: '★ FR Neural2-C (Féminin, doux)' },
+    { id: 'fr-FR-Neural2-D', label: '★ FR Neural2-D (Masculin, profond)' },
+    { id: 'fr-FR-Wavenet-C', label: 'FR WaveNet-C (Féminin)' },
+    { id: 'fr-FR-Wavenet-B', label: 'FR WaveNet-B (Masculin)' },
+  ],
+  RU: [
+    { id: 'ru-RU-Wavenet-C', label: '★ RU WaveNet-C (Женский)' },
+    { id: 'ru-RU-Wavenet-B', label: '★ RU WaveNet-B (Мужской)' },
+    { id: 'ru-RU-Wavenet-A', label: 'RU WaveNet-A (Женский, мягкий)' },
+    { id: 'ru-RU-Wavenet-D', label: 'RU WaveNet-D (Мужской, глубокий)' },
+  ],
+  ES: [
+    { id: 'es-ES-Neural2-A', label: '★ ES Neural2-A (Femenino)' },
+    { id: 'es-ES-Neural2-B', label: '★ ES Neural2-B (Masculino)' },
+    { id: 'es-ES-Wavenet-C', label: 'ES WaveNet-C (Femenino)' },
+  ],
+  IT: [
+    { id: 'it-IT-Neural2-A', label: '★ IT Neural2-A (Femminile)' },
+    { id: 'it-IT-Neural2-C', label: '★ IT Neural2-C (Maschile)' },
+    { id: 'it-IT-Wavenet-A', label: 'IT WaveNet-A (Femminile)' },
+  ],
+};
+
+export const GOOGLE_DE_VOICES = GOOGLE_VOICES_BY_LANG.DE;
+
+const LANG_TO_BCP47: Record<string, string> = {
+  DE: 'de-DE',
+  EN: 'en-US',
+  FR: 'fr-FR',
+  RU: 'ru-RU',
+  ES: 'es-ES',
+  IT: 'it-IT',
+  PT: 'pt-PT',
+  PL: 'pl-PL',
+  NL: 'nl-NL',
+  JA: 'ja-JP',
+  KO: 'ko-KR',
+  ZH: 'zh-CN',
+};
+
+const TEST_PHRASES_BY_LANG: Record<string, string> = {
+  DE: 'Guten Tag! Ich spreche Deutsch flüssig und natürlich.',
+  EN: 'Hello! I speak English clearly and naturally.',
+  FR: 'Bonjour ! Je parle français couramment et naturellement.',
+  RU: 'Добрый день! Я говорю по-русски чисто и естественно.',
+  ES: '¡Hola! Hablo español con fluidez y naturalidad.',
+  IT: 'Buongiorno! Parlo italiano in modo fluente e naturale.',
+};
+
+export function getBcp47ForLang(langCode: string): string {
+  const key = String(langCode || 'DE').trim().toUpperCase().slice(0, 2);
+  return LANG_TO_BCP47[key] || `${key.toLowerCase()}-${key}`;
+}
+
+export function getGoogleVoicesForLang(langCode: string): GoogleVoiceOption[] {
+  const key = String(langCode || 'DE').trim().toUpperCase().slice(0, 2);
+  return GOOGLE_VOICES_BY_LANG[key] || GOOGLE_VOICES_BY_LANG.EN;
+}
+
+export function resolveGoogleVoiceForLang(preferredVoice: string, langCode: string): string {
+  const options = getGoogleVoicesForLang(langCode);
+  if (options.some((o) => o.id === preferredVoice)) {
+    return preferredVoice;
+  }
+  return options[0].id;
+}
+
+export function getTestPhraseForLang(langCode: string): string {
+  const key = String(langCode || 'DE').trim().toUpperCase().slice(0, 2);
+  return TEST_PHRASES_BY_LANG[key] || TEST_PHRASES_BY_LANG.EN;
+}
+
+function getLanguageCodeFromVoice(voiceName: string, fallbackLang: string): string {
+  const parts = voiceName.split('-');
+  if (parts.length >= 2 && parts[0].length === 2 && parts[1].length === 2) {
+    return `${parts[0]}-${parts[1]}`;
+  }
+  return getBcp47ForLang(fallbackLang);
+}
 
 let activeAudioEl: HTMLAudioElement | null = null;
 let activeAudioUrl: string | null = null;
@@ -35,25 +126,30 @@ export function stopActiveAudio(): void {
   }
 }
 
-export function rankVoice(v: SpeechSynthesisVoice): number {
+export function rankVoice(v: SpeechSynthesisVoice, targetBcp47 = 'de-DE'): number {
   const name = v.name.toLowerCase();
   if (name.includes('natural') || name.includes('neural')) return 100;
-  if (name.includes('google deutsch') || name.includes('google')) return 80;
-  if (name.includes('anna') || name.includes('katja') || name.includes('petra') || name.includes('markus')) return 70;
-  if (name.includes('siri') || name.includes('enhanced') || name.includes('premium')) return 60;
-  if (v.lang === 'de-DE') return 50;
+  if (name.includes('google')) return 80;
+  if (name.includes('siri') || name.includes('enhanced') || name.includes('premium')) return 65;
+  if (v.lang.toLowerCase() === targetBcp47.toLowerCase()) return 50;
   return 10;
 }
 
-export function getSortedGermanVoices(): SpeechSynthesisVoice[] {
+export function getSortedVoicesForLang(langCode: string): SpeechSynthesisVoice[] {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
   const voices = window.speechSynthesis.getVoices();
   if (!voices || voices.length === 0) return [];
-  const deVoices = voices.filter((v) => v.lang && (v.lang.startsWith('de') || v.lang.includes('DE')));
-  return (deVoices.length > 0 ? deVoices : voices).sort((a, b) => rankVoice(b) - rankVoice(a));
+  const bcp47 = getBcp47ForLang(langCode);
+  const shortPrefix = bcp47.slice(0, 2).toLowerCase();
+  const matched = voices.filter(
+    (v) => v.lang && v.lang.toLowerCase().startsWith(shortPrefix)
+  );
+  return (matched.length > 0 ? matched : voices).sort(
+    (a, b) => rankVoice(b, bcp47) - rankVoice(a, bcp47)
+  );
 }
 
-export function cleanGermanSpeechText(text: string): string {
+export function cleanSpeechText(text: string): string {
   if (!text) return '';
   return text
     .replace(/\([^)]*\)/g, '')
@@ -65,13 +161,14 @@ export function cleanGermanSpeechText(text: string): string {
 
 export function speakWithSystemVoice(
   text: string,
+  langCode: string,
   voice: SpeechSynthesisVoice | null,
   rate: number,
   pitch: number
 ): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'de-DE';
+  utterance.lang = voice?.lang || getBcp47ForLang(langCode);
   utterance.rate = rate;
   utterance.pitch = pitch;
   if (voice) utterance.voice = voice;
@@ -90,11 +187,11 @@ function base64ToBlob(base64: string, mimeType = 'audio/mpeg'): Blob {
 async function fetchGoogleTtsBlob(
   text: string,
   voiceName: string,
+  languageCode: string,
   apiKey: string,
   rate: number,
   pitch: number
 ): Promise<Blob> {
-  // Google TTS pitch is in semitones [-20.0, 20.0]; map UI [0.8..1.2] around 0
   const semitonePitch = Math.round((pitch - 1.0) * 10 * 10) / 10;
 
   const res = await fetch(
@@ -104,7 +201,7 @@ async function fetchGoogleTtsBlob(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         input: { text },
-        voice: { languageCode: 'de-DE', name: voiceName },
+        voice: { languageCode, name: voiceName },
         audioConfig: {
           audioEncoding: 'MP3',
           speakingRate: rate,
@@ -172,12 +269,13 @@ async function fetchEdgeTtsBlob(
 }
 
 /**
- * Speaks German text using either Google Cloud TTS (via Supabase Edge Function master key
- * or optional personal API key, with IndexedDB cache) or the default browser Web Speech API.
- * Automatically falls back to system voice on error.
+ * Speaks text in the active deck's learning language using either Google Cloud TTS
+ * (via Supabase Edge Function master key or optional personal API key, with IndexedDB cache)
+ * or the browser Web Speech API. Automatically falls back to system voice on error.
  */
-export async function speakGermanText(
+export async function speakText(
   rawText: string,
+  langCode: string,
   settings: SpeechSettings,
   systemVoice: SpeechSynthesisVoice | null,
   isAuthenticated: boolean,
@@ -185,14 +283,17 @@ export async function speakGermanText(
 ): Promise<void> {
   stopActiveAudio();
   const requestId = activeSpeechRequestId;
-  const text = cleanGermanSpeechText(rawText);
+  const text = cleanSpeechText(rawText);
   if (!text) return;
+
+  const resolvedGoogleVoice = resolveGoogleVoiceForLang(settings.googleVoiceName, langCode);
+  const languageCode = getLanguageCodeFromVoice(resolvedGoogleVoice, langCode);
 
   const personalKey = settings.googleApiKey.trim();
   const canUseGoogle = settings.engine === 'google' && (Boolean(personalKey) || isAuthenticated);
 
   if (canUseGoogle) {
-    const cacheKey = `${settings.googleVoiceName}|${settings.rate.toFixed(2)}|${settings.pitch.toFixed(2)}|${text}`;
+    const cacheKey = `${resolvedGoogleVoice}|${settings.rate.toFixed(2)}|${settings.pitch.toFixed(2)}|${text}`;
     try {
       let blob = await getCachedAudio(cacheKey);
       if (requestId !== activeSpeechRequestId) return;
@@ -200,14 +301,15 @@ export async function speakGermanText(
         blob = personalKey
           ? await fetchGoogleTtsBlob(
               text,
-              settings.googleVoiceName,
+              resolvedGoogleVoice,
+              languageCode,
               personalKey,
               settings.rate,
               settings.pitch
             )
           : await fetchEdgeTtsBlob(
               text,
-              settings.googleVoiceName,
+              resolvedGoogleVoice,
               settings.rate,
               settings.pitch
             );
@@ -224,5 +326,5 @@ export async function speakGermanText(
   }
 
   if (requestId !== activeSpeechRequestId) return;
-  speakWithSystemVoice(text, systemVoice, settings.rate, settings.pitch);
+  speakWithSystemVoice(text, langCode, systemVoice, settings.rate, settings.pitch);
 }

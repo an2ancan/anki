@@ -32,7 +32,13 @@ import {
   saveLocalDecks,
   saveSpeechSettings,
 } from './lib/storage';
-import { getSortedGermanVoices, speakGermanText, stopActiveAudio } from './lib/speech';
+import {
+  getSortedVoicesForLang,
+  getTestPhraseForLang,
+  resolveGoogleVoiceForLang,
+  speakText,
+  stopActiveAudio,
+} from './lib/speech';
 import {
   deleteCardFromSupabase,
   deleteDeckFromSupabase,
@@ -113,23 +119,26 @@ export default function App() {
     localStorage.setItem('anki_theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  // Voices init
+  const activeDeckKey = decks.some((d) => d.deckKey === stats.activeDeckKey)
+    ? stats.activeDeckKey
+    : decks[0]?.deckKey || '';
+  const activeDeckMeta = useMemo(
+    () => decks.find((d) => d.deckKey === activeDeckKey) || decks[0],
+    [decks, activeDeckKey]
+  );
+  const activeLearningLang = activeDeckMeta?.learningLang || 'DE';
+
+  // Voices init — dynamically tracks the active deck's learning language
   useEffect(() => {
     const loadVoices = () => {
-      const sorted = getSortedGermanVoices();
+      const sorted = getSortedVoicesForLang(activeLearningLang);
       setVoices(sorted);
-      setSpeechSettings((prev) => {
-        if (!prev.voiceName && sorted[0]) {
-          return { ...prev, voiceName: sorted[0].name };
-        }
-        return prev;
-      });
     };
     loadVoices();
     if ('speechSynthesis' in window) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
-  }, []);
+  }, [activeLearningLang]);
 
   const chosenVoice = useMemo(
     () => voices.find((v) => v.name === speechSettings.voiceName) || voices[0] || null,
@@ -138,20 +147,29 @@ export default function App() {
 
   const voiceLabel = useMemo(() => {
     if (speechSettings.engine === 'google' && (speechSettings.googleApiKey.trim() || user)) {
-      const short = speechSettings.googleVoiceName.replace('de-DE-', '');
-      return `Google: ${short}`;
+      const resolved = resolveGoogleVoiceForLang(speechSettings.googleVoiceName, activeLearningLang);
+      const short = resolved.replace(/^[a-z]{2}-[A-Z]{2}-/, '');
+      return `${activeLearningLang} • ${short}`;
     }
     if (!('speechSynthesis' in window)) return t.voiceUnavailable;
-    return chosenVoice ? `${t.voicePrefix} ${chosenVoice.name.split(' ')[0]}` : t.voiceAuto;
-  }, [chosenVoice, speechSettings.engine, speechSettings.googleApiKey, speechSettings.googleVoiceName, user, t]);
+    return chosenVoice ? `${activeLearningLang} • ${chosenVoice.name.split(' ')[0]}` : t.voiceAuto;
+  }, [
+    activeLearningLang,
+    chosenVoice,
+    speechSettings.engine,
+    speechSettings.googleApiKey,
+    speechSettings.googleVoiceName,
+    user,
+    t,
+  ]);
 
   const speak = useCallback(
     (text: string) => {
-      speakGermanText(text, speechSettings, chosenVoice, Boolean(user), () => {
+      speakText(text, activeLearningLang, speechSettings, chosenVoice, Boolean(user), () => {
         showToast(tRef.current.toastGoogleFallback);
       });
     },
-    [chosenVoice, speechSettings, user, showToast]
+    [activeLearningLang, chosenVoice, speechSettings, user, showToast]
   );
 
   const rebuildQueue = useCallback(
@@ -448,7 +466,9 @@ export default function App() {
           );
           for (const it of newItems) {
             if (!existingPairs.has(`${it.card.cardKey}|${it.direction}`)) {
-              next.push(it);
+              const minIdx = currentIndex + 1;
+              const insertAt = minIdx + Math.floor(Math.random() * (next.length - minIdx + 1));
+              next.splice(insertAt, 0, it);
             }
           }
         }
@@ -746,13 +766,6 @@ export default function App() {
     showToast(t.toastCardReset);
   };
 
-  const activeDeckKey = decks.some((d) => d.deckKey === stats.activeDeckKey)
-    ? stats.activeDeckKey
-    : decks[0]?.deckKey || '';
-  const activeDeckMeta = useMemo(
-    () => decks.find((d) => d.deckKey === activeDeckKey) || decks[0],
-    [decks, activeDeckKey]
-  );
   const activeDeckCards = useMemo(
     () => deck.filter((c) => c.deckKey === activeDeckKey),
     [deck, activeDeckKey]
@@ -777,7 +790,7 @@ export default function App() {
       <Header
         activeDeckName={activeDeckMeta?.name || t.myDecks}
         origLang={activeDeckMeta?.origLang || 'RU'}
-        learningLang={activeDeckMeta?.learningLang || 'DE'}
+        learningLang={activeLearningLang}
         voiceLabel={voiceLabel}
         mode={mode}
         onModeChange={(nextMode) => {
@@ -786,8 +799,8 @@ export default function App() {
         }}
         userEmail={user?.email ?? null}
         syncState={syncState}
-        isDark={isDark}
         isDecksOpen={activeView === 'decks'}
+        showStudyBar={activeView === 'study'}
         onToggleDecks={() => setActiveView((v) => (v === 'decks' ? 'study' : 'decks'))}
         onOpenAddCard={() => {
           setAddCardTargetDeckKey(activeDeckKey);
@@ -795,7 +808,6 @@ export default function App() {
         }}
         onOpenAuth={() => setAuthOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
-        onToggleTheme={() => setIsDark((d) => !d)}
       />
 
       <StatusRibbon
@@ -910,7 +922,9 @@ export default function App() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         decks={decks}
-        activeDeckKey={activeDeckKey}
+        learningLang={activeLearningLang}
+        isDark={isDark}
+        onToggleTheme={() => setIsDark((d) => !d)}
         voices={voices}
         speechSettings={speechSettings}
         onUpdateSpeech={(next) => {
@@ -920,7 +934,7 @@ export default function App() {
             syncProfileToSupabase(user.id, stats, next).catch(() => {});
           }
         }}
-        onTestVoice={() => speak('Guten Tag! Ich spreche Deutsch flüssig und natürlich.')}
+        onTestVoice={() => speak(getTestPhraseForLang(activeLearningLang))}
         dailyLimit={stats.dailyLimit}
         maxActiveUnknown={stats.maxActiveUnknown}
         onSaveDailyLimit={(limit) => {
@@ -945,8 +959,6 @@ export default function App() {
           setAddCardOpen(true);
         }}
         onDeleteCustomCard={handleDeleteCustomCard}
-        onImportCsv={handleImportCsv}
-        onExportCsv={handleExportCsv}
         onAddStarterDeck={handleAddStarterDeck}
       />
 

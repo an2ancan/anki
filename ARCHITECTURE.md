@@ -66,7 +66,8 @@ anki/
 ├── supabase_migration_decks.sql         # Migration: user_decks & moving cards to 'default' deck
 ├── supabase_migration_orig_learning.sql # Migration: language-agnostic orig <-> learning schema
 ├── supabase_migration_catalog.sql       # Migration: public.catalog_corpora table (CSV in Supabase)
-├── supabase_seed_catalog.sql            # SQL seed inserting A1-A2, B1, B2, C1 CSVs into Supabase
+├── supabase_seed_catalog.sql            # SQL seed inserting A1-A2, B1, B2, C1 (DE/EN/RU) CSVs into Supabase
+├── supabase_seed_catalog_fr.sql         # SQL seed inserting FR-A1-A2..FR-C1 (FR/EN/RU/DE) CSVs into Supabase
 ├── supabase_migrate_default_cards.sql   # One-off migration moving legacy 70 default cards to user profile
 ├── supabase/
 │   └── functions/
@@ -90,12 +91,12 @@ anki/
     │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
     │   └── supabase.ts             # Supabase client and fullSync / upsert / delete logic
     └── components/
-        ├── Header.tsx              # Top bar: deck switcher, mode, +, auth, settings, theme
+        ├── Header.tsx              # Compact 2-tier mobile bar: Total Recall brand/deck switcher, +, auth, settings + study direction bar
         ├── StatusRibbon.tsx        # Daily goal, clickable streak 🔥, counters, progress bar
         ├── FlashCard.tsx           # Interactive card with dynamic rating interval labels
-        ├── DecksView.tsx           # Personal cabinet: create/delete decks, add cards, CSV
+        ├── DecksView.tsx           # Personal cabinet: create/delete decks, starter catalog, add cards, CSV import/export
         ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
-        ├── SettingsModal.tsx       # Voice, limits (synced with profile), starter decks, custom cards, CSV
+        ├── SettingsModal.tsx       # UI language, theme, language-aware voice, limits, starter decks, custom cards
         ├── AddCardModal.tsx        # Form to create a new custom card
         ├── AuthModal.tsx           # Email sign in/up, password reset, Google OAuth, sync & starter decks
         ├── ProgressModal.tsx       # Card-by-card progress list, filters, search, reset
@@ -224,7 +225,7 @@ Button interval previews (`1 мин`, `5 мин`, `10 мин` / `1 дн.`, `4 д
 ### Persistent Active Queue & Both-Sides Mastery (`reconcileActiveQueue` + `expandCardsToQueueItems`)
 1. `user_profiles` (and `localStorage`) stores `max_active_unknown` (default **`5`**) and the exact **`active_card_keys`** array so the same active words survive page reloads and sync across devices.
 2. **Time-based priority + 10% random new words**: Only **hard/due-now** cards (`nextReview <= now`) and **new** cards (`reps === 0`) occupy the active queue. Due cards are strictly sorted by `nextReview` ascending — the larger the overdue gap (`now - nextReview`), the earlier the card appears. At the same time, **10% of the queue** (`max(1, round(maxActiveUnknown × 0.1))` when `maxActiveUnknown >= 2` and new cards remain) is reserved for random new words so fresh vocabulary keeps flowing even when many reviews are due. Cards on a 5-minute "Hard" cooldown are temporarily hidden until their timer expires, then immediately return to the front (most overdue first).
-3. In **Mixed** mode, `expandCardsToQueueItems` expands `5` active words into **`10` queue items** (`DE → RU` and `RU → DE`) while preserving time-based priority: pass 1 shows all cards in priority order with alternating directions, and pass 2 shows the opposite side in the same priority order.
+3. **Random queue draw**: `expandCardsToQueueItems` shuffles the selected active words into randomized `QueueItem`s (`DE → RU` / `RU → DE`). In **Mixed** mode, `5` active words expand into **`10` queue items** across two independently shuffled passes (pass 1 with alternating directions, pass 2 with the opposite sides, avoiding back-to-back repeats across the boundary). Newly reconciled words added mid-session are also inserted at random positions in the remaining queue.
 4. **Two-sided promotion**: `App.tsx` tracks completed sides in `passedSidesRef`. A card only advances its SRS level (`reps` / `nextReview`) and gets replaced by the next word in `active_card_keys` once **both** sides have passed.
 
 ---

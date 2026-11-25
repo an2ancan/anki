@@ -3,13 +3,14 @@ import { generateCustomKey, normalizeCard } from '../lib/srs';
 import { supabase } from '../lib/supabase';
 
 export type CefrLevel = 'A1-A2' | 'B1' | 'B2' | 'C1';
-export type CatalogLang = 'RU' | 'EN' | 'DE';
+export type CatalogLang = 'RU' | 'EN' | 'DE' | 'FR';
+export type PairGroup = 'ru-en' | 'ru-de' | 'en-de' | 'ru-fr' | 'en-fr' | 'de-fr';
 
 export interface StarterPair {
   id: string;
   origLang: CatalogLang;
   learningLang: CatalogLang;
-  pairGroup: 'ru-en' | 'ru-de' | 'en-de';
+  pairGroup: PairGroup;
 }
 
 export interface LevelInfo {
@@ -31,8 +32,8 @@ export const STARTER_LEVELS: readonly LevelInfo[] = [
   },
   {
     level: 'B2',
-    descRu: 'Работа, бизнес, глаголы с предлогами, NVV и сложные союзы',
-    descEn: 'Work, business, prepositional verbs, NVV & complex connectors',
+    descRu: 'Работа, бизнес, глаголы с предлогами и сложные конструкции',
+    descEn: 'Work, business, prepositional verbs & complex connectors',
   },
   {
     level: 'C1',
@@ -48,55 +49,65 @@ export const STARTER_PAIRS: readonly StarterPair[] = [
   { id: 'de-ru', origLang: 'DE', learningLang: 'RU', pairGroup: 'ru-de' },
   { id: 'en-de', origLang: 'EN', learningLang: 'DE', pairGroup: 'en-de' },
   { id: 'de-en', origLang: 'DE', learningLang: 'EN', pairGroup: 'en-de' },
+  { id: 'ru-fr', origLang: 'RU', learningLang: 'FR', pairGroup: 'ru-fr' },
+  { id: 'fr-ru', origLang: 'FR', learningLang: 'RU', pairGroup: 'ru-fr' },
+  { id: 'en-fr', origLang: 'EN', learningLang: 'FR', pairGroup: 'en-fr' },
+  { id: 'fr-en', origLang: 'FR', learningLang: 'EN', pairGroup: 'en-fr' },
+  { id: 'de-fr', origLang: 'DE', learningLang: 'FR', pairGroup: 'de-fr' },
+  { id: 'fr-de', origLang: 'FR', learningLang: 'DE', pairGroup: 'de-fr' },
 ];
 
-type CsvTuple = readonly [
-  de: string,
-  en: string,
-  ru: string,
-  exDe: string,
-  exEn: string,
-  exRu: string,
-  ctx: string,
-  tags: string,
-];
-
-function pickTerm(tuple: CsvTuple, lang: CatalogLang): string {
-  if (lang === 'DE') return tuple[0];
-  if (lang === 'EN') return tuple[1];
-  return tuple[2];
+export function getCatalogCorpusKey(
+  level: CefrLevel,
+  origLang: CatalogLang,
+  learningLang: CatalogLang
+): string {
+  return origLang === 'FR' || learningLang === 'FR' ? `FR-${level}` : level;
 }
 
-function pickExample(tuple: CsvTuple, lang: CatalogLang): string {
-  if (lang === 'DE') return tuple[3];
-  if (lang === 'EN') return tuple[4];
-  return tuple[5];
-}
+type CsvRow = Record<string, string>;
 
-function parseCsvToTuples(csvContent: string): CsvTuple[] {
-  const lines = csvContent.trim().split('\n');
-  const tuples: CsvTuple[] = [];
-  for (const line of lines) {
-    const parts = line.split(';').map((p) => p.trim().replace(/^"|"$/g, ''));
-    if (parts.length < 3 || parts[0].toLowerCase() === 'de') continue;
-    tuples.push([
-      parts[0] || '',
-      parts[1] || '',
-      parts[2] || '',
-      parts[3] || '',
-      parts[4] || '',
-      parts[5] || '',
-      parts[6] || '',
-      parts[7] || '',
-    ]);
+function parseCsvToRecords(csvContent: string): CsvRow[] {
+  const lines = csvContent
+    .trim()
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(';').map((h) => h.trim().replace(/^"|"$/g, ''));
+  const records: CsvRow[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(';').map((p) => p.trim().replace(/^"|"$/g, ''));
+    if (parts.length < 3) continue;
+    const row: CsvRow = {};
+    headers.forEach((h, idx) => {
+      row[h] = parts[idx] || '';
+    });
+    records.push(row);
   }
-  return tuples;
+  return records;
+}
+
+function pickTerm(row: CsvRow, lang: CatalogLang): string {
+  if (lang === 'DE') return row.de || '';
+  if (lang === 'EN') return row.en || '';
+  if (lang === 'FR') return row.fr || '';
+  return row.ru || '';
+}
+
+function pickExample(row: CsvRow, lang: CatalogLang): string {
+  if (lang === 'DE') return row.exDe || '';
+  if (lang === 'EN') return row.exEn || '';
+  if (lang === 'FR') return row.exFr || '';
+  return row.exRu || '';
 }
 
 /**
  * Fetches starter deck word counts from Supabase (`public.catalog_corpora`).
  */
-export async function fetchStarterCatalogCounts(): Promise<Partial<Record<CefrLevel, number>>> {
+export async function fetchStarterCatalogCounts(): Promise<Record<string, number>> {
   const { data, error } = await supabase
     .from('catalog_corpora')
     .select('level, word_count');
@@ -105,14 +116,14 @@ export async function fetchStarterCatalogCounts(): Promise<Partial<Record<CefrLe
     return {};
   }
 
-  const counts: Partial<Record<CefrLevel, number>> = {};
+  const counts: Record<string, number> = {};
   for (const row of data) {
     if (
       typeof row.level === 'string' &&
       typeof row.word_count === 'number' &&
       row.word_count > 0
     ) {
-      counts[row.level as CefrLevel] = row.word_count;
+      counts[row.level] = row.word_count;
     }
   }
   return counts;
@@ -128,34 +139,38 @@ export async function loadStarterDeckCards(
   learningLang: CatalogLang,
   deckKey: string
 ): Promise<Card[]> {
+  const corpusKey = getCatalogCorpusKey(level, origLang, learningLang);
   const { data, error } = await supabase
     .from('catalog_corpora')
     .select('csv_content')
-    .eq('level', level)
+    .eq('level', corpusKey)
     .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
   if (!data || typeof data.csv_content !== 'string' || !data.csv_content.trim()) {
-    throw new Error(`Catalog "${level}" not found in Supabase (run supabase_seed_catalog.sql)`);
+    const seedFile = corpusKey.startsWith('FR-')
+      ? 'supabase_seed_catalog_fr.sql'
+      : 'supabase_seed_catalog.sql';
+    throw new Error(`Catalog "${corpusKey}" not found in Supabase (run ${seedFile})`);
   }
 
-  const tuples = parseCsvToTuples(data.csv_content);
+  const rows = parseCsvToRecords(data.csv_content);
   const now = Date.now();
 
-  return tuples.map((tuple, idx) =>
+  return rows.map((row, idx) =>
     normalizeCard(
       {
         id: now + idx,
         deckKey,
         cardKey: generateCustomKey(),
-        learning: pickTerm(tuple, learningLang),
-        orig: pickTerm(tuple, origLang),
-        example_learning: pickExample(tuple, learningLang),
-        example_orig: pickExample(tuple, origLang),
-        context: learningLang === 'DE' ? tuple[6] : '',
-        tags: tuple[7],
+        learning: pickTerm(row, learningLang),
+        orig: pickTerm(row, origLang),
+        example_learning: pickExample(row, learningLang),
+        example_orig: pickExample(row, origLang),
+        context: learningLang === 'DE' || learningLang === 'FR' ? row.ctx || '' : '',
+        tags: row.tags || '',
         isCustom: true,
         reps: 0,
         interval: 0,
