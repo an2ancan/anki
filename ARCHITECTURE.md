@@ -180,18 +180,18 @@ A card is considered **unknown** if:
 flowchart TD
   Start["User rates a card"] --> Check{"Rating?"}
 
-  Check -->|"1. Again"| Again["reps = 0<br/>interval = 0<br/>nextReview = now + 1 min<br/>Requeue in session (+3 slots)"]
+  Check -->|"1. Again"| Again["reps = max(0, reps - 2)<br/>interval = floor(interval × 0.4)<br/>nextReview = now + 1 min<br/>Always stays in session queue (+3 slots)"]
 
-  Check -->|"2. Hard"| IsUnk{"Unknown word?<br/>(reps == 0 or due today)"}
-  IsUnk -->|"Yes"| HardUnk["interval = 0<br/>nextReview = now + 5 min<br/>Hide for 5 min → return first with priority"]
-  IsUnk -->|"No (known word)"| HardKnown["reps += 1<br/>interval = max(1, interval × 1.2) days<br/>nextReview = now + interval days"]
+  Check -->|"2. Hard"| Hard["Progress unchanged (reps & interval kept)<br/>nextReview = now + 5 min<br/>Removed from queue for 5 min → returns first"]
 
-  Check -->|"3. Good"| Good["reps += 1<br/>interval = 1 day (then ×2.0)<br/>nextReview = now + interval days"]
+  Check -->|"3. Good"| FirstGood{"First Good?<br/>(reps == 0)"}
+  FirstGood -->|"Yes"| Good10["reps = 1, interval = 0<br/>nextReview = now + 10 min<br/>Removed from queue for 10 min → returns first"]
+  FirstGood -->|"No (reps >= 1)"| GoodDays["reps += 1<br/>interval = 1 day (then ×2.0)<br/>nextReview = now + interval days"]
 
   Check -->|"4. Easy"| Easy["reps += 2<br/>interval = max(4, interval × 2.8) days<br/>nextReview = now + interval days"]
 ```
 
-Button interval previews (`1 мин`, `5 мин` / `1 дн.`, `4 дн.`) are computed dynamically per card via `getRatingPreviewLabels(card)`.
+Button interval previews (`1 мин`, `5 мин`, `10 мин` / `1 дн.`, `4 дн.`) are computed dynamically per card via `getRatingPreviewLabels(card)`.
 
 ### Persistent Active Queue & Both-Sides Mastery (`reconcileActiveQueue` + `expandCardsToQueueItems`)
 1. `user_profiles` (and `localStorage`) stores `max_active_unknown` (default **`5`**) and the exact **`active_card_keys`** array so the same active words survive page reloads and sync across devices.

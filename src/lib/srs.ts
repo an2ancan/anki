@@ -3,7 +3,8 @@ import { DEFAULT_CORPUS } from '../data/defaultCorpus';
 
 export const MINUTE_MS = 60 * 1000;
 export const DAY_MS = 24 * 60 * 60 * 1000;
-export const HARD_UNKNOWN_MINUTES = 5;
+export const HARD_COOLDOWN_MINUTES = 5;
+export const GOOD_FIRST_MINUTES = 10;
 
 export function generateCustomKey(): string {
   if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -57,19 +58,18 @@ export function isUnknownCard(card: Card, now = Date.now()): boolean {
   return false;
 }
 
-export function getRatingPreviewLabels(card: Card, now = Date.now()): Record<Rating, string> {
-  const unknown = isUnknownCard(card, now);
+export function getRatingPreviewLabels(card: Card): Record<Rating, string> {
   const baseInterval = card.interval || 1;
-  const hardLabel = unknown
-    ? `${HARD_UNKNOWN_MINUTES} мин`
-    : `${Math.max(1, Math.round(baseInterval * 1.2))} дн.`;
-  const goodDays = card.interval > 0 ? Math.max(2, Math.round(card.interval * 2.0)) : 1;
+  const goodLabel =
+    card.reps === 0
+      ? `${GOOD_FIRST_MINUTES} мин`
+      : `${card.interval > 0 ? Math.max(2, Math.round(card.interval * 2.0)) : 1} дн.`;
   const easyDays = Math.max(4, Math.round(baseInterval * 2.8));
 
   return {
     again: '1 мин',
-    hard: hardLabel,
-    good: `${goodDays} дн.`,
+    hard: `${HARD_COOLDOWN_MINUTES} мин`,
+    good: goodLabel,
     easy: `${easyDays} дн.`,
   };
 }
@@ -83,31 +83,34 @@ export interface RateResult {
 
 export function applyCardRating(card: Card, rate: Rating, now = Date.now()): RateResult {
   const updated: Card = { ...card, updatedAt: now };
-  const unknown = isUnknownCard(card, now);
 
   if (rate === 'again') {
-    updated.reps = 0;
-    updated.interval = 0;
+    // Reduce progress more than a single step (-2 reps) without resetting everything to 0,
+    // and always keep the card in the active session queue.
+    updated.reps = Math.max(0, (card.reps || 0) - 2);
+    updated.interval = card.interval > 0 ? Math.max(0, Math.floor(card.interval * 0.4)) : 0;
     updated.nextReview = now + MINUTE_MS;
     return { updatedCard: updated, requeueInSession: true, requeueDelaySlots: 3, delayUntilMs: null };
   }
 
   if (rate === 'hard') {
-    if (unknown) {
-      // Unknown word: hide from queue for 5 minutes, then return with top priority
-      const readyAt = now + HARD_UNKNOWN_MINUTES * MINUTE_MS;
-      updated.reps = Math.max(0, card.reps);
+    // Does not change progress (reps/interval stay the same); removes card from queue for 5 min.
+    const readyAt = now + HARD_COOLDOWN_MINUTES * MINUTE_MS;
+    updated.reps = card.reps || 0;
+    updated.interval = card.interval || 0;
+    updated.nextReview = readyAt;
+    return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0, delayUntilMs: readyAt };
+  }
+
+  if (rate === 'good') {
+    if ((card.reps || 0) === 0) {
+      // First "Good": remove from queue for 10 minutes
+      const readyAt = now + GOOD_FIRST_MINUTES * MINUTE_MS;
+      updated.reps = 1;
       updated.interval = 0;
       updated.nextReview = readyAt;
       return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0, delayUntilMs: readyAt };
     }
-    updated.reps = (card.reps || 0) + 1;
-    updated.interval = Math.max(1, (card.interval || 1) * 1.2);
-    updated.nextReview = now + Math.round(updated.interval * DAY_MS);
-    return { updatedCard: updated, requeueInSession: false, requeueDelaySlots: 0, delayUntilMs: null };
-  }
-
-  if (rate === 'good') {
     updated.reps = (card.reps || 0) + 1;
     updated.interval = card.interval > 0 ? Math.max(2, card.interval * 2.0) : 1;
     updated.nextReview = now + Math.round(updated.interval * DAY_MS);

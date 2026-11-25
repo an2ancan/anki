@@ -298,29 +298,37 @@ export default function App() {
       const requiresBothSides = mode === 'mixed';
       let cardToSave = updatedCard;
       const shouldRequeueThisSide = requeueInSession;
+      let shouldRemoveRemainingSides = false;
 
-      if (requiresBothSides) {
+      if (rate === 'again') {
+        passedSidesRef.current.delete(currentCard.cardKey);
+      } else if (rate === 'hard' && delayUntilMs) {
+        // Hard: remove card from queue for 5 min without changing progress, then return with priority
+        shouldRemoveRemainingSides = true;
+        delayedItemsRef.current.push({
+          item: { card: updatedCard, direction: currentItem.direction },
+          readyAt: delayUntilMs,
+        });
+      } else if (requiresBothSides) {
         const sides = passedSidesRef.current.get(currentCard.cardKey) ?? new Set<Direction>();
-        if (rate === 'again') {
+        sides.add(currentItem.direction);
+        passedSidesRef.current.set(currentCard.cardKey, sides);
+        if (sides.size < 2) {
+          // Only 1 side passed so far: do not advance SRS interval/reps yet
+          cardToSave = currentCard;
+        } else {
+          // Both sides passed! Advance card to next level (10 min on first Good, or days)
           passedSidesRef.current.delete(currentCard.cardKey);
-        } else if (delayUntilMs) {
-          // Hard on unknown word: remove from queue for 5 min, then return with priority
-          delayedItemsRef.current.push({
-            item: { card: updatedCard, direction: currentItem.direction },
-            readyAt: delayUntilMs,
-          });
-        } else if (!requeueInSession) {
-          sides.add(currentItem.direction);
-          passedSidesRef.current.set(currentCard.cardKey, sides);
-          if (sides.size < 2) {
-            // Only 1 side passed so far: do not advance SRS interval/reps yet
-            cardToSave = currentCard;
-          } else {
-            // Both sides passed! Advance card to next level and clear tracker
-            passedSidesRef.current.delete(currentCard.cardKey);
+          if (delayUntilMs) {
+            shouldRemoveRemainingSides = true;
+            delayedItemsRef.current.push({
+              item: { card: updatedCard, direction: currentItem.direction },
+              readyAt: delayUntilMs,
+            });
           }
         }
       } else if (delayUntilMs) {
+        shouldRemoveRemainingSides = true;
         delayedItemsRef.current.push({
           item: { card: updatedCard, direction: currentItem.direction },
           readyAt: delayUntilMs,
@@ -365,11 +373,20 @@ export default function App() {
 
       setQueue((prev) => {
         const now = Date.now();
-        const next = prev.map((item) =>
+        let next = prev.map((item) =>
           item.card.cardKey === cardToSave.cardKey ? { ...item, card: cardToSave } : item
         );
 
-        // Pull any 5-min delayed "Hard" cards whose cooldown has expired right to the front (most overdue first)
+        // If card was put on a 5-min (Hard) or 10-min (first Good) cooldown, remove any remaining
+        // upcoming items for this card from the current queue so it truly leaves for that duration.
+        if (shouldRemoveRemainingSides) {
+          next = [
+            ...next.slice(0, currentIndex + 1),
+            ...next.slice(currentIndex + 1).filter((item) => item.card.cardKey !== cardToSave.cardKey),
+          ];
+        }
+
+        // Pull any delayed cards whose cooldown has expired right to the front (most overdue first)
         const readyNow = delayedItemsRef.current
           .filter((d) => d.readyAt <= now)
           .sort((a, b) => a.readyAt - b.readyAt);

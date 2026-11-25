@@ -1,0 +1,24 @@
+# AGENTS.md — Deutsch B1–B2 Anki Mobile
+
+## Project Overview
+A local-first mobile web app for learning German vocabulary and grammar (B1–B2) with spaced repetition (SRS), Supabase cloud sync, Google Cloud TTS (via Supabase Edge Function + IndexedDB MP3 cache), streaks, and statistics.
+
+- **Stack**: React 19, TypeScript (`strict: true`), Vite 6, Tailwind CSS v4, `@supabase/supabase-js` v2.
+- **Deployment**: GitHub Pages via `.github/workflows/deploy.yml` (Node 24).
+- **Documentation Language**: Keep all documentation (`README.md`, `ARCHITECTURE.md`, `AGENTS.md`) in **English**.
+
+## Key Modules
+- `src/types.ts` — Core data types (`Card`, `QueueItem`, `DailyStats`, `SpeechSettings`).
+- `src/data/defaultCorpus.ts` — 70 built-in B1–B2 vocabulary & grammar cards.
+- `src/lib/srs.ts` — SRS rating rules (`Again` = `-2 reps` & stays in queue; `Hard` = no progress change & 5-min removal; first `Good` = 10-min removal; subsequent `Good`/`Easy` = day intervals), time-priority queue with 10% random new-word reserve, two-sided `mixed` expansion.
+- `src/lib/stats.ts` — Streak calculation (`currentStreak`, `bestStreak`) and 90-day `reviewHistory`.
+- `src/lib/storage.ts` — User-scoped `localStorage` persistence (`anki_guest_*` / `anki_u_<id>_*`).
+- `src/lib/audioCache.ts` & `src/lib/speech.ts` — Google Cloud TTS (default `de-DE-Wavenet-C` via Edge Function `bright-action`) with `IndexedDB` MP3 cache and `Web Speech API` fallback.
+- `src/lib/supabase.ts` — Supabase client and bidirectional merge sync (`user_profiles`, `user_cards`).
+- `supabase/functions/tts/index.ts` — Deno Edge Function proxying Google Cloud TTS with JWT verification, free-tier voice allowlist, and 300-char limit.
+- `src/components/` — `Header`, `StatusRibbon`, `FlashCard`, `StatsView`, `SettingsModal`, `AddCardModal`, `AuthModal`, `ProgressModal`, `InfoTip`.
+
+## Mandatory Agent Workflow (Run on Every Code Change)
+1. **Update `ARCHITECTURE.md`**: Whenever code, data models, SRS rules, sync flows, or components change, update `ARCHITECTURE.md` (in English) to stay 100% in sync with the implementation.
+2. **Run Linter & Build**: Always run `npm run lint` and `npm run build` after edits and fix all reported errors before finishing.
+3. **Update `AGENTS.md`**: Keep this `AGENTS.md` file updated whenever project structure, scripts, conventions, or core rules change.
