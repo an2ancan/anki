@@ -337,6 +337,9 @@ export async function speakText(
       console.warn('Google TTS failed, falling back to system voice:', err);
       onFallback?.(err instanceof Error ? err.message : 'Google TTS недоступен');
     }
+  } else if (settings.engine === 'google') {
+    console.warn('Google TTS skipped: user is not signed in and no personal API key is set');
+    onFallback?.('Войдите в аккаунт для Google TTS');
   }
 
   if (requestId !== activeSpeechRequestId) return;

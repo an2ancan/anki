@@ -326,17 +326,20 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [currentIndex, queue.length]);
 
-  // Stop any playing or in-flight audio whenever the active card/view changes
+  const speakRef = useRef(speak);
+  speakRef.current = speak;
+
+  // Stop any playing or in-flight audio whenever the active card or view changes
   useEffect(() => {
     stopActiveAudio();
-    if (activeView !== 'study' || !currentCard || isFlipped) return;
+    if (activeView !== 'study' || !currentCard) return;
     if (direction === 'learning-orig' && speechSettings.autoPlay) {
-      speak(`${currentCard.learning}. ${currentCard.example_learning || ''}`);
+      speakRef.current(`${currentCard.learning}. ${currentCard.example_learning || ''}`);
     }
     return () => {
       stopActiveAudio();
     };
-  }, [activeView, currentIndex, currentCard, direction, isFlipped, speechSettings.autoPlay, speak]);
+  }, [activeView, currentIndex, currentCard?.cardKey, direction, speechSettings.autoPlay]);
 
   const handleFlip = useCallback(() => {
     if (!currentCard || isFlipped) return;
