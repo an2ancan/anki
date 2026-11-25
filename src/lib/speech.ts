@@ -18,8 +18,10 @@ export const GOOGLE_DE_VOICES: GoogleVoiceOption[] = [
 
 let activeAudioEl: HTMLAudioElement | null = null;
 let activeAudioUrl: string | null = null;
+let activeSpeechRequestId = 0;
 
 export function stopActiveAudio(): void {
+  activeSpeechRequestId++;
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
@@ -182,6 +184,7 @@ export async function speakGermanText(
   onFallback?: (reason: string) => void
 ): Promise<void> {
   stopActiveAudio();
+  const requestId = activeSpeechRequestId;
   const text = cleanGermanSpeechText(rawText);
   if (!text) return;
 
@@ -192,6 +195,7 @@ export async function speakGermanText(
     const cacheKey = `${settings.googleVoiceName}|${settings.rate.toFixed(2)}|${settings.pitch.toFixed(2)}|${text}`;
     try {
       let blob = await getCachedAudio(cacheKey);
+      if (requestId !== activeSpeechRequestId) return;
       if (!blob) {
         blob = personalKey
           ? await fetchGoogleTtsBlob(
@@ -209,13 +213,16 @@ export async function speakGermanText(
             );
         await setCachedAudio(cacheKey, blob);
       }
+      if (requestId !== activeSpeechRequestId) return;
       await playBlob(blob);
       return;
     } catch (err) {
+      if (requestId !== activeSpeechRequestId) return;
       console.warn('Google TTS failed, falling back to system voice:', err);
       onFallback?.(err instanceof Error ? err.message : 'Google TTS недоступен');
     }
   }
 
+  if (requestId !== activeSpeechRequestId) return;
   speakWithSystemVoice(text, systemVoice, settings.rate, settings.pitch);
 }

@@ -27,7 +27,7 @@ import {
   saveLocalDeck,
   saveSpeechSettings,
 } from './lib/storage';
-import { getSortedGermanVoices, speakGermanText } from './lib/speech';
+import { getSortedGermanVoices, speakGermanText, stopActiveAudio } from './lib/speech';
 import {
   deleteCardFromSupabase,
   fullSyncWithSupabase,
@@ -272,13 +272,17 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [currentIndex, queue.length]);
 
-  // Auto-play audio when card changes
+  // Stop any playing or in-flight audio whenever the active card/view changes
   useEffect(() => {
-    if (!currentCard || isFlipped) return;
+    stopActiveAudio();
+    if (activeView !== 'study' || !currentCard || isFlipped) return;
     if (direction === 'de-ru' && speechSettings.autoPlay) {
       speak(`${currentCard.german}. ${currentCard.example_de || ''}`);
     }
-  }, [currentCard, direction, isFlipped, speechSettings.autoPlay, speak]);
+    return () => {
+      stopActiveAudio();
+    };
+  }, [activeView, currentIndex, currentCard, direction, isFlipped, speechSettings.autoPlay, speak]);
 
   const handleFlip = useCallback(() => {
     if (!currentCard || isFlipped) return;

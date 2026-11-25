@@ -248,7 +248,7 @@ flowchart LR
 
 - **Server-side master key (`supabase/functions/tts/index.ts`, deployed slug `bright-action`)**: reads `GOOGLE_TTS_API_KEY` from **Supabase Secrets** (never exposed to the browser), verifies the user's JWT (`auth.getUser()`), enforces a strict free-tier allowlist (`de-DE-Wavenet-B/C`, `de-DE-Neural2-B/C/D/F`, default `de-DE-Wavenet-C`), and caps text length at `300` characters.
 - **IndexedDB MP3 cache (`audioCache.ts`)**: caches generated MP3 blobs locally under `voice|rate|pitch|text` so repeated card reviews cost zero API quota and work offline.
-- **Automatic fallback**: if unauthenticated (without a personal key), offline, or on API error, playback seamlessly falls back to `Web Speech API`.
+- **Automatic fallback & card-switch interruption**: if unauthenticated (without a personal key), offline, or on API error, playback seamlessly falls back to `Web Speech API`. Switching to a new card or leaving the study view calls `stopActiveAudio()`, immediately halting current playback and cancelling any in-flight TTS fetch via a request-ID guard.
 
 ---
 
