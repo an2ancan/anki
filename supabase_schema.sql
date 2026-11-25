@@ -1,12 +1,13 @@
 -- Supabase Schema for Deutsch B1-B2 Anki Mobile
 -- Run this entire script in your Supabase Dashboard -> SQL Editor -> New Query
 
--- 1. User profiles (daily goal, daily progress, active study queue, and TTS settings)
+-- 1. User profiles (daily goal, daily progress, active study queue, streaks, and TTS settings)
 create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   daily_limit integer not null default 60,
   today_date text not null default '',
   today_count integer not null default 0,
+  active_deck_key text not null default 'default',
   max_active_unknown integer not null default 5,
   active_card_keys text[] not null default '{}',
   current_streak integer not null default 0,
@@ -20,6 +21,7 @@ create table if not exists public.user_profiles (
 );
 
 -- Safe migration for existing installations:
+alter table public.user_profiles add column if not exists active_deck_key text not null default 'default';
 alter table public.user_profiles add column if not exists max_active_unknown integer not null default 5;
 alter table public.user_profiles add column if not exists active_card_keys text[] not null default '{}';
 alter table public.user_profiles add column if not exists current_streak integer not null default 0;
@@ -30,10 +32,26 @@ alter table public.user_profiles add column if not exists tts_engine text not nu
 alter table public.user_profiles add column if not exists google_voice text not null default 'de-DE-Wavenet-C';
 alter table public.user_profiles add column if not exists google_tts_key text not null default '';
 
+-- 1b. User decks (personal cabinet with default + custom decks)
+create table if not exists public.user_decks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  deck_key text not null,
+  name text not null,
+  description text not null default '',
+  is_default boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint user_decks_user_deck_key_unique unique (user_id, deck_key)
+);
+
+create index if not exists idx_user_decks_user_id on public.user_decks(user_id);
+
 -- 2. User cards (both progress on built-in cards and custom user-created cards)
 create table if not exists public.user_cards (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  deck_key text not null default 'default',
   card_key text not null,
   german text not null,
   russian text not null,
@@ -49,11 +67,36 @@ create table if not exists public.user_cards (
   constraint user_cards_user_card_key_unique unique (user_id, card_key)
 );
 
+alter table public.user_cards add column if not exists deck_key text not null default 'default';
 create index if not exists idx_user_cards_user_id on public.user_cards(user_id);
+create index if not exists idx_user_cards_user_deck on public.user_cards(user_id, deck_key);
 
 -- 3. Enable Row Level Security (RLS)
 alter table public.user_profiles enable row level security;
+alter table public.user_decks enable row level security;
 alter table public.user_cards enable row level security;
+
+-- 3b. RLS Policies for user_decks
+drop policy if exists "Users can view own decks" on public.user_decks;
+create policy "Users can view own decks"
+  on public.user_decks for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert own decks" on public.user_decks;
+create policy "Users can insert own decks"
+  on public.user_decks for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update own decks" on public.user_decks;
+create policy "Users can update own decks"
+  on public.user_decks for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete own decks" on public.user_decks;
+create policy "Users can delete own decks"
+  on public.user_decks for delete
+  using (auth.uid() = user_id);
 
 -- 4. RLS Policies for user_profiles
 drop policy if exists "Users can view own profile" on public.user_profiles;

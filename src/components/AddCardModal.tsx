@@ -1,9 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import type { Deck } from '../types';
 
 interface AddCardModalProps {
   isOpen: boolean;
+  decks: Deck[];
+  defaultDeckKey: string;
   onClose: () => void;
   onAddCard: (data: {
+    deckKey: string;
     german: string;
     russian: string;
     example_de: string;
@@ -14,7 +18,14 @@ interface AddCardModalProps {
   }) => void;
 }
 
-export function AddCardModal({ isOpen, onClose, onAddCard }: AddCardModalProps) {
+export function AddCardModal({
+  isOpen,
+  decks,
+  defaultDeckKey,
+  onClose,
+  onAddCard,
+}: AddCardModalProps) {
+  const [deckKey, setDeckKey] = useState(defaultDeckKey);
   const [german, setGerman] = useState('');
   const [russian, setRussian] = useState('');
   const [exampleDe, setExampleDe] = useState('');
@@ -23,12 +34,17 @@ export function AddCardModal({ isOpen, onClose, onAddCard }: AddCardModalProps) 
   const [tags, setTags] = useState('custom');
   const [studyNow, setStudyNow] = useState(true);
 
+  useEffect(() => {
+    if (isOpen) setDeckKey(defaultDeckKey);
+  }, [isOpen, defaultDeckKey]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!german.trim() || !russian.trim()) return;
     onAddCard({
+      deckKey,
       german: german.trim(),
       russian: russian.trim(),
       example_de: exampleDe.trim(),
@@ -68,6 +84,22 @@ export function AddCardModal({ isOpen, onClose, onAddCard }: AddCardModalProps) 
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              Колода
+            </label>
+            <select
+              value={deckKey}
+              onChange={(e) => setDeckKey(e.target.value)}
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-500"
+            >
+              {decks.map((d) => (
+                <option key={d.deckKey} value={d.deckKey}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
               Немецкое слово / фраза *

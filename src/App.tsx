@@ -1,38 +1,45 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import type {
-  Card,
-  DailyStats,
-  Direction,
-  ProgressFilter,
-  QueueItem,
-  Rating,
-  SpeechSettings,
-  StudyMode,
-  SyncState,
+import {
+  DEFAULT_DECK_KEY,
+  type Card,
+  type DailyStats,
+  type Deck,
+  type Direction,
+  type ProgressFilter,
+  type QueueItem,
+  type Rating,
+  type SpeechSettings,
+  type StudyMode,
+  type SyncState,
 } from './types';
 import {
   applyCardRating,
   buildSessionQueue,
   expandCardsToQueueItems,
   generateCustomKey,
+  generateDeckKey,
   normalizeCard,
   reconcileActiveQueue,
 } from './lib/srs';
 import {
   loadLocalDailyStats,
   loadLocalDeck,
+  loadLocalDecks,
   loadSpeechSettings,
   saveLocalDailyStats,
   saveLocalDeck,
+  saveLocalDecks,
   saveSpeechSettings,
 } from './lib/storage';
 import { getSortedGermanVoices, speakGermanText, stopActiveAudio } from './lib/speech';
 import {
   deleteCardFromSupabase,
+  deleteDeckFromSupabase,
   fullSyncWithSupabase,
   supabase,
   syncCardsToSupabase,
+  syncDeckToSupabase,
   syncProfileToSupabase,
 } from './lib/supabase';
 import { getEffectiveStreak, recordReviewInStats } from './lib/stats';
@@ -40,6 +47,7 @@ import { Header } from './components/Header';
 import { StatusRibbon } from './components/StatusRibbon';
 import { FlashCard } from './components/FlashCard';
 import { StatsView } from './components/StatsView';
+import { DecksView } from './components/DecksView';
 import { SettingsModal } from './components/SettingsModal';
 import { AddCardModal } from './components/AddCardModal';
 import { AuthModal } from './components/AuthModal';
@@ -52,6 +60,7 @@ export default function App() {
     message: 'Режим: локально (без входа)',
   });
   const [deck, setDeck] = useState<Card[]>(() => loadLocalDeck(null));
+  const [decks, setDecks] = useState<Deck[]>(() => loadLocalDecks(null));
   const [stats, setStats] = useState<DailyStats>(() => loadLocalDailyStats(null));
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -69,9 +78,10 @@ export default function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  const [activeView, setActiveView] = useState<'study' | 'stats'>('study');
+  const [activeView, setActiveView] = useState<'study' | 'decks' | 'stats'>('study');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addCardOpen, setAddCardOpen] = useState(false);
+  const [addCardTargetDeckKey, setAddCardTargetDeckKey] = useState<string>(DEFAULT_DECK_KEY);
   const [authOpen, setAuthOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [progressFilter, setProgressFilter] = useState<ProgressFilter>('all');
@@ -137,15 +147,17 @@ export default function App() {
 
   const rebuildQueue = useCallback(
     (
-      nextDeck: Card[],
+      allCards: Card[],
       nextStats: DailyStats,
       forceMore = false,
       targetUserId?: string | null,
       targetMode?: StudyMode
     ) => {
       const effectiveMode = targetMode ?? modeRef.current;
+      const deckKey = nextStats.activeDeckKey || DEFAULT_DECK_KEY;
+      const deckCards = allCards.filter((c) => c.deckKey === deckKey);
       const { queue: nextQueue, activeKeys } = buildSessionQueue(
-        nextDeck,
+        deckCards,
         nextStats.dailyLimit,
         nextStats.dailyReviewedCount,
         nextStats.maxActiveUnknown,
@@ -153,7 +165,7 @@ export default function App() {
         effectiveMode,
         forceMore
       );
-      const updatedStats: DailyStats = { ...nextStats, activeCardKeys: activeKeys };
+      const updatedStats: DailyStats = { ...nextStats, activeDeckKey: deckKey, activeCardKeys: activeKeys };
       setStats(updatedStats);
       const uid = targetUserId !== undefined ? targetUserId : userIdRef.current;
       saveLocalDailyStats(uid, updatedStats);
@@ -161,6 +173,7 @@ export default function App() {
         syncProfileToSupabase(uid, updatedStats).catch(() => {});
       }
       passedSidesRef.current.clear();
+      delayedItemsRef.current = [];
       setQueue(nextQueue);
       setCurrentIndex(0);
       setIsFlipped(false);
@@ -176,21 +189,24 @@ export default function App() {
 
   // Supabase auth & sync
   const runSync = useCallback(
-    async (targetUser: User, localDeck: Card[], localStats: DailyStats) => {
+    async (targetUser: User, localDeck: Card[], localDecks: Deck[], localStats: DailyStats) => {
       if (isSyncingRef.current) return;
       isSyncingRef.current = true;
       setSyncState({ status: 'syncing', message: 'Синхронизация с Supabase...' });
       try {
-        const { mergedDeck, mergedStats, mergedSpeech } = await fullSyncWithSupabase(
+        const { mergedDeck, mergedDecks, mergedStats, mergedSpeech } = await fullSyncWithSupabase(
           targetUser.id,
           localDeck,
+          localDecks,
           localStats,
           loadSpeechSettings()
         );
         saveLocalDeck(targetUser.id, mergedDeck);
+        saveLocalDecks(targetUser.id, mergedDecks);
         saveLocalDailyStats(targetUser.id, mergedStats);
         saveSpeechSettings(mergedSpeech);
         setDeck(mergedDeck);
+        setDecks(mergedDecks);
         setStats(mergedStats);
         setSpeechSettings(mergedSpeech);
         rebuildQueue(mergedDeck, mergedStats, false, targetUser.id);
@@ -216,10 +232,12 @@ export default function App() {
         userIdRef.current = session.user.id;
         setUser(session.user);
         const uDeck = loadLocalDeck(session.user.id);
+        const uDecks = loadLocalDecks(session.user.id);
         const uStats = loadLocalDailyStats(session.user.id);
         setDeck(uDeck);
+        setDecks(uDecks);
         setStats(uStats);
-        runSync(session.user, uDeck, uStats);
+        runSync(session.user, uDeck, uDecks, uStats);
       }
     });
 
@@ -233,14 +251,18 @@ export default function App() {
       setUser(nextUser);
       if (nextUser && event === 'SIGNED_IN' && changed) {
         const uDeck = loadLocalDeck(nextUser.id);
+        const uDecks = loadLocalDecks(nextUser.id);
         const uStats = loadLocalDailyStats(nextUser.id);
         setDeck(uDeck);
+        setDecks(uDecks);
         setStats(uStats);
-        runSync(nextUser, uDeck, uStats);
+        runSync(nextUser, uDeck, uDecks, uStats);
       } else if (!nextUser && event === 'SIGNED_OUT') {
         const gDeck = loadLocalDeck(null);
+        const gDecks = loadLocalDecks(null);
         const gStats = loadLocalDailyStats(null);
         setDeck(gDeck);
+        setDecks(gDecks);
         setStats(gStats);
         rebuildQueue(gDeck, gStats, false, null);
         setSyncState({ status: 'local', message: 'Режим: локально (без входа)' });
@@ -345,8 +367,11 @@ export default function App() {
         : deck;
 
       const prevActiveSet = new Set(stats.activeCardKeys);
+      const activeDeckCardsAfterRate = nextDeck.filter(
+        (c) => c.deckKey === (stats.activeDeckKey || DEFAULT_DECK_KEY)
+      );
       const { activeKeys: nextActiveKeys, activeCards: nextActiveCards } = reconcileActiveQueue(
-        nextDeck,
+        activeDeckCardsAfterRate,
         stats.activeCardKeys,
         stats.maxActiveUnknown
       );
@@ -450,7 +475,55 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [anyModalOpen, isFlipped, handleFlip, handleRate]);
 
+  const handleSelectDeck = (deckKey: string) => {
+    const nextStats: DailyStats = {
+      ...stats,
+      activeDeckKey: deckKey,
+      activeCardKeys: [],
+    };
+    rebuildQueue(deck, nextStats);
+    setActiveView('study');
+  };
+
+  const handleCreateDeck = (name: string, description: string) => {
+    const now = Date.now();
+    const newDeck: Deck = {
+      deckKey: generateDeckKey(),
+      name,
+      description,
+      isDefault: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const nextDecks = [...decks, newDeck];
+    setDecks(nextDecks);
+    saveLocalDecks(user?.id ?? null, nextDecks);
+    if (user) {
+      syncDeckToSupabase(user.id, newDeck).catch(() => {});
+    }
+    showToast(`Колода «${name}» создана!`);
+  };
+
+  const handleDeleteDeck = (deckKey: string) => {
+    if (deckKey === DEFAULT_DECK_KEY) return;
+    const nextDecks = decks.filter((d) => d.deckKey !== deckKey);
+    const nextCards = deck.filter((c) => c.deckKey !== deckKey);
+    setDecks(nextDecks);
+    setDeck(nextCards);
+    saveLocalDecks(user?.id ?? null, nextDecks);
+    saveLocalDeck(user?.id ?? null, nextCards);
+    if (user) {
+      deleteDeckFromSupabase(user.id, deckKey).catch(() => {});
+    }
+    if (stats.activeDeckKey === deckKey) {
+      const nextStats: DailyStats = { ...stats, activeDeckKey: DEFAULT_DECK_KEY, activeCardKeys: [] };
+      rebuildQueue(nextCards, nextStats);
+    }
+    showToast('Колода удалена');
+  };
+
   const handleAddCard = (data: {
+    deckKey: string;
     german: string;
     russian: string;
     example_de: string;
@@ -459,8 +532,10 @@ export default function App() {
     tags: string;
     studyNow: boolean;
   }) => {
+    const targetDeckKey = data.deckKey || stats.activeDeckKey || DEFAULT_DECK_KEY;
     const newCard = normalizeCard({
       id: Date.now(),
+      deckKey: targetDeckKey,
       cardKey: generateCustomKey(),
       german: data.german,
       russian: data.russian,
@@ -480,16 +555,19 @@ export default function App() {
     if (user) {
       syncCardsToSupabase(user.id, [newCard]).catch(() => {});
     }
-    if (data.studyNow) {
-      const items = expandCardsToQueueItems([newCard], mode);
-      setQueue((prev) => {
-        const next = [...prev];
-        next.splice(currentIndex, 0, ...items);
-        return next;
-      });
-      setIsFlipped(false);
-    } else if (queue.length === 0) {
-      rebuildQueue(nextDeck, stats, true);
+    if (targetDeckKey === stats.activeDeckKey) {
+      if (data.studyNow) {
+        const items = expandCardsToQueueItems([newCard], mode);
+        setQueue((prev) => {
+          const next = [...prev];
+          next.splice(currentIndex, 0, ...items);
+          return next;
+        });
+        setIsFlipped(false);
+        setActiveView('study');
+      } else if (queue.length === 0) {
+        rebuildQueue(nextDeck, stats, true);
+      }
     }
     showToast('Карточка добавлена!');
   };
@@ -505,7 +583,8 @@ export default function App() {
     showToast('Карточка удалена');
   };
 
-  const handleImportCsv = (rawCsv: string) => {
+  const handleImportCsv = (targetDeckKey: string, rawCsv: string) => {
+    const resolvedDeckKey = targetDeckKey || stats.activeDeckKey || DEFAULT_DECK_KEY;
     const lines = rawCsv.trim().split('\n');
     const added: Card[] = [];
     let idCounter = Date.now();
@@ -515,6 +594,7 @@ export default function App() {
         added.push(
           normalizeCard({
             id: idCounter++,
+            deckKey: resolvedDeckKey,
             cardKey: generateCustomKey(),
             german: parts[0],
             russian: parts[1],
@@ -541,22 +621,28 @@ export default function App() {
     if (user) {
       syncCardsToSupabase(user.id, added).catch(() => {});
     }
-    rebuildQueue(nextDeck, stats);
+    if (resolvedDeckKey === stats.activeDeckKey) {
+      rebuildQueue(nextDeck, stats);
+    }
     showToast(`Добавлено карточек: ${added.length}`);
   };
 
-  const handleExportCsv = () => {
+  const handleExportCsv = (targetDeckKey: string) => {
+    const resolvedDeckKey = targetDeckKey || stats.activeDeckKey || DEFAULT_DECK_KEY;
+    const targetDeckMeta = decks.find((d) => d.deckKey === resolvedDeckKey);
+    const cardsToExport = deck.filter((c) => c.deckKey === resolvedDeckKey);
     const esc = (v: string) => String(v || '').replace(/"/g, '""');
     const rows = [
       'German;Russian;Example_DE;Example_RU;Context;Tags',
-      ...deck.map(
+      ...cardsToExport.map(
         (c) =>
           `"${esc(c.german)}";"${esc(c.russian)}";"${esc(c.example_de)}";"${esc(c.example_ru)}";"${esc(c.context)}";"${esc(c.tags)}"`
       ),
     ];
+    const safeName = (targetDeckMeta?.name || 'deck').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '_');
     const link = document.createElement('a');
     link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
-    link.download = 'anki_deutsch_b1_b2.csv';
+    link.download = `anki_${safeName}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -594,15 +680,35 @@ export default function App() {
     showToast('Прогресс карточки сброшен');
   };
 
-  const newCount = useMemo(() => deck.filter((c) => c.reps === 0).length, [deck]);
-  const learningCount = useMemo(() => deck.filter((c) => c.reps > 0 && c.reps < 3).length, [deck]);
-  const masteredCount = useMemo(() => deck.filter((c) => c.reps >= 3).length, [deck]);
-  const customCards = useMemo(() => deck.filter((c) => c.isCustom), [deck]);
+  const activeDeckKey = stats.activeDeckKey || DEFAULT_DECK_KEY;
+  const activeDeckMeta = useMemo(
+    () => decks.find((d) => d.deckKey === activeDeckKey) || decks[0],
+    [decks, activeDeckKey]
+  );
+  const activeDeckCards = useMemo(
+    () => deck.filter((c) => c.deckKey === activeDeckKey),
+    [deck, activeDeckKey]
+  );
+
+  const newCount = useMemo(() => activeDeckCards.filter((c) => c.reps === 0).length, [activeDeckCards]);
+  const learningCount = useMemo(
+    () => activeDeckCards.filter((c) => c.reps > 0 && c.reps < 3).length,
+    [activeDeckCards]
+  );
+  const masteredCount = useMemo(
+    () => activeDeckCards.filter((c) => c.reps >= 3).length,
+    [activeDeckCards]
+  );
+  const customCards = useMemo(
+    () => activeDeckCards.filter((c) => c.isCustom),
+    [activeDeckCards]
+  );
   const progressPercent = queue.length > 0 ? (currentIndex / queue.length) * 100 : 100;
 
   return (
     <div className="h-[100dvh] bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
       <Header
+        activeDeckName={activeDeckMeta?.name || 'Deutsch B1–B2'}
         voiceLabel={voiceLabel}
         mode={mode}
         onModeChange={(nextMode) => {
@@ -612,7 +718,12 @@ export default function App() {
         userEmail={user?.email ?? null}
         syncState={syncState}
         isDark={isDark}
-        onOpenAddCard={() => setAddCardOpen(true)}
+        isDecksOpen={activeView === 'decks'}
+        onToggleDecks={() => setActiveView((v) => (v === 'decks' ? 'study' : 'decks'))}
+        onOpenAddCard={() => {
+          setAddCardTargetDeckKey(activeDeckKey);
+          setAddCardOpen(true);
+        }}
         onOpenAuth={() => setAuthOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onToggleTheme={() => setIsDark((d) => !d)}
@@ -634,9 +745,25 @@ export default function App() {
       />
 
       <main className="flex-1 max-w-md w-full mx-auto px-3 py-2 flex flex-col justify-between overflow-hidden">
-        {activeView === 'stats' ? (
+        {activeView === 'decks' ? (
+          <DecksView
+            decks={decks}
+            allCards={deck}
+            activeDeckKey={activeDeckKey}
+            onSelectDeck={handleSelectDeck}
+            onCreateDeck={handleCreateDeck}
+            onDeleteDeck={handleDeleteDeck}
+            onAddCardToDeck={(targetKey) => {
+              setAddCardTargetDeckKey(targetKey);
+              setAddCardOpen(true);
+            }}
+            onImportCsvToDeck={handleImportCsv}
+            onExportCsvForDeck={handleExportCsv}
+            onBackToStudy={() => setActiveView('study')}
+          />
+        ) : activeView === 'stats' ? (
           <StatsView
-            deck={deck}
+            deck={activeDeckCards}
             stats={stats}
             onBackToStudy={() => setActiveView('study')}
             onOpenProgress={(filter) => {
@@ -652,22 +779,39 @@ export default function App() {
               </svg>
             </div>
             <h2 className="text-base font-bold mb-1">
-              {stats.dailyReviewedCount >= stats.dailyLimit
-                ? 'Дневная норма выполнена!'
-                : 'Очередь завершена!'}
+              {activeDeckCards.length === 0
+                ? 'В этой колоде пока нет карточек'
+                : stats.dailyReviewedCount >= stats.dailyLimit
+                  ? 'Дневная норма выполнена!'
+                  : 'Очередь завершена!'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              {stats.dailyReviewedCount >= stats.dailyLimit
-                ? `Вы повторили ${stats.dailyReviewedCount} из ${stats.dailyLimit} карточек. Отличная работа!`
-                : `Вы повторили ${stats.dailyReviewedCount} карточек за сегодня.`}
+              {activeDeckCards.length === 0
+                ? 'Добавьте первое слово вручную или импортируйте список через CSV.'
+                : stats.dailyReviewedCount >= stats.dailyLimit
+                  ? `Вы повторили ${stats.dailyReviewedCount} из ${stats.dailyLimit} карточек. Отличная работа!`
+                  : `Вы повторили ${stats.dailyReviewedCount} карточек за сегодня.`}
             </p>
-            <button
-              type="button"
-              onClick={() => rebuildQueue(deck, stats, true)}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
-            >
-              Продолжить ещё 20 карточек
-            </button>
+            {activeDeckCards.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAddCardTargetDeckKey(activeDeckKey);
+                  setAddCardOpen(true);
+                }}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
+              >
+                + Добавить первую карточку
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => rebuildQueue(deck, stats, true)}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
+              >
+                Продолжить ещё 20 карточек
+              </button>
+            )}
           </div>
         ) : (
           <FlashCard
@@ -686,6 +830,8 @@ export default function App() {
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        decks={decks}
+        activeDeckKey={activeDeckKey}
         voices={voices}
         speechSettings={speechSettings}
         onUpdateSpeech={(next) => {
@@ -716,6 +862,7 @@ export default function App() {
         customCards={customCards}
         onOpenAddCard={() => {
           setSettingsOpen(false);
+          setAddCardTargetDeckKey(activeDeckKey);
           setAddCardOpen(true);
         }}
         onDeleteCustomCard={handleDeleteCustomCard}
@@ -725,6 +872,8 @@ export default function App() {
 
       <AddCardModal
         isOpen={addCardOpen}
+        decks={decks}
+        defaultDeckKey={addCardTargetDeckKey}
         onClose={() => setAddCardOpen(false)}
         onAddCard={handleAddCard}
       />
@@ -734,13 +883,13 @@ export default function App() {
         onClose={() => setAuthOpen(false)}
         userEmail={user?.email ?? null}
         totalCards={deck.length}
-        customCards={customCards.length}
+        customCards={deck.filter((c) => c.isCustom).length}
         dailyReviewedCount={stats.dailyReviewedCount}
         dailyLimit={stats.dailyLimit}
         syncState={syncState}
         onSyncNow={async () => {
           if (user) {
-            await runSync(user, deck, stats);
+            await runSync(user, deck, decks, stats);
             showToast('Синхронизация завершена');
           }
         }}
@@ -754,7 +903,7 @@ export default function App() {
       <ProgressModal
         isOpen={progressOpen}
         onClose={() => setProgressOpen(false)}
-        deck={deck}
+        deck={activeDeckCards}
         filter={progressFilter}
         onFilterChange={setProgressFilter}
         onSpeak={speak}

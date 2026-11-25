@@ -13,9 +13,10 @@ The app is built as a **Local-First SPA** using **React 19 + TypeScript + Vite +
 ```mermaid
 flowchart TD
   subgraph UI["UI Layer (React Components)"]
-    Header["Header.tsx<br/>(mode, +, profile, settings, theme)"]
+    Header["Header.tsx<br/>(deck switcher, mode, +, profile, settings, theme)"]
     Ribbon["StatusRibbon.tsx<br/>(daily goal, streak 🔥, counters, progress bar)"]
     Card["FlashCard.tsx<br/>(card flip, audio, 4 dynamic rating buttons)"]
+    Decks["DecksView.tsx<br/>(personal cabinet: create/delete decks, CSV, study)"]
     Stats["StatsView.tsx<br/>(streaks, 14-day chart, 7-day forecast)"]
     Modals["Modals<br/>SettingsModal / AddCardModal / AuthModal / ProgressModal + InfoTip"]
   end
@@ -62,6 +63,7 @@ anki/
 ├── tsconfig.json                   # Strict TypeScript config (strict: true)
 ├── vite.config.ts                  # Vite + React + Tailwind CSS v4 config (base: './')
 ├── supabase_schema.sql             # PostgreSQL tables, RLS policies, and safe migrations
+├── supabase_migration_decks.sql    # One-time migration moving existing cards to 'default' deck
 ├── supabase/
 │   └── functions/
 │       └── tts/
@@ -82,9 +84,10 @@ anki/
     │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
     │   └── supabase.ts             # Supabase client and fullSync / upsert / delete logic
     └── components/
-        ├── Header.tsx              # Top bar: mode, +, auth status, settings, theme
+        ├── Header.tsx              # Top bar: deck switcher, mode, +, auth, settings, theme
         ├── StatusRibbon.tsx        # Daily goal, clickable streak 🔥, counters, progress bar
         ├── FlashCard.tsx           # Interactive card with dynamic rating interval labels
+        ├── DecksView.tsx           # Personal cabinet: create/delete decks, add cards, CSV
         ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
         ├── SettingsModal.tsx       # Voice, limits (synced with profile), custom cards, CSV
         ├── AddCardModal.tsx        # Form to create a new custom card
@@ -118,6 +121,7 @@ Both built-in and user-created cards share the same `Card` interface:
 ```mermaid
 erDiagram
   AUTH_USERS ||--o| USER_PROFILES : "has 1"
+  AUTH_USERS ||--o{ USER_DECKS : "owns many"
   AUTH_USERS ||--o{ USER_CARDS : "owns many"
 
   AUTH_USERS {
@@ -130,6 +134,7 @@ erDiagram
     integer daily_limit
     text today_date
     integer today_count
+    text active_deck_key
     integer max_active_unknown
     text_array active_card_keys
     integer current_streak
@@ -142,9 +147,21 @@ erDiagram
     timestamptz updated_at
   }
 
+  USER_DECKS {
+    uuid id PK
+    uuid user_id FK
+    text deck_key "UNIQUE (user_id, deck_key)"
+    text name
+    text description
+    boolean is_default
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
   USER_CARDS {
     uuid id PK
     uuid user_id FK
+    text deck_key "default: 'default'"
     text card_key "UNIQUE (user_id, card_key)"
     text german
     text russian

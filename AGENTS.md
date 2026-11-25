@@ -8,15 +8,15 @@ A local-first mobile web app for learning German vocabulary and grammar (B1–B2
 - **Documentation Language**: Keep all documentation (`README.md`, `ARCHITECTURE.md`, `AGENTS.md`) in **English**.
 
 ## Key Modules
-- `src/types.ts` — Core data types (`Card`, `QueueItem`, `DailyStats`, `SpeechSettings`).
-- `src/data/defaultCorpus.ts` — 70 built-in B1–B2 vocabulary & grammar cards.
+- `src/types.ts` — Core data types (`Deck`, `Card`, `QueueItem`, `DailyStats`, `SpeechSettings`).
+- `src/data/defaultCorpus.ts` — 70 built-in B1–B2 vocabulary & grammar cards (assigned to `default` deck).
 - `src/lib/srs.ts` — SRS rating rules (`Again` = `-2 reps` & stays in queue; `Hard` = no progress change & 5-min removal; first `Good` = 10-min removal; subsequent `Good`/`Easy` = day intervals), time-priority queue with 10% random new-word reserve, two-sided `mixed` expansion.
 - `src/lib/stats.ts` — Streak calculation (`currentStreak`, `bestStreak`) and 90-day `reviewHistory`.
-- `src/lib/storage.ts` — User-scoped `localStorage` persistence (`anki_guest_*` / `anki_u_<id>_*`).
-- `src/lib/audioCache.ts` & `src/lib/speech.ts` — Google Cloud TTS (default `de-DE-Wavenet-C` via Edge Function `bright-action`) with `IndexedDB` MP3 cache and `Web Speech API` fallback.
-- `src/lib/supabase.ts` — Supabase client and bidirectional merge sync (`user_profiles`, `user_cards`).
+- `src/lib/storage.ts` — User-scoped `localStorage` persistence (`anki_guest_*` / `anki_u_<id>_*`), including `decks_v1` and `active_deck_key`.
+- `src/lib/audioCache.ts` & `src/lib/speech.ts` — Google Cloud TTS (default `de-DE-Wavenet-C` via Edge Function `bright-action`) with `IndexedDB` MP3 cache, `Web Speech API` fallback, and request-ID audio cancellation on card switch.
+- `src/lib/supabase.ts` — Supabase client and bidirectional merge sync (`user_profiles`, `user_decks`, `user_cards`).
 - `supabase/functions/tts/index.ts` — Deno Edge Function proxying Google Cloud TTS with JWT verification, free-tier voice allowlist, and 300-char limit.
-- `src/components/` — `Header`, `StatusRibbon`, `FlashCard`, `StatsView`, `SettingsModal`, `AddCardModal`, `AuthModal`, `ProgressModal`, `InfoTip`.
+- `src/components/` — `Header`, `StatusRibbon`, `FlashCard`, `DecksView`, `StatsView`, `SettingsModal`, `AddCardModal`, `AuthModal`, `ProgressModal`, `InfoTip`.
 
 ## Mandatory Agent Workflow (Run on Every Code Change)
 1. **Update `ARCHITECTURE.md`**: Whenever code, data models, SRS rules, sync flows, or components change, update `ARCHITECTURE.md` (in English) to stay 100% in sync with the implementation.

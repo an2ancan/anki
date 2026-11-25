@@ -1,10 +1,28 @@
-import type { Card, QueueItem, Rating, StudyMode } from '../types';
+import { DEFAULT_DECK_KEY, type Card, type Deck, type QueueItem, type Rating, type StudyMode } from '../types';
 import { DEFAULT_CORPUS } from '../data/defaultCorpus';
 
 export const MINUTE_MS = 60 * 1000;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const HARD_COOLDOWN_MINUTES = 5;
 export const GOOD_FIRST_MINUTES = 10;
+
+export function createDefaultDeckMeta(): Deck {
+  return {
+    deckKey: DEFAULT_DECK_KEY,
+    name: 'Deutsch B1–B2',
+    description: 'Встроенный словарь и грамматика B1–B2',
+    isDefault: true,
+    createdAt: 0,
+    updatedAt: 0,
+  };
+}
+
+export function generateDeckKey(): string {
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return `deck_${window.crypto.randomUUID()}`;
+  }
+  return `deck_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
 export function generateCustomKey(): string {
   if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -22,6 +40,7 @@ export function normalizeCard(card: Partial<Card> & { id?: number | string }, fa
 
   return {
     id: card.id ?? Date.now() + fallbackIndex,
+    deckKey: String(card.deckKey || DEFAULT_DECK_KEY).trim() || DEFAULT_DECK_KEY,
     cardKey: card.cardKey || (isDefaultId ? `default_${card.id}` : generateCustomKey()),
     german: String(card.german || '').trim(),
     russian: String(card.russian || '').trim(),

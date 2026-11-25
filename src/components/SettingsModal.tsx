@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Card, SpeechSettings, TtsEngine } from '../types';
+import type { Card, Deck, SpeechSettings, TtsEngine } from '../types';
 import { GOOGLE_DE_VOICES, rankVoice } from '../lib/speech';
 import { clearAudioCache, getAudioCacheCount } from '../lib/audioCache';
 import { InfoTip } from './InfoTip';
@@ -7,6 +7,8 @@ import { InfoTip } from './InfoTip';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  decks: Deck[];
+  activeDeckKey: string;
   voices: SpeechSynthesisVoice[];
   speechSettings: SpeechSettings;
   onUpdateSpeech: (next: SpeechSettings) => void;
@@ -18,13 +20,15 @@ interface SettingsModalProps {
   customCards: Card[];
   onOpenAddCard: () => void;
   onDeleteCustomCard: (cardKey: string) => void;
-  onImportCsv: (rawCsv: string) => void;
-  onExportCsv: () => void;
+  onImportCsv: (deckKey: string, rawCsv: string) => void;
+  onExportCsv: (deckKey: string) => void;
 }
 
 export function SettingsModal({
   isOpen,
   onClose,
+  decks,
+  activeDeckKey,
   voices,
   speechSettings,
   onUpdateSpeech,
@@ -41,6 +45,7 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [limitInput, setLimitInput] = useState(String(dailyLimit));
   const [unknownLimitInput, setUnknownLimitInput] = useState(String(maxActiveUnknown));
+  const [csvDeckKey, setCsvDeckKey] = useState(activeDeckKey);
   const [search, setSearch] = useState('');
   const [csvText, setCsvText] = useState('');
   const [cacheCount, setCacheCount] = useState(0);
@@ -49,9 +54,10 @@ export function SettingsModal({
     if (isOpen) {
       setLimitInput(String(dailyLimit));
       setUnknownLimitInput(String(maxActiveUnknown));
+      setCsvDeckKey(activeDeckKey);
       getAudioCacheCount().then(setCacheCount);
     }
-  }, [isOpen, dailyLimit, maxActiveUnknown]);
+  }, [isOpen, dailyLimit, maxActiveUnknown, activeDeckKey]);
 
   if (!isOpen) return null;
 
@@ -356,24 +362,35 @@ export function SettingsModal({
           </div>
 
           {/* CSV Import / Export */}
-          <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3">
-            <div className="font-bold mb-2">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
+            <div className="font-bold">
               Импорт / Экспорт CSV
-              <InfoTip text="Массовое добавление карточек списком (каждая строка: Немецкий;Русский;Пример DE;Пример RU;Контекст;Теги). Кнопка «Экспорт» скачивает всю вашу колоду в CSV-файл." />
+              <InfoTip text="Массовое добавление карточек списком в выбранную колоду (каждая строка: Немецкий;Русский;Пример DE;Пример RU;Контекст;Теги). Кнопка «Экспорт» скачивает карточки выбранной колоды в CSV-файл." />
             </div>
+            <select
+              value={csvDeckKey}
+              onChange={(e) => setCsvDeckKey(e.target.value)}
+              className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold"
+            >
+              {decks.map((d) => (
+                <option key={d.deckKey} value={d.deckKey}>
+                  Колода: {d.name}
+                </option>
+              ))}
+            </select>
             <textarea
               rows={4}
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
               placeholder="German;Russian;Example_DE;Example_RU;Context;Tags"
-              className="w-full font-mono text-[11px] p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 mb-2"
+              className="w-full font-mono text-[11px] p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950"
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => {
                   if (!csvText.trim()) return;
-                  onImportCsv(csvText);
+                  onImportCsv(csvDeckKey, csvText);
                   setCsvText('');
                   onClose();
                 }}
@@ -383,7 +400,7 @@ export function SettingsModal({
               </button>
               <button
                 type="button"
-                onClick={onExportCsv}
+                onClick={() => onExportCsv(csvDeckKey)}
                 className="flex-1 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold"
               >
                 Экспорт

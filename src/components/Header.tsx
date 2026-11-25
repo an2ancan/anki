@@ -1,12 +1,15 @@
 import type { StudyMode, SyncState } from '../types';
 
 interface HeaderProps {
+  activeDeckName: string;
   voiceLabel: string;
   mode: StudyMode;
   onModeChange: (mode: StudyMode) => void;
   userEmail: string | null;
   syncState: SyncState;
   isDark: boolean;
+  isDecksOpen: boolean;
+  onToggleDecks: () => void;
   onOpenAddCard: () => void;
   onOpenAuth: () => void;
   onOpenSettings: () => void;
@@ -14,12 +17,15 @@ interface HeaderProps {
 }
 
 export function Header({
+  activeDeckName,
   voiceLabel,
   mode,
   onModeChange,
   userEmail,
   syncState,
   isDark,
+  isDecksOpen,
+  onToggleDecks,
   onOpenAddCard,
   onOpenAuth,
   onOpenSettings,
@@ -38,15 +44,31 @@ export function Header({
   return (
     <header className="w-full flex-none bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 py-2 z-20">
       <div className="max-w-md mx-auto flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
+        <button
+          type="button"
+          onClick={onToggleDecks}
+          className={`flex items-center gap-2 text-left rounded-xl px-1.5 py-0.5 -ml-1.5 transition ${
+            isDecksOpen
+              ? 'bg-blue-50 dark:bg-blue-950/60'
+              : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+          title="Личный кабинет: мои колоды"
+        >
+          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-xs shadow-sm flex-none">
             DE
           </div>
-          <div>
-            <h1 className="text-xs font-bold leading-none tracking-tight">Anki B1–B2</h1>
-            <span className="text-[10px] text-slate-400 font-medium">{voiceLabel}</span>
+          <div className="min-w-0">
+            <h1 className="text-xs font-bold leading-none tracking-tight flex items-center gap-1 max-w-[105px]">
+              <span className="truncate">{activeDeckName}</span>
+              <svg className="w-3 h-3 text-slate-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </h1>
+            <span className="text-[10px] text-slate-400 font-medium block truncate max-w-[105px]">
+              {voiceLabel}
+            </span>
           </div>
-        </div>
+        </button>
 
         <div className="flex items-center gap-1">
           <select

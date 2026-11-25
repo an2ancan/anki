@@ -1,5 +1,5 @@
-import type { Card, DailyStats, SpeechSettings } from '../types';
-import { getDefaultDeck, normalizeCard } from './srs';
+import { DEFAULT_DECK_KEY, type Card, type DailyStats, type Deck, type SpeechSettings } from '../types';
+import { createDefaultDeckMeta, getDefaultDeck, normalizeCard } from './srs';
 
 export function getTodayKey(): string {
   const d = new Date();
@@ -33,6 +33,39 @@ export function loadLocalDeck(userId: string | null): Card[] {
 
 export function saveLocalDeck(userId: string | null, deck: Card[]): void {
   localStorage.setItem(`${getStoragePrefix(userId)}corpus_v4`, JSON.stringify(deck));
+}
+
+export function loadLocalDecks(userId: string | null): Deck[] {
+  const prefix = getStoragePrefix(userId);
+  const stored = localStorage.getItem(`${prefix}decks_v1`);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const list: Deck[] = parsed.map((d) => ({
+          deckKey: String(d.deckKey || DEFAULT_DECK_KEY),
+          name: String(d.name || 'Deck'),
+          description: String(d.description || ''),
+          isDefault: Boolean(d.isDefault || d.deckKey === DEFAULT_DECK_KEY),
+          createdAt: Number(d.createdAt) || 0,
+          updatedAt: Number(d.updatedAt) || 0,
+        }));
+        if (!list.some((d) => d.deckKey === DEFAULT_DECK_KEY)) {
+          list.unshift(createDefaultDeckMeta());
+        }
+        return list;
+      }
+    } catch {
+      // Fallback below
+    }
+  }
+  const initial = [createDefaultDeckMeta()];
+  saveLocalDecks(userId, initial);
+  return initial;
+}
+
+export function saveLocalDecks(userId: string | null, decks: Deck[]): void {
+  localStorage.setItem(`${getStoragePrefix(userId)}decks_v1`, JSON.stringify(decks));
 }
 
 export function loadLocalDailyStats(userId: string | null): DailyStats {
@@ -77,6 +110,7 @@ export function loadLocalDailyStats(userId: string | null): DailyStats {
     reviewHistory = {};
   }
 
+  const activeDeckKey = localStorage.getItem(`${prefix}active_deck_key`) || DEFAULT_DECK_KEY;
   const currentStreak = parseInt(localStorage.getItem(`${prefix}current_streak`) || '0', 10);
   const bestStreak = parseInt(localStorage.getItem(`${prefix}best_streak`) || '0', 10);
   const lastStudyDate = localStorage.getItem(`${prefix}last_study_date`) || '';
@@ -84,6 +118,7 @@ export function loadLocalDailyStats(userId: string | null): DailyStats {
   return {
     dailyLimit: Number.isNaN(dailyLimit) ? 60 : dailyLimit,
     dailyReviewedCount: Number.isNaN(dailyReviewedCount) ? 0 : dailyReviewedCount,
+    activeDeckKey,
     maxActiveUnknown: Number.isNaN(maxActiveUnknown) ? 5 : maxActiveUnknown,
     activeCardKeys,
     currentStreak: Number.isNaN(currentStreak) ? 0 : currentStreak,
@@ -98,6 +133,7 @@ export function saveLocalDailyStats(userId: string | null, stats: DailyStats): v
   localStorage.setItem(`${prefix}daily_limit`, String(stats.dailyLimit));
   localStorage.setItem(`${prefix}today_date`, getTodayKey());
   localStorage.setItem(`${prefix}today_count`, String(stats.dailyReviewedCount));
+  localStorage.setItem(`${prefix}active_deck_key`, stats.activeDeckKey || DEFAULT_DECK_KEY);
   localStorage.setItem(`${prefix}max_active_unknown`, String(stats.maxActiveUnknown));
   localStorage.setItem(`${prefix}active_card_keys`, JSON.stringify(stats.activeCardKeys || []));
   localStorage.setItem(`${prefix}current_streak`, String(stats.currentStreak || 0));

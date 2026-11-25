@@ -11,8 +11,20 @@ export interface RawCorpusCard {
   nextReview: number;
 }
 
+export const DEFAULT_DECK_KEY = 'default';
+
+export interface Deck {
+  deckKey: string;
+  name: string;
+  description: string;
+  isDefault: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Card {
   id: number | string;
+  deckKey: string;
   cardKey: string;
   german: string;
   russian: string;
@@ -45,6 +57,7 @@ export interface SyncState {
 export interface DailyStats {
   dailyLimit: number;
   dailyReviewedCount: number;
+  activeDeckKey: string;
   maxActiveUnknown: number;
   activeCardKeys: string[];
   currentStreak: number;
