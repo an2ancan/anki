@@ -9,12 +9,10 @@ export interface GoogleVoiceOption {
 
 export const GOOGLE_VOICES_BY_LANG: Record<string, GoogleVoiceOption[]> = {
   DE: [
-    { id: 'de-DE-Neural2-C', label: '★ Neural2-C (Женский, естественный)' },
-    { id: 'de-DE-Neural2-B', label: '★ Neural2-B (Мужской, естественный)' },
-    { id: 'de-DE-Neural2-F', label: '★ Neural2-F (Женский, мягкий)' },
-    { id: 'de-DE-Neural2-D', label: '★ Neural2-D (Мужской, глубокий)' },
-    { id: 'de-DE-Wavenet-C', label: 'WaveNet-C (Женский)' },
-    { id: 'de-DE-Wavenet-B', label: 'WaveNet-B (Мужской)' },
+    { id: 'de-DE-Neural2-G', label: '★ Neural2-G (Женский, естественный)' },
+    { id: 'de-DE-Neural2-H', label: '★ Neural2-H (Мужской, естественный)' },
+    { id: 'de-DE-Wavenet-G', label: 'WaveNet-G (Женский)' },
+    { id: 'de-DE-Wavenet-H', label: 'WaveNet-H (Мужской)' },
   ],
   EN: [
     { id: 'en-US-Neural2-C', label: '★ US Neural2-C (Female, natural)' },
@@ -25,12 +23,12 @@ export const GOOGLE_VOICES_BY_LANG: Record<string, GoogleVoiceOption[]> = {
     { id: 'en-US-Wavenet-C', label: 'US WaveNet-C (Female)' },
   ],
   FR: [
-    { id: 'fr-FR-Neural2-A', label: '★ FR Neural2-A (Féminin, naturel)' },
-    { id: 'fr-FR-Neural2-B', label: '★ FR Neural2-B (Masculin, naturel)' },
-    { id: 'fr-FR-Neural2-C', label: '★ FR Neural2-C (Féminin, doux)' },
-    { id: 'fr-FR-Neural2-D', label: '★ FR Neural2-D (Masculin, profond)' },
-    { id: 'fr-FR-Wavenet-C', label: 'FR WaveNet-C (Féminin)' },
-    { id: 'fr-FR-Wavenet-B', label: 'FR WaveNet-B (Masculin)' },
+    { id: 'fr-FR-Neural2-F', label: '★ FR Neural2-F (Féminin, naturel)' },
+    { id: 'fr-FR-Neural2-G', label: '★ FR Neural2-G (Masculin, naturel)' },
+    { id: 'fr-FR-Wavenet-F', label: 'FR WaveNet-F (Féminin)' },
+    { id: 'fr-FR-Wavenet-G', label: 'FR WaveNet-G (Masculin)' },
+    { id: 'fr-FR-Standard-F', label: 'FR Standard-F (Féminin)' },
+    { id: 'fr-FR-Standard-G', label: 'FR Standard-G (Masculin)' },
   ],
   RU: [
     { id: 'ru-RU-Wavenet-C', label: '★ RU WaveNet-C (Женский)' },
@@ -39,14 +37,13 @@ export const GOOGLE_VOICES_BY_LANG: Record<string, GoogleVoiceOption[]> = {
     { id: 'ru-RU-Wavenet-D', label: 'RU WaveNet-D (Мужской, глубокий)' },
   ],
   ES: [
-    { id: 'es-ES-Neural2-A', label: '★ ES Neural2-A (Femenino)' },
-    { id: 'es-ES-Neural2-B', label: '★ ES Neural2-B (Masculino)' },
-    { id: 'es-ES-Wavenet-C', label: 'ES WaveNet-C (Femenino)' },
+    { id: 'es-ES-Neural2-E', label: '★ ES Neural2-E (Femenino)' },
+    { id: 'es-ES-Neural2-F', label: '★ ES Neural2-F (Masculino)' },
+    { id: 'es-ES-Neural2-G', label: 'ES Neural2-G (Masculino)' },
   ],
   IT: [
-    { id: 'it-IT-Neural2-A', label: '★ IT Neural2-A (Femminile)' },
-    { id: 'it-IT-Neural2-C', label: '★ IT Neural2-C (Maschile)' },
-    { id: 'it-IT-Wavenet-A', label: 'IT WaveNet-A (Femminile)' },
+    { id: 'it-IT-Neural2-E', label: '★ IT Neural2-E (Femminile)' },
+    { id: 'it-IT-Neural2-F', label: '★ IT Neural2-F (Maschile)' },
   ],
 };
 

@@ -6,13 +6,13 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Strict allowlist of Google Cloud TTS voices covered by the 1M chars/month free tier
+// Strict allowlist of active Google Cloud TTS voices covered by the free tier
 const ALLOWED_VOICES = new Set([
-  // German
-  'de-DE-Neural2-C',
-  'de-DE-Neural2-B',
-  'de-DE-Neural2-F',
-  'de-DE-Neural2-D',
+  // German (active + legacy fallback)
+  'de-DE-Neural2-G',
+  'de-DE-Neural2-H',
+  'de-DE-Wavenet-G',
+  'de-DE-Wavenet-H',
   'de-DE-Wavenet-C',
   'de-DE-Wavenet-B',
   // English
@@ -22,25 +22,24 @@ const ALLOWED_VOICES = new Set([
   'en-GB-Neural2-A',
   'en-GB-Neural2-B',
   'en-US-Wavenet-C',
-  // French
-  'fr-FR-Neural2-A',
-  'fr-FR-Neural2-B',
-  'fr-FR-Neural2-C',
-  'fr-FR-Neural2-D',
-  'fr-FR-Wavenet-C',
-  'fr-FR-Wavenet-B',
+  // French (active F/G models)
+  'fr-FR-Neural2-F',
+  'fr-FR-Neural2-G',
+  'fr-FR-Wavenet-F',
+  'fr-FR-Wavenet-G',
+  'fr-FR-Standard-F',
+  'fr-FR-Standard-G',
   // Russian
   'ru-RU-Wavenet-C',
   'ru-RU-Wavenet-B',
   'ru-RU-Wavenet-A',
   'ru-RU-Wavenet-D',
-  // Spanish & Italian
-  'es-ES-Neural2-A',
-  'es-ES-Neural2-B',
-  'es-ES-Wavenet-C',
-  'it-IT-Neural2-A',
-  'it-IT-Neural2-C',
-  'it-IT-Wavenet-A',
+  // Spanish & Italian (active models)
+  'es-ES-Neural2-E',
+  'es-ES-Neural2-F',
+  'es-ES-Neural2-G',
+  'it-IT-Neural2-E',
+  'it-IT-Neural2-F',
 ]);
 
 const MAX_TEXT_LENGTH = 300;
@@ -91,7 +90,7 @@ Deno.serve(async (req: Request) => {
     // 3. Validate request payload
     const payload = await req.json();
     const text = String(payload?.text ?? '').trim();
-    const voice = String(payload?.voice ?? 'de-DE-Neural2-C');
+    const voice = String(payload?.voice ?? 'de-DE-Neural2-G');
     const rate = Math.min(1.2, Math.max(0.7, Number(payload?.rate) || 0.92));
     const pitch = Math.min(1.2, Math.max(0.8, Number(payload?.pitch) || 1.0));
 
