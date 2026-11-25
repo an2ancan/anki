@@ -4,6 +4,7 @@ import { GOOGLE_DE_VOICES, rankVoice } from '../lib/speech';
 import { clearAudioCache, getAudioCacheCount } from '../lib/audioCache';
 import { useI18n } from '../lib/I18nContext';
 import { InfoTip } from './InfoTip';
+import { AiPromptBuilder } from './AiPromptBuilder';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -400,6 +401,10 @@ export function SettingsModal({
                 </option>
               ))}
             </select>
+            <AiPromptBuilder
+              defaultOrigLang={decks.find((d) => d.deckKey === csvDeckKey)?.origLang || 'RU'}
+              defaultLearningLang={decks.find((d) => d.deckKey === csvDeckKey)?.learningLang || 'DE'}
+            />
             <textarea
               rows={4}
               value={csvText}

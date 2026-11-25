@@ -96,6 +96,7 @@ anki/
         ├── AddCardModal.tsx        # Form to create a new custom card
         ├── AuthModal.tsx           # Sign in / sign up / manual sync / sign out
         ├── ProgressModal.tsx       # Card-by-card progress list, filters, search, reset
+        ├── AiPromptBuilder.tsx     # Dynamic AI CSV prompt generator (languages, CEFR level, topic)
         └── InfoTip.tsx             # Tap/click "?" in-app help popover component
 ```
 

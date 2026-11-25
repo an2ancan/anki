@@ -125,6 +125,18 @@ export const translations = {
     importAddBtn: 'Добавить',
     exportBtn: 'Экспорт',
 
+    // AI Prompt Builder
+    aiPromptToggle: '✨ AI-промт для генерации карточек',
+    aiPromptDesc: 'Скопируйте промпт, вставьте в ChatGPT / Gemini / Claude и импортируйте готовый CSV ниже.',
+    aiPromptFromLang: 'С какого (orig)',
+    aiPromptToLang: 'На какой (learning)',
+    aiPromptLevel: 'Уровень',
+    aiPromptCount: 'Карточек',
+    aiPromptTopic: 'Тема (необязательно)',
+    aiPromptTopicPlaceholder: 'например: работа в IT, путешествия, медицина...',
+    aiPromptCopy: 'Скопировать промпт',
+    aiPromptCopied: 'Скопировано! ✓',
+
     // AddCardModal
     newCardTitle: 'Новая карточка',
     deckFieldLabel: 'Колода',
@@ -326,6 +338,18 @@ export const translations = {
     deckPrefix: 'Deck',
     importAddBtn: 'Import',
     exportBtn: 'Export',
+
+    // AI Prompt Builder
+    aiPromptToggle: '✨ AI Prompt for Card Generation',
+    aiPromptDesc: 'Copy this prompt, paste it into ChatGPT / Gemini / Claude, and import the resulting CSV below.',
+    aiPromptFromLang: 'From (orig)',
+    aiPromptToLang: 'To (learning)',
+    aiPromptLevel: 'Level',
+    aiPromptCount: 'Cards',
+    aiPromptTopic: 'Topic (optional)',
+    aiPromptTopicPlaceholder: 'e.g. IT & work, travel, medicine...',
+    aiPromptCopy: 'Copy prompt',
+    aiPromptCopied: 'Copied! ✓',
 
     // AddCardModal
     newCardTitle: 'New Card',

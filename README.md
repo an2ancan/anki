@@ -17,7 +17,7 @@ A local-first mobile web app for language learning (shipped with a 70-card Germa
   - **Easy**: jumps ahead (`+2 reps`, `4d+`).
   - **Persistent Active Queue**: caps simultaneous unknown words (default `5`, synced to Supabase), prioritizes the most overdue cards first, reserves **10%** for random new words, and in **Mixed** mode requires **both sides** (`learning → orig` & `orig → learning`) to pass before advancing.
 - **Streaks & Statistics**: Daily streak counter (`🔥`), best record (`🏆`), daily progress bar (`Today: x/y`), 14-day activity chart, deck mastery breakdown, and 7-day review forecast.
-- **Add Cards & CSV Import/Export**: Add single cards to any deck (`+`) or bulk import/export CSV (`Learning;Orig;Example_Learning;Example_Orig;Context;Tags`).
+- **Add Cards, AI Prompt Builder & CSV Import/Export**: Add single cards to any deck (`+`), generate a tailored **AI prompt** (selectable source/target languages, CEFR level, card count, and optional topic) to paste into ChatGPT/Gemini/Claude, or bulk import/export CSV (`Learning;Orig;Example_Learning;Example_Orig;Context;Tags`).
 - **Google Cloud TTS + Offline Fallback**: Uses `de-DE-Wavenet-C` by default via a secure Supabase Edge Function (master key stored in Supabase Secrets, free-tier voice allowlist) with local `IndexedDB` MP3 caching, automatic fallback to browser `Web Speech API`, and immediate audio cancellation on card switch.
 - **Live RU / EN UI Switcher**, **In-App Help (`?`)**, **Dark / Light Theme**, and **Offline Guest Mode**.
 

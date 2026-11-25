@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { Card, Deck } from '../types';
 import { useI18n } from '../lib/I18nContext';
+import { AiPromptBuilder } from './AiPromptBuilder';
 
 interface DecksViewProps {
   decks: Deck[];
@@ -252,6 +253,10 @@ export function DecksView({
 
               {isCsvOpen && (
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+                  <AiPromptBuilder
+                    defaultOrigLang={d.origLang}
+                    defaultLearningLang={d.learningLang}
+                  />
                   <textarea
                     rows={3}
                     value={csvText}
