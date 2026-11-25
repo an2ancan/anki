@@ -1,4 +1,4 @@
-# Total Recall — Spaced Repetition Flashcards
+# LaRecall — Spaced Repetition Flashcards
 
 A local-first mobile web app for language learning built with **React 19, TypeScript, Vite, and Tailwind CSS v4**, featuring a personal deck cabinet, starter deck catalog fetched from Supabase (**RU/EN/DE/FR**), language-agnostic `orig ↔ learning` cards, spaced repetition (SRS), streaks & statistics, live **RU/EN** UI localization, **Supabase** cloud sync, and language-aware **Google Cloud TTS** via a Supabase Edge Function with `IndexedDB` MP3 caching.
 

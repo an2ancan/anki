@@ -66,7 +66,7 @@ export function Header({
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[9px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 leading-none mb-0.5">
-                Total Recall
+                LaRecall
               </div>
               <h1 className="text-xs font-bold leading-tight tracking-tight flex items-center gap-1">
                 <span className="truncate">{activeDeckName}</span>

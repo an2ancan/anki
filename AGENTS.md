@@ -1,7 +1,7 @@
-# AGENTS.md — Total Recall (Anki Mobile)
+# AGENTS.md — LaRecall (Anki Mobile)
 
 ## Project Overview
-A local-first mobile web app (**Total Recall**) for learning vocabulary and grammar across any language pair (`orig ↔ learning`) with spaced repetition (SRS), Supabase cloud sync (Email, Password Reset, Google OAuth), language-aware Google Cloud TTS (via Supabase Edge Function + IndexedDB MP3 cache), streaks, and statistics.
+A local-first mobile web app (**LaRecall**) for learning vocabulary and grammar across any language pair (`orig ↔ learning`) with spaced repetition (SRS), Supabase cloud sync (Email, Password Reset, Google OAuth), language-aware Google Cloud TTS (via Supabase Edge Function + IndexedDB MP3 cache), streaks, and statistics.
 
 - **Stack**: React 19, TypeScript (`strict: true`), Vite 6, Tailwind CSS v4, `@supabase/supabase-js` v2.
 - **Deployment**: GitHub Pages via `.github/workflows/deploy.yml` (Node 24).

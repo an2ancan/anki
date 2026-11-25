@@ -91,7 +91,7 @@ anki/
     │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
     │   └── supabase.ts             # Supabase client and fullSync / upsert / delete logic
     └── components/
-        ├── Header.tsx              # Compact 2-tier mobile bar: Total Recall brand/deck switcher, +, auth, settings + study direction bar
+        ├── Header.tsx              # Compact 2-tier mobile bar: LaRecall brand/deck switcher, +, auth, settings + study direction bar
         ├── StatusRibbon.tsx        # Daily goal, clickable streak 🔥, counters, progress bar
         ├── FlashCard.tsx           # Interactive card with dynamic rating interval labels
         ├── DecksView.tsx           # Personal cabinet: create/delete decks, starter catalog, add cards, CSV import/export
