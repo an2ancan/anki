@@ -5,6 +5,8 @@ import { clearAudioCache, getAudioCacheCount } from '../lib/audioCache';
 import { useI18n } from '../lib/I18nContext';
 import { InfoTip } from './InfoTip';
 import { AiPromptBuilder } from './AiPromptBuilder';
+import { StarterDecksCatalog } from './StarterDecksCatalog';
+import type { CatalogLang, CefrLevel } from '../data/starterDecks';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -24,6 +26,11 @@ interface SettingsModalProps {
   onDeleteCustomCard: (cardKey: string) => void;
   onImportCsv: (deckKey: string, rawCsv: string) => void;
   onExportCsv: (deckKey: string) => void;
+  onAddStarterDeck: (
+    level: CefrLevel,
+    origLang: CatalogLang,
+    learningLang: CatalogLang
+  ) => Promise<void>;
 }
 
 export function SettingsModal({
@@ -44,6 +51,7 @@ export function SettingsModal({
   onDeleteCustomCard,
   onImportCsv,
   onExportCsv,
+  onAddStarterDeck,
 }: SettingsModalProps) {
   const { locale, setLocale, t } = useI18n();
   const [limitInput, setLimitInput] = useState(String(dailyLimit));
@@ -326,6 +334,9 @@ export function SettingsModal({
               </button>
             </div>
           </div>
+
+          {/* Starter Decks Catalog */}
+          <StarterDecksCatalog decks={decks} onAddStarterDeck={onAddStarterDeck} />
 
           {/* My Custom Cards */}
           <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">

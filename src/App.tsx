@@ -923,6 +923,7 @@ export default function App() {
         onDeleteCustomCard={handleDeleteCustomCard}
         onImportCsv={handleImportCsv}
         onExportCsv={handleExportCsv}
+        onAddStarterDeck={handleAddStarterDeck}
       />
 
       <AddCardModal
@@ -937,6 +938,7 @@ export default function App() {
         isOpen={authOpen}
         onClose={() => setAuthOpen(false)}
         userEmail={user?.email ?? null}
+        decks={decks}
         totalCards={deck.length}
         customCards={deck.filter((c) => c.isCustom).length}
         dailyReviewedCount={stats.dailyReviewedCount}
@@ -952,6 +954,7 @@ export default function App() {
           await supabase.auth.signOut();
           showToast(t.toastSignedOut);
         }}
+        onAddStarterDeck={handleAddStarterDeck}
         onToast={showToast}
       />
 

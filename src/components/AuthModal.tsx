@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from 'react';
-import type { SyncState } from '../types';
+import type { Deck, SyncState } from '../types';
+import type { CatalogLang, CefrLevel } from '../data/starterDecks';
 import { supabase } from '../lib/supabase';
 import { useI18n } from '../lib/I18nContext';
+import { StarterDecksCatalog } from './StarterDecksCatalog';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   userEmail: string | null;
+  decks: Deck[];
   totalCards: number;
   customCards: number;
   dailyReviewedCount: number;
@@ -14,6 +17,11 @@ interface AuthModalProps {
   syncState: SyncState;
   onSyncNow: () => Promise<void>;
   onSignOut: () => Promise<void>;
+  onAddStarterDeck: (
+    level: CefrLevel,
+    origLang: CatalogLang,
+    learningLang: CatalogLang
+  ) => Promise<void>;
   onToast: (msg: string) => void;
 }
 
@@ -21,6 +29,7 @@ export function AuthModal({
   isOpen,
   onClose,
   userEmail,
+  decks,
   totalCards,
   customCards,
   dailyReviewedCount,
@@ -28,6 +37,7 @@ export function AuthModal({
   syncState,
   onSyncNow,
   onSignOut,
+  onAddStarterDeck,
   onToast,
 }: AuthModalProps) {
   const { t } = useI18n();
@@ -214,6 +224,9 @@ export function AuthModal({
               </form>
             </div>
           )}
+
+          {/* Starter Decks Catalog */}
+          <StarterDecksCatalog decks={decks} onAddStarterDeck={onAddStarterDeck} />
         </div>
       </div>
     </div>

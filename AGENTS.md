@@ -17,7 +17,7 @@ A local-first mobile web app for learning German vocabulary and grammar (B1–B2
 - `src/lib/audioCache.ts` & `src/lib/speech.ts` — Google Cloud TTS (default `de-DE-Wavenet-C` via Edge Function `bright-action`) with `IndexedDB` MP3 cache, `Web Speech API` fallback, and request-ID audio cancellation on card switch.
 - `src/lib/supabase.ts` — Supabase client and bidirectional merge sync (`user_profiles`, `user_decks`, `user_cards`).
 - `supabase/functions/tts/index.ts` — Deno Edge Function proxying Google Cloud TTS with JWT verification, free-tier voice allowlist, and 300-char limit.
-- `src/components/` — `Header`, `StatusRibbon`, `FlashCard`, `DecksView`, `StatsView`, `SettingsModal`, `AddCardModal`, `AuthModal`, `ProgressModal`, `AiPromptBuilder`, `InfoTip`.
+- `src/components/` — `Header`, `StatusRibbon`, `FlashCard`, `DecksView`, `StatsView`, `SettingsModal`, `AddCardModal`, `AuthModal`, `ProgressModal`, `AiPromptBuilder`, `StarterDecksCatalog`, `InfoTip`.
 
 ## Mandatory Agent Workflow (Run on Every Code Change)
 1. **Update `ARCHITECTURE.md`**: Whenever code, data models, SRS rules, sync flows, or components change, update `ARCHITECTURE.md` (in English) to stay 100% in sync with the implementation.
