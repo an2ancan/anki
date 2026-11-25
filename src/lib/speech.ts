@@ -256,7 +256,24 @@ async function fetchEdgeTtsBlob(
     body: { text, voice: voiceName, rate, pitch },
   });
   if (error) {
-    throw new Error(error.message || 'Edge TTS error');
+    let detail = error.message || 'Edge TTS error';
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.text === 'function') {
+      try {
+        const bodyText = await ctx.clone().text();
+        if (bodyText) {
+          try {
+            const parsed = JSON.parse(bodyText) as { error?: string; message?: string };
+            detail = parsed.error || parsed.message || bodyText.slice(0, 140);
+          } catch {
+            detail = bodyText.slice(0, 140);
+          }
+        }
+      } catch {
+        // ignore body read error
+      }
+    }
+    throw new Error(detail);
   }
   const audioContent = (data as { audioContent?: string } | null)?.audioContent;
   if (!audioContent) {

@@ -165,8 +165,9 @@ export default function App() {
 
   const speak = useCallback(
     (text: string) => {
-      speakText(text, activeLearningLang, speechSettings, chosenVoice, Boolean(user), () => {
-        showToast(tRef.current.toastGoogleFallback);
+      speakText(text, activeLearningLang, speechSettings, chosenVoice, Boolean(user), (reason) => {
+        const suffix = reason ? ` (${reason.slice(0, 80)})` : '';
+        showToast(`${tRef.current.toastGoogleFallback}${suffix}`);
       });
     },
     [activeLearningLang, chosenVoice, speechSettings, user, showToast]
