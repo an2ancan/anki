@@ -8,7 +8,7 @@ A local-first mobile web app for language learning (shipped with a 70-card Germa
 
 ## Features
 
-- **Personal Deck Cabinet**: Create and delete custom decks with any language pair (`origLang` → `learningLang`, e.g. `RU → DE`, `EN → ES`), switch active decks, and track mastery per deck.
+- **Personal Deck Cabinet & Starter Catalog**: Create and delete custom decks with any language pair (`origLang` → `learningLang`), or add ready-made starter decks for **RU ↔ EN**, **RU ↔ DE**, and **EN ↔ DE** across **A1–A2, B1, B2, and C1** levels (short descriptions in UI, CSV corpora fetched from Supabase `catalog_corpora`).
 - **Language-Agnostic Cards (`orig ↔ learning`)**: Cards display `learning (DE) → orig (RU)` or `orig (RU) → learning (DE)` based on the active deck's language pair. Includes 70 built-in B1–B2 German cards in the `default` deck.
 - **Smart Spaced Repetition (SRS)**:
   - **Again**: reduces progress (`-2 reps`) without wiping it to 0 and keeps the card in the active queue.
@@ -38,7 +38,8 @@ npm run build    # Type-check & production build to dist/
 
 ### 1. Database Schema & Migrations
 - **Fresh setup**: Open **Supabase Dashboard → SQL Editor → New query**, paste [`supabase_schema.sql`](./supabase_schema.sql), and click **Run**.
-- **Upgrading an existing database**: Run [`supabase_migration_decks.sql`](./supabase_migration_decks.sql) followed by [`supabase_migration_orig_learning.sql`](./supabase_migration_orig_learning.sql).
+- **Upgrading an existing database**: Run [`supabase_migration_decks.sql`](./supabase_migration_decks.sql), [`supabase_migration_orig_learning.sql`](./supabase_migration_orig_learning.sql), and [`supabase_migration_catalog.sql`](./supabase_migration_catalog.sql).
+- **Starter Decks CSV Seed (Required for Starter Catalog)**: Run [`supabase_seed_catalog.sql`](./supabase_seed_catalog.sql) in **SQL Editor** to store the `A1-A2`, `B1`, `B2`, and `C1` CSV corpora in `public.catalog_corpora`.
 
 ### 2. Email Authentication
 1. Go to **Authentication → Sign In / Providers → Email** and ensure Email is enabled.

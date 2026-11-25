@@ -165,10 +165,14 @@ export async function syncProfileToSupabase(
 export async function syncCardsToSupabase(userId: string, cards: Card[]): Promise<void> {
   if (cards.length === 0) return;
   const rows = cards.map((c) => cardToRow(userId, c));
-  const { error } = await supabase
-    .from('user_cards')
-    .upsert(rows, { onConflict: 'user_id,card_key' });
-  if (error) throw error;
+  const CHUNK_SIZE = 150;
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    const chunk = rows.slice(i, i + CHUNK_SIZE);
+    const { error } = await supabase
+      .from('user_cards')
+      .upsert(chunk, { onConflict: 'user_id,card_key' });
+    if (error) throw error;
+  }
 }
 
 export async function deleteCardFromSupabase(userId: string, cardKey: string): Promise<void> {

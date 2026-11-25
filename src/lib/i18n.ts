@@ -68,6 +68,15 @@ export const translations = {
     addWordBtn: '+ Слово',
     importToDeck: 'Импорт в эту колоду',
     exportCsv: 'Экспорт CSV',
+    starterCatalogTitle: '📚 Готовые колоды (RU / EN / DE)',
+    starterCatalogDesc: 'Выберите языковую пару и уровень (A1–C1), чтобы добавить готовую колоду в свой кабинет.',
+    starterAllPairs: 'Все пары',
+    starterAllLevels: 'Все уровни',
+    starterAddBtn: '+ Добавить',
+    starterAddedBtn: 'Добавлена ✓',
+    starterLoadingBtn: 'Загрузка...',
+    starterWordsCount: (n: number) => `${n} слов`,
+    toastStarterAdded: (name: string, n: number) => `Колода «${name}» добавлена (${n} карт.)`,
 
     // StatsView
     statsTitle: 'Статистика и стрики',
@@ -282,6 +291,15 @@ export const translations = {
     addWordBtn: '+ Word',
     importToDeck: 'Import to this deck',
     exportCsv: 'Export CSV',
+    starterCatalogTitle: '📚 Starter Decks (RU / EN / DE)',
+    starterCatalogDesc: 'Pick a language pair & direction and CEFR level (A1–C1) to add a ready-made deck.',
+    starterAllPairs: 'All pairs',
+    starterAllLevels: 'All levels',
+    starterAddBtn: '+ Add',
+    starterAddedBtn: 'Added ✓',
+    starterLoadingBtn: 'Loading...',
+    starterWordsCount: (n: number) => `${n} words`,
+    toastStarterAdded: (name: string, n: number) => `Deck "${name}" added (${n} cards)`,
 
     // StatsView
     statsTitle: 'Statistics & Streaks',

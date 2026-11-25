@@ -44,6 +44,7 @@ import {
 } from './lib/supabase';
 import { getEffectiveStreak, recordReviewInStats } from './lib/stats';
 import { useI18n } from './lib/I18nContext';
+import { loadStarterDeckCards, type CatalogLang, type CefrLevel } from './data/starterDecks';
 import { Header } from './components/Header';
 import { StatusRibbon } from './components/StatusRibbon';
 import { FlashCard } from './components/FlashCard';
@@ -517,6 +518,43 @@ export default function App() {
     showToast(t.toastDeckCreated(name));
   };
 
+  const handleAddStarterDeck = async (
+    level: CefrLevel,
+    origLang: CatalogLang,
+    learningLang: CatalogLang
+  ) => {
+    const now = Date.now();
+    const deckKey = generateDeckKey();
+    const name = `${origLang} → ${learningLang} • ${level}`;
+    const newDeck: Deck = {
+      deckKey,
+      name,
+      description: `Starter ${level} (${origLang} → ${learningLang})`,
+      origLang,
+      learningLang,
+      isDefault: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      const starterCards = await loadStarterDeckCards(level, origLang, learningLang, deckKey);
+      const nextDecks = [...decks, newDeck];
+      const nextCards = [...deck, ...starterCards];
+      setDecks(nextDecks);
+      setDeck(nextCards);
+      saveLocalDecks(user?.id ?? null, nextDecks);
+      saveLocalDeck(user?.id ?? null, nextCards);
+      if (user) {
+        syncDeckToSupabase(user.id, newDeck)
+          .then(() => syncCardsToSupabase(user.id, starterCards))
+          .catch(() => {});
+      }
+      showToast(t.toastStarterAdded(name, starterCards.length));
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load starter deck');
+    }
+  };
+
   const handleDeleteDeck = (deckKey: string) => {
     if (deckKey === DEFAULT_DECK_KEY) return;
     const nextDecks = decks.filter((d) => d.deckKey !== deckKey);
@@ -766,6 +804,7 @@ export default function App() {
             activeDeckKey={activeDeckKey}
             onSelectDeck={handleSelectDeck}
             onCreateDeck={handleCreateDeck}
+            onAddStarterDeck={handleAddStarterDeck}
             onDeleteDeck={handleDeleteDeck}
             onAddCardToDeck={(targetKey) => {
               setAddCardTargetDeckKey(targetKey);
