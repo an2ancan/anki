@@ -89,6 +89,9 @@ export default function App() {
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [addCardTargetDeckKey, setAddCardTargetDeckKey] = useState<string>(DEFAULT_DECK_KEY);
   const [authOpen, setAuthOpen] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
+    typeof window !== 'undefined' && window.location.hash.includes('type=recovery')
+  );
   const [progressOpen, setProgressOpen] = useState(false);
   const [progressFilter, setProgressFilter] = useState<ProgressFilter>('all');
   const [toastMsg, setToastMsg] = useState('');
@@ -255,7 +258,10 @@ export default function App() {
       const changed = nextId !== userIdRef.current;
       userIdRef.current = nextId;
       setUser(nextUser);
-      if (nextUser && event === 'SIGNED_IN' && changed) {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+        setAuthOpen(true);
+      } else if (nextUser && event === 'SIGNED_IN' && changed) {
         const uDeck = loadLocalDeck(nextUser.id);
         const uDecks = loadLocalDecks(nextUser.id);
         const uStats = loadLocalDailyStats(nextUser.id);
@@ -953,9 +959,14 @@ export default function App() {
       />
 
       <AuthModal
-        isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
+        isOpen={authOpen || isPasswordRecovery}
+        onClose={() => {
+          setAuthOpen(false);
+          setIsPasswordRecovery(false);
+        }}
         userEmail={user?.email ?? null}
+        isPasswordRecovery={isPasswordRecovery}
+        onClearPasswordRecovery={() => setIsPasswordRecovery(false)}
         decks={decks}
         totalCards={deck.length}
         customCards={deck.filter((c) => c.isCustom).length}

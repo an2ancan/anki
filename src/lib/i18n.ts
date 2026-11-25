@@ -177,6 +177,19 @@ export const translations = {
     authErrorDefault: 'Ошибка авторизации',
     accountCreatedConfirm:
       'Аккаунт создан! Проверьте почту для подтверждения email, затем войдите.',
+    forgotPasswordLink: 'Забыли пароль?',
+    resetPasswordTitle: 'Сброс пароля',
+    resetPasswordSubmit: 'Отправить ссылку на почту',
+    resetPasswordSent: 'Ссылка для сброса пароля отправлена! Проверьте почту (и папку «Спам»).',
+    backToSignIn: '← Вернуться ко входу',
+    newPasswordTitle: 'Задайте новый пароль',
+    newPasswordLabel: 'Новый пароль (минимум 6 символов)',
+    confirmPasswordLabel: 'Повторите новый пароль',
+    passwordsMismatch: 'Пароли не совпадают',
+    saveNewPasswordBtn: 'Сохранить новый пароль',
+    toastPasswordUpdated: 'Пароль успешно обновлён!',
+    orDivider: 'или',
+    continueWithGoogle: 'Войти через Google',
 
     // ProgressModal
     progressTitle: 'Прогресс обучения',
@@ -400,6 +413,19 @@ export const translations = {
     authErrorDefault: 'Authentication error',
     accountCreatedConfirm:
       'Account created! Check your email to confirm your address, then sign in.',
+    forgotPasswordLink: 'Forgot password?',
+    resetPasswordTitle: 'Reset Password',
+    resetPasswordSubmit: 'Send reset link',
+    resetPasswordSent: 'Password reset link sent! Check your email (and spam folder).',
+    backToSignIn: '← Back to Sign In',
+    newPasswordTitle: 'Set a new password',
+    newPasswordLabel: 'New password (min 6 characters)',
+    confirmPasswordLabel: 'Confirm new password',
+    passwordsMismatch: 'Passwords do not match',
+    saveNewPasswordBtn: 'Save new password',
+    toastPasswordUpdated: 'Password updated!',
+    orDivider: 'or',
+    continueWithGoogle: 'Continue with Google',
 
     // ProgressModal
     progressTitle: 'Learning Progress',

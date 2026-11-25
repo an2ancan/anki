@@ -41,9 +41,10 @@ npm run build    # Type-check & production build to dist/
 - **Upgrading an existing database**: Run [`supabase_migration_decks.sql`](./supabase_migration_decks.sql), [`supabase_migration_orig_learning.sql`](./supabase_migration_orig_learning.sql), and [`supabase_migration_catalog.sql`](./supabase_migration_catalog.sql).
 - **Starter Decks CSV Seed (Required for Starter Catalog)**: Run [`supabase_seed_catalog.sql`](./supabase_seed_catalog.sql) in **SQL Editor** to store the `A1-A2`, `B1`, `B2`, and `C1` CSV corpora in `public.catalog_corpora`.
 
-### 2. Email Authentication
+### 2. Authentication (Email, Password Reset & Google OAuth)
 1. Go to **Authentication → Sign In / Providers → Email** and ensure Email is enabled.
-2. *(Optional)* Disable **Confirm email** for instant sign-up, or add your site URL under **Authentication → URL Configuration → Site URL**.
+2. Under **Authentication → URL Configuration**, set **Site URL** to your production URL (e.g. `https://<user>.github.io/<repo>/`) and add both your production URL and `http://localhost:5173/` to **Redirect URLs** (required for password reset links and OAuth redirects).
+3. *(Optional)* To enable **Google** sign-in, open **Authentication → Sign In / Providers → Google**, toggle it ON, paste your OAuth Client ID & Secret from Google Cloud Console, and register `https://<project-ref>.supabase.co/auth/v1/callback` as an Authorized Redirect URI.
 
 ### 3. Google Cloud TTS Edge Function (Optional Master Key)
 1. Enable **Cloud Text-to-Speech API** in [Google Cloud Console](https://console.cloud.google.com/) and create an API key (restrict it to **Cloud Text-to-Speech API**; leave *Application restrictions* as **None** for server-side calls).

@@ -97,7 +97,7 @@ anki/
         ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
         ├── SettingsModal.tsx       # Voice, limits (synced with profile), starter decks, custom cards, CSV
         ├── AddCardModal.tsx        # Form to create a new custom card
-        ├── AuthModal.tsx           # Sign in / sign up / manual sync / sign out / starter decks
+        ├── AuthModal.tsx           # Email sign in/up, password reset, Google OAuth, sync & starter decks
         ├── ProgressModal.tsx       # Card-by-card progress list, filters, search, reset
         ├── AiPromptBuilder.tsx     # Dynamic AI CSV prompt generator (languages, CEFR level, topic)
         ├── StarterDecksCatalog.tsx # Reusable starter deck catalog with dynamic Supabase word counts
