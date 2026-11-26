@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { Card, Direction, Rating } from '../types';
 import { getRatingPreviewLabels } from '../lib/srs';
 import { useI18n } from '../lib/I18nContext';
@@ -10,6 +11,7 @@ interface FlashCardProps {
   isFlipped: boolean;
   onFlip: () => void;
   onRate: (rate: Rating) => void;
+  onDelete: () => void;
   onSpeakAll: () => void;
   onSpeakTerm: () => void;
   onSpeakExample: () => void;
@@ -23,11 +25,17 @@ export function FlashCard({
   isFlipped,
   onFlip,
   onRate,
+  onDelete,
   onSpeakAll,
   onSpeakTerm,
   onSpeakExample,
 }: FlashCardProps) {
   const { locale, t } = useI18n();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    setConfirmDelete(false);
+  }, [card.cardKey]);
   const promptText = direction === 'learning-orig' ? card.learning : card.orig;
   const promptExample = direction === 'learning-orig' ? card.example_learning : card.example_orig;
   const answerText = direction === 'learning-orig' ? card.orig : card.learning;
@@ -104,13 +112,60 @@ export function FlashCard({
           </div>
         )}
 
-        <div className="flex justify-between items-center text-xs text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800/80 tabular-nums">
+        <div className="flex justify-between items-center gap-2 text-xs text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800/80 tabular-nums">
           <span>
             {t.repsLabel}: {card.reps || 0}
           </span>
-          <span className="truncate max-w-[160px]">
-            {card.tags ? `#${card.tags.split(' ')[0]}` : ''}
-          </span>
+          <div className="flex items-center gap-2 min-w-0">
+            {card.tags && (
+              <span className="truncate max-w-[140px]">#{card.tags.split(' ')[0]}</span>
+            )}
+            {confirmDelete ? (
+              <div className="flex items-center gap-1 flex-none">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(false);
+                    onDelete();
+                  }}
+                  className="px-2 py-0.5 rounded-lg bg-rose-600 text-white text-[11px] font-bold hover:bg-rose-700 transition"
+                >
+                  {t.confirmDelete}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(false);
+                  }}
+                  className="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold transition"
+                >
+                  {t.cancel}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmDelete(true);
+                }}
+                className="p-1.5 -mr-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition flex-none"
+                title={t.deleteCardTitle}
+                aria-label={t.deleteCardTitle}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

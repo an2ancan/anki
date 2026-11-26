@@ -63,6 +63,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { AddCardModal } from './components/AddCardModal';
 import { AuthModal } from './components/AuthModal';
 import { ProgressModal } from './components/ProgressModal';
+import { QuickAddModal } from './components/QuickAddModal';
 
 export default function App() {
   const { t } = useI18n();
@@ -95,6 +96,7 @@ export default function App() {
 
   const [activeView, setActiveView] = useState<'study' | 'decks' | 'stats'>('study');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [addCardTargetDeckKey, setAddCardTargetDeckKey] = useState<string>(DEFAULT_DECK_KEY);
   const [authOpen, setAuthOpen] = useState(false);
@@ -665,10 +667,24 @@ export default function App() {
   };
 
   const handleDeleteCustomCard = (cardKey: string) => {
+    stopActiveAudio();
     const nextDeck = deck.filter((c) => c.cardKey !== cardKey);
+    const nextStats: DailyStats = {
+      ...stats,
+      activeCardKeys: (stats.activeCardKeys || []).filter((k) => k !== cardKey),
+    };
     setDeck(nextDeck);
+    setStats(nextStats);
     saveLocalDeck(user?.id ?? null, nextDeck);
-    setQueue((prev) => prev.filter((item) => item.card.cardKey !== cardKey));
+    saveLocalDailyStats(user?.id ?? null, nextStats);
+    setIsFlipped(false);
+    const nextQueue = queue.filter((item) => item.card.cardKey !== cardKey);
+    if (nextQueue.length === 0) {
+      rebuildQueue(nextDeck, nextStats);
+    } else {
+      setQueue(nextQueue);
+      setCurrentIndex((idx) => Math.min(idx, nextQueue.length - 1));
+    }
     if (user) {
       deleteCardFromSupabase(user.id, cardKey).catch(() => {});
     }
@@ -812,10 +828,6 @@ export default function App() {
         isDecksOpen={activeView === 'decks'}
         showStudyBar={activeView === 'study'}
         onToggleDecks={() => setActiveView((v) => (v === 'decks' ? 'study' : 'decks'))}
-        onOpenAddCard={() => {
-          setAddCardTargetDeckKey(activeDeckKey);
-          setAddCardOpen(true);
-        }}
         onOpenAuth={() => setAuthOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
       />
@@ -824,14 +836,8 @@ export default function App() {
         dailyReviewedCount={stats.dailyReviewedCount}
         dailyLimit={stats.dailyLimit}
         streak={getEffectiveStreak(stats)}
-        newCount={newCount}
-        learningCount={learningCount}
-        masteredCount={masteredCount}
         onOpenStats={() => setActiveView((v) => (v === 'stats' ? 'study' : 'stats'))}
-        onOpenProgress={(filter) => {
-          setProgressFilter(filter);
-          setProgressOpen(true);
-        }}
+        onOpenQuickAdd={() => setQuickAddOpen(true)}
       />
 
       <main className="flex-1 max-w-lg w-full mx-auto px-3.5 py-2.5 flex flex-col justify-between overflow-hidden">
@@ -921,6 +927,7 @@ export default function App() {
             isFlipped={isFlipped}
             onFlip={handleFlip}
             onRate={handleRate}
+            onDelete={() => handleDeleteCustomCard(currentCard.cardKey)}
             onSpeakAll={() => speak(`${currentCard.learning}. ${currentCard.example_learning || ''}`)}
             onSpeakTerm={() => speak(currentCard.learning)}
             onSpeakExample={() => speak(currentCard.example_learning || '')}
@@ -928,8 +935,42 @@ export default function App() {
         )}
       </main>
 
-      <footer className="flex-none max-w-lg w-full mx-auto px-4 pb-1.5 pt-0.5 flex justify-end pointer-events-none select-none safe-pb">
-        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400/75 dark:text-slate-600">
+      <footer className="flex-none max-w-lg w-full mx-auto px-3.5 pb-1.5 pt-1 flex items-center justify-between gap-2 safe-pb">
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs tabular-nums whitespace-nowrap overflow-hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setProgressFilter('new');
+              setProgressOpen(true);
+            }}
+            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold whitespace-nowrap"
+          >
+            {t.newLabel}: {newCount}
+          </button>
+          <span className="text-slate-400 opacity-50">•</span>
+          <button
+            type="button"
+            onClick={() => {
+              setProgressFilter('learning');
+              setProgressOpen(true);
+            }}
+            className="text-amber-600 dark:text-amber-400 hover:underline font-semibold whitespace-nowrap"
+          >
+            {t.learningLabel}: {learningCount}
+          </button>
+          <span className="text-slate-400 opacity-50">•</span>
+          <button
+            type="button"
+            onClick={() => {
+              setProgressFilter('mastered');
+              setProgressOpen(true);
+            }}
+            className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold whitespace-nowrap"
+          >
+            {t.masteredLabel}: {masteredCount}
+          </button>
+        </div>
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400/75 dark:text-slate-600 select-none flex-none">
           LaRecall
         </span>
       </footer>
@@ -980,6 +1021,21 @@ export default function App() {
           setAddCardOpen(true);
         }}
         onDeleteCustomCard={handleDeleteCustomCard}
+        onAddStarterDeck={handleAddStarterDeck}
+      />
+
+      <QuickAddModal
+        isOpen={quickAddOpen}
+        onClose={() => setQuickAddOpen(false)}
+        decks={decks}
+        activeDeckName={activeDeckMeta?.name || t.myDecks}
+        activeDeckCardCount={activeDeckCards.length}
+        onAddCard={() => {
+          setAddCardTargetDeckKey(activeDeckKey);
+          setAddCardOpen(true);
+        }}
+        onExportCsv={() => handleExportCsv(activeDeckKey)}
+        onOpenDecks={() => setActiveView('decks')}
         onAddStarterDeck={handleAddStarterDeck}
       />
 

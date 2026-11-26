@@ -1,26 +1,19 @@
-import type { ProgressFilter } from '../types';
 import { useI18n } from '../lib/I18nContext';
 
 interface StatusRibbonProps {
   dailyReviewedCount: number;
   dailyLimit: number;
   streak: number;
-  newCount: number;
-  learningCount: number;
-  masteredCount: number;
   onOpenStats: () => void;
-  onOpenProgress: (filter: ProgressFilter) => void;
+  onOpenQuickAdd: () => void;
 }
 
 export function StatusRibbon({
   dailyReviewedCount,
   dailyLimit,
   streak,
-  newCount,
-  learningCount,
-  masteredCount,
   onOpenStats,
-  onOpenProgress,
+  onOpenQuickAdd,
 }: StatusRibbonProps) {
   const { t } = useI18n();
   const goalReached = dailyReviewedCount >= dailyLimit;
@@ -29,12 +22,12 @@ export function StatusRibbon({
 
   return (
     <div className="flex-none max-w-lg w-full mx-auto px-3.5 pt-2.5">
-      <div className="flex items-center justify-between gap-1.5 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-1 flex-none">
+      <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 flex-none">
           <button
             type="button"
             onClick={onOpenStats}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-bold tabular-nums whitespace-nowrap hover:opacity-90 transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold tabular-nums whitespace-nowrap hover:opacity-90 transition ${
               goalReached
                 ? 'bg-emerald-100 dark:bg-emerald-950/90 text-emerald-700 dark:text-emerald-300'
                 : 'bg-blue-100/90 dark:bg-blue-950/90 text-blue-700 dark:text-blue-300'
@@ -44,7 +37,7 @@ export function StatusRibbon({
             <span>
               {t.today}: {dailyReviewedCount}/{dailyLimit}
             </span>
-            <svg className="w-3 h-3 opacity-80 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 opacity-80 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -57,38 +50,24 @@ export function StatusRibbon({
           <button
             type="button"
             onClick={onOpenStats}
-            className="px-2 py-0.5 rounded-full font-bold tabular-nums whitespace-nowrap bg-orange-100/90 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
+            className="px-2.5 py-1 rounded-full font-bold tabular-nums whitespace-nowrap bg-orange-100/90 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
             title={t.streakTitle}
           >
             🔥 {streak}
           </button>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] sm:text-xs tabular-nums whitespace-nowrap overflow-hidden">
-          <button
-            type="button"
-            onClick={() => onOpenProgress('new')}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold whitespace-nowrap"
-          >
-            {t.newLabel}: {newCount}
-          </button>
-          <span className="opacity-50">•</span>
-          <button
-            type="button"
-            onClick={() => onOpenProgress('learning')}
-            className="text-amber-600 dark:text-amber-400 hover:underline font-semibold whitespace-nowrap"
-          >
-            {t.learningLabel}: {learningCount}
-          </button>
-          <span className="opacity-50">•</span>
-          <button
-            type="button"
-            onClick={() => onOpenProgress('mastered')}
-            className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold whitespace-nowrap"
-          >
-            {t.masteredLabel}: {masteredCount}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onOpenQuickAdd}
+          className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm shadow-blue-600/25 active:scale-95 transition flex items-center justify-center flex-none"
+          title={t.quickAddTitle}
+          aria-label={t.quickAddTitle}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
       </div>
 
       <div className="w-full bg-slate-200/80 dark:bg-slate-800 rounded-full h-2 mt-2 overflow-hidden">

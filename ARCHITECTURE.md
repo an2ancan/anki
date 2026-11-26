@@ -94,9 +94,10 @@ anki/
     │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
     │   └── supabase.ts             # Supabase client and fullSync / upsert / delete logic
     └── components/
-        ├── Header.tsx              # Frosted-glass 2-tier bar: LaRecall brand/deck switcher, labeled + Card CTA pill, auth, RU/EN toggle, settings + study direction bar
-        ├── StatusRibbon.tsx        # Daily goal pill, clickable streak 🔥, counters (tabular-nums), gradient progress bar
-        ├── FlashCard.tsx           # Elevated flashcard surface, animated answer reveal panel, audio pills & dynamic rating buttons
+        ├── Header.tsx              # Frosted-glass 2-tier bar: deck switcher, auth, RU/EN toggle, settings + study direction bar
+        ├── StatusRibbon.tsx        # Daily goal pill, clickable streak 🔥, + quick-add trigger & gradient progress bar
+        ├── FlashCard.tsx           # Elevated flashcard surface, animated answer reveal panel, audio pills, card delete button & dynamic rating buttons
+        ├── QuickAddModal.tsx       # Quick-add modal (+ button): add card, export CSV, import/decks & starter decks catalog
         ├── DecksView.tsx           # Personal cabinet: create/delete decks, starter catalog, add cards, CSV import/export
         ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
         ├── SettingsModal.tsx       # UI language, theme, language-aware voice, limits, starter decks, custom cards
