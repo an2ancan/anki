@@ -200,6 +200,12 @@ erDiagram
 
 All scheduling logic lives as pure functions in `src/lib/srs.ts`.
 
+### Card Learning Stages (`getCardStage`)
+Used consistently across `StatusRibbon`, `DecksView`, `StatsView`, and `ProgressModal`:
+- **New** (`'new'`): `card.reps === 0 && !card.nextReview` — never encountered yet (or explicitly reset to `0`).
+- **Learning** (`'learning'`): seen at least once (`nextReview > 0` or `0 < reps < 3`), including cards demoted by "Again" or delayed by "Hard".
+- **Mastered** (`'mastered'`): `card.reps >= 3`.
+
 ### Definition of an "Unknown Word" (`isUnknownCard`)
 A card is considered **unknown** if:
 1. `card.reps === 0` (never learned or reset via "Again"), OR

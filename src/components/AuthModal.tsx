@@ -154,29 +154,29 @@ export function AuthModal({
       onClick={(e) => e.target === e.currentTarget && onClose()}
       className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h3 id="authModalTitle" className="text-sm font-bold">
+            <h3 id="authModalTitle" className="text-base font-bold">
               {t.authHeader}
             </h3>
-            <p className="text-[10px] text-slate-400">{syncState.message}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{syncState.message}</p>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label={t.close}>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1" aria-label={t.close}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+        <div className="flex-1 overflow-y-auto py-3.5 space-y-3.5 text-sm">
           {isPasswordRecovery ? (
-            <form onSubmit={handlePasswordUpdate} className="space-y-2.5">
-              <div className="font-bold text-slate-900 dark:text-white text-sm">
+            <form onSubmit={handlePasswordUpdate} className="space-y-3">
+              <div className="font-bold text-slate-900 dark:text-white text-base">
                 {t.newPasswordTitle}
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                   {t.newPasswordLabel}
                 </label>
                 <input
@@ -187,11 +187,11 @@ export function AuthModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••"
-                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                   {t.confirmPasswordLabel}
                 </label>
                 <input
@@ -202,18 +202,18 @@ export function AuthModal({
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••"
-                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
               {errorMsg && (
-                <div className="text-[11px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/50 p-2 rounded-lg">
+                <div className="text-xs text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/50 p-2.5 rounded-xl">
                   {errorMsg}
                 </div>
               )}
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition ${
+                className={`w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition ${
                   loading ? 'opacity-60' : ''
                 }`}
               >
@@ -222,14 +222,14 @@ export function AuthModal({
             </form>
           ) : userEmail ? (
             <div className="space-y-3">
-              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-3.5">
-                <div className="text-[10px] uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-300 mb-0.5">
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-4">
+                <div className="text-xs uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-300 mb-1">
                   {t.loggedInAs}
                 </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white break-all">
+                <div className="text-base font-bold text-slate-900 dark:text-white break-all">
                   {userEmail}
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
                   {t.authUserStats(totalCards, customCards, dailyReviewedCount, dailyLimit)}
                 </div>
               </div>
@@ -237,21 +237,21 @@ export function AuthModal({
                 <button
                   type="button"
                   onClick={onSyncNow}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition"
                 >
                   {t.syncBtn}
                 </button>
                 <button
                   type="button"
                   onClick={onSignOut}
-                  className="px-4 py-2.5 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-200 rounded-xl font-bold transition"
+                  className="px-4 py-3 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-200 rounded-xl font-bold text-sm transition"
                 >
                   {t.signOutBtn}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {authMode !== 'forgot' ? (
                 <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                   <button
@@ -261,7 +261,7 @@ export function AuthModal({
                       setErrorMsg('');
                       setInfoMsg('');
                     }}
-                    className={`py-1.5 rounded-lg font-bold transition ${
+                    className={`py-2 rounded-lg text-sm font-bold transition ${
                       authMode === 'signin'
                         ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
                         : 'text-slate-500 dark:text-slate-400'
@@ -276,7 +276,7 @@ export function AuthModal({
                       setErrorMsg('');
                       setInfoMsg('');
                     }}
-                    className={`py-1.5 rounded-lg font-bold transition ${
+                    className={`py-2 rounded-lg text-sm font-bold transition ${
                       authMode === 'signup'
                         ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
                         : 'text-slate-500 dark:text-slate-400'
@@ -287,7 +287,7 @@ export function AuthModal({
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">
+                  <span className="font-bold text-slate-900 dark:text-white text-base">
                     {t.resetPasswordTitle}
                   </span>
                   <button
@@ -297,16 +297,16 @@ export function AuthModal({
                       setErrorMsg('');
                       setInfoMsg('');
                     }}
-                    className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {t.backToSignIn}
                   </button>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-2.5">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                     Email
                   </label>
                   <input
@@ -316,13 +316,13 @@ export function AuthModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 {authMode !== 'forgot' && (
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
                         {t.passwordLabel}
                       </label>
                       {authMode === 'signin' && (
@@ -333,7 +333,7 @@ export function AuthModal({
                             setErrorMsg('');
                             setInfoMsg('');
                           }}
-                          className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                          className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                         >
                           {t.forgotPasswordLink}
                         </button>
@@ -347,24 +347,24 @@ export function AuthModal({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••"
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 )}
                 {errorMsg && (
-                  <div className="text-[11px] text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/50 p-2 rounded-lg">
+                  <div className="text-xs text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-950/50 p-2.5 rounded-xl">
                     {errorMsg}
                   </div>
                 )}
                 {infoMsg && (
-                  <div className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/50 p-2 rounded-lg">
+                  <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/50 p-2.5 rounded-xl">
                     {infoMsg}
                   </div>
                 )}
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition ${
+                  className={`w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition ${
                     loading ? 'opacity-60' : ''
                   }`}
                 >
@@ -378,7 +378,7 @@ export function AuthModal({
 
               {authMode !== 'forgot' && (
                 <>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
                     <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
                     <span>{t.orDivider}</span>
                     <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
@@ -388,7 +388,7 @@ export function AuthModal({
                     type="button"
                     disabled={oauthLoading}
                     onClick={handleGoogleOAuth}
-                    className={`w-full py-2.5 px-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold rounded-xl transition flex items-center justify-center gap-2 ${
+                    className={`w-full py-3 px-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold rounded-xl text-sm transition flex items-center justify-center gap-2 ${
                       oauthLoading ? 'opacity-60' : ''
                     }`}
                   >

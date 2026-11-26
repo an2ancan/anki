@@ -19,6 +19,7 @@ import {
   expandCardsToQueueItems,
   generateCustomKey,
   generateDeckKey,
+  getCardStage,
   normalizeCard,
   reconcileActiveQueue,
 } from './lib/srs';
@@ -775,13 +776,16 @@ export default function App() {
     [deck, activeDeckKey]
   );
 
-  const newCount = useMemo(() => activeDeckCards.filter((c) => c.reps === 0).length, [activeDeckCards]);
+  const newCount = useMemo(
+    () => activeDeckCards.filter((c) => getCardStage(c) === 'new').length,
+    [activeDeckCards]
+  );
   const learningCount = useMemo(
-    () => activeDeckCards.filter((c) => c.reps > 0 && c.reps < 3).length,
+    () => activeDeckCards.filter((c) => getCardStage(c) === 'learning').length,
     [activeDeckCards]
   );
   const masteredCount = useMemo(
-    () => activeDeckCards.filter((c) => c.reps >= 3).length,
+    () => activeDeckCards.filter((c) => getCardStage(c) === 'mastered').length,
     [activeDeckCards]
   );
   const customCards = useMemo(

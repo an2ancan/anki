@@ -53,6 +53,20 @@ export function getEndOfTodayMs(now = Date.now()): number {
   return d.getTime();
 }
 
+export type CardStage = 'new' | 'learning' | 'mastered';
+
+/**
+ * Classifies a card's learning stage:
+ * - 'mastered': 3+ successful repetitions
+ * - 'new': never reviewed yet (or explicitly reset: reps === 0 and nextReview === 0)
+ * - 'learning': seen at least once (including cards demoted by "Again" or delayed by "Hard")
+ */
+export function getCardStage(card: Card): CardStage {
+  if (card.reps >= 3) return 'mastered';
+  if (card.reps === 0 && !card.nextReview) return 'new';
+  return 'learning';
+}
+
 /**
  * Unknown word: either never learned (reps === 0) or still scheduled to be repeated today.
  */

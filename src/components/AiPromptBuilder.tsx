@@ -87,25 +87,25 @@ export function AiPromptBuilder({
   };
 
   return (
-    <details className="rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 p-2.5 text-xs">
+    <details className="rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 p-3 text-sm">
       <summary className="font-bold text-indigo-700 dark:text-indigo-300 cursor-pointer select-none">
         {t.aiPromptToggle}
       </summary>
 
-      <div className="mt-2.5 space-y-2">
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+      <div className="mt-2.5 space-y-2.5">
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
           {t.aiPromptDesc}
         </p>
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
               {t.aiPromptFromLang}
             </label>
             <select
               value={LANG_OPTIONS.some((l) => l.code === origLang) ? origLang : 'RU'}
               onChange={(e) => setOrigLang(e.target.value)}
-              className="w-full p-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-[11px] font-semibold"
+              className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold"
             >
               {LANG_OPTIONS.map((l) => (
                 <option key={l.code} value={l.code}>
@@ -115,13 +115,13 @@ export function AiPromptBuilder({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
               {t.aiPromptToLang}
             </label>
             <select
               value={LANG_OPTIONS.some((l) => l.code === learningLang) ? learningLang : 'DE'}
               onChange={(e) => setLearningLang(e.target.value)}
-              className="w-full p-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-[11px] font-semibold"
+              className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold"
             >
               {LANG_OPTIONS.map((l) => (
                 <option key={l.code} value={l.code}>
@@ -134,13 +134,13 @@ export function AiPromptBuilder({
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
               {t.aiPromptLevel}
             </label>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value)}
-              className="w-full p-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-[11px] font-semibold"
+              className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold"
             >
               {LEVELS.map((lv) => (
                 <option key={lv} value={lv}>
@@ -150,7 +150,7 @@ export function AiPromptBuilder({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
               {t.aiPromptCount}
             </label>
             <input
@@ -160,13 +160,13 @@ export function AiPromptBuilder({
               step={5}
               value={count}
               onChange={(e) => setCount(Math.max(5, Math.min(100, Number(e.target.value) || 20)))}
-              className="w-full p-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-[11px] font-semibold"
+              className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
             {t.aiPromptTopic}
           </label>
           <input
@@ -174,7 +174,7 @@ export function AiPromptBuilder({
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder={t.aiPromptTopicPlaceholder}
-            className="w-full p-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-[11px]"
+            className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs"
           />
         </div>
 
@@ -182,13 +182,13 @@ export function AiPromptBuilder({
           readOnly
           rows={6}
           value={promptText}
-          className="w-full font-mono text-[10px] leading-relaxed p-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300"
+          className="w-full font-mono text-xs leading-relaxed p-2.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300"
         />
 
         <button
           type="button"
           onClick={handleCopy}
-          className={`w-full py-2 rounded-lg text-[11px] font-bold transition ${
+          className={`w-full py-2.5 rounded-xl text-xs font-bold transition ${
             copied
               ? 'bg-emerald-600 text-white'
               : 'bg-indigo-600 hover:bg-indigo-700 text-white'

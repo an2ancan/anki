@@ -101,26 +101,26 @@ export function SettingsModal({
       onClick={(e) => e.target === e.currentTarget && onClose()}
       className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[88dvh] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col max-h-[88dvh] overflow-hidden">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-sm font-bold">{t.settingsHeader}</h3>
-          <button type="button" onClick={onClose} className="text-slate-400 p-1" aria-label={t.close}>
+          <h3 className="text-base font-bold">{t.settingsHeader}</h3>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1" aria-label={t.close}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+        <div className="flex-1 overflow-y-auto py-3.5 space-y-3.5 text-sm">
           {/* UI Language & Theme Switcher */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="font-bold text-slate-800 dark:text-slate-200">{t.interfaceLang}</div>
               <div className="grid grid-cols-2 gap-1 bg-slate-200/70 dark:bg-slate-900 p-1 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setLocale('ru')}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                     locale === 'ru'
                       ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                       : 'text-slate-500 dark:text-slate-400'
@@ -131,7 +131,7 @@ export function SettingsModal({
                 <button
                   type="button"
                   onClick={() => setLocale('en')}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                     locale === 'en'
                       ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                       : 'text-slate-500 dark:text-slate-400'
@@ -142,12 +142,12 @@ export function SettingsModal({
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
+            <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-200/80 dark:border-slate-700/80">
               <div className="font-bold text-slate-800 dark:text-slate-200">{t.themeTitle}</div>
               <button
                 type="button"
                 onClick={onToggleTheme}
-                className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
+                className="px-3.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
               >
                 <span>{isDark ? '🌙' : '☀️'}</span>
                 <span>{isDark ? 'Dark' : 'Light'}</span>
@@ -156,7 +156,7 @@ export function SettingsModal({
           </div>
 
           {/* Voice Settings */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
             <div className="font-bold text-slate-800 dark:text-slate-200 flex items-start justify-between gap-2">
               <div className="flex-1">
                 <span>
@@ -164,7 +164,7 @@ export function SettingsModal({
                 </span>
                 <InfoTip text={t.voiceTip} />
               </div>
-              <label className="inline-flex items-center gap-1 font-normal cursor-pointer text-[11px] flex-none">
+              <label className="inline-flex items-center gap-1.5 font-medium cursor-pointer text-xs flex-none">
                 <input
                   type="checkbox"
                   checked={speechSettings.autoPlay}
@@ -182,7 +182,7 @@ export function SettingsModal({
                     key={eng}
                     type="button"
                     onClick={() => onUpdateSpeech({ ...speechSettings, engine: eng })}
-                    className={`py-1.5 rounded-lg text-[11px] font-bold transition ${
+                    className={`py-2 rounded-lg text-xs font-bold transition ${
                       speechSettings.engine === eng
                         ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                         : 'text-slate-500 dark:text-slate-400'
@@ -196,7 +196,7 @@ export function SettingsModal({
               <button
                 type="button"
                 onClick={onOpenAuth}
-                className="w-full py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-[11px] font-semibold text-left hover:bg-blue-100 dark:hover:bg-blue-950/70 transition"
+                className="w-full py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-semibold text-left hover:bg-blue-100 dark:hover:bg-blue-950/70 transition"
               >
                 {t.googleTtsLoginHint}
               </button>
@@ -205,7 +205,7 @@ export function SettingsModal({
             {speechSettings.engine === 'system' ||
             (!isAuthenticated && !speechSettings.googleApiKey.trim()) ? (
               <div>
-                <label className="text-[10px] text-slate-400 block mb-1">{t.selectSystemVoice}</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">{t.selectSystemVoice}</label>
                 <select
                   value={
                     voices.some((v) => v.name === speechSettings.voiceName)
@@ -213,7 +213,7 @@ export function SettingsModal({
                       : voices[0]?.name || ''
                   }
                   onChange={(e) => onUpdateSpeech({ ...speechSettings, voiceName: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"
+                  className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium"
                 >
                   {voices.map((v) => (
                     <option key={v.name} value={v.name}>
@@ -224,15 +224,15 @@ export function SettingsModal({
                 </select>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1">{t.selectGoogleVoice}</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">{t.selectGoogleVoice}</label>
                   <select
                     value={resolvedGoogleVoice}
                     onChange={(e) =>
                       onUpdateSpeech({ ...speechSettings, googleVoiceName: e.target.value })
                     }
-                    className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium"
+                    className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium"
                   >
                     {googleVoiceOptions.map((v) => (
                       <option key={v.id} value={v.id}>
@@ -242,7 +242,7 @@ export function SettingsModal({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1">{t.personalKeyLabel}</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">{t.personalKeyLabel}</label>
                   <input
                     type="password"
                     value={speechSettings.googleApiKey}
@@ -250,10 +250,10 @@ export function SettingsModal({
                       onUpdateSpeech({ ...speechSettings, googleApiKey: e.target.value })
                     }
                     placeholder={t.personalKeyPlaceholder}
-                    className="w-full p-2 font-mono text-[11px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl"
+                    className="w-full p-2.5 font-mono text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl"
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>{t.cachedPhrases(cacheCount)}</span>
                   {cacheCount > 0 && (
                     <button
@@ -271,10 +271,10 @@ export function SettingsModal({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 block mb-1">
-                  {t.speedLabel}: <span>{speechSettings.rate.toFixed(2)}x</span>
+                <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.speedLabel}: <span className="font-semibold text-slate-700 dark:text-slate-200">{speechSettings.rate.toFixed(2)}x</span>
                 </label>
                 <input
                   type="range"
@@ -289,8 +289,8 @@ export function SettingsModal({
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 block mb-1">
-                  {t.pitchLabel}: <span>{speechSettings.pitch.toFixed(2)}</span>
+                <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.pitchLabel}: <span className="font-semibold text-slate-700 dark:text-slate-200">{speechSettings.pitch.toFixed(2)}</span>
                 </label>
                 <input
                   type="range"
@@ -308,20 +308,20 @@ export function SettingsModal({
             <button
               type="button"
               onClick={onTestVoice}
-              className="w-full py-1.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded-lg text-xs font-semibold"
+              className="w-full py-2.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 rounded-xl text-sm font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition"
             >
               {t.testVoiceBtn}
             </button>
           </div>
 
           {/* Daily Limit */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
             <div className="flex-1">
               <div className="font-bold text-slate-800 dark:text-slate-200">
                 {t.dailyLimitTitle}
                 <InfoTip text={t.dailyLimitTip} />
               </div>
-              <div className="text-[10px] text-slate-400">{t.dailyLimitHint}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.dailyLimitHint}</div>
             </div>
             <div className="flex items-center gap-2 flex-none">
               <input
@@ -331,7 +331,7 @@ export function SettingsModal({
                 step={5}
                 value={limitInput}
                 onChange={(e) => setLimitInput(e.target.value)}
-                className="w-16 text-center font-bold text-xs p-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
+                className="w-16 text-center font-bold text-sm p-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
               />
               <button
                 type="button"
@@ -339,7 +339,7 @@ export function SettingsModal({
                   const val = parseInt(limitInput, 10);
                   if (!Number.isNaN(val) && val >= 5) onSaveDailyLimit(val);
                 }}
-                className="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold"
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition"
               >
                 OK
               </button>
@@ -347,13 +347,13 @@ export function SettingsModal({
           </div>
 
           {/* Max Active Unknown Words Limit */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-2">
             <div className="flex-1">
               <div className="font-bold text-slate-800 dark:text-slate-200">
                 {t.maxUnknownTitle}
                 <InfoTip text={t.maxUnknownTip} />
               </div>
-              <div className="text-[10px] text-slate-400">{t.maxUnknownHint}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.maxUnknownHint}</div>
             </div>
             <div className="flex items-center gap-2 flex-none">
               <input
@@ -363,7 +363,7 @@ export function SettingsModal({
                 step={1}
                 value={unknownLimitInput}
                 onChange={(e) => setUnknownLimitInput(e.target.value)}
-                className="w-16 text-center font-bold text-xs p-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
+                className="w-16 text-center font-bold text-sm p-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
               />
               <button
                 type="button"
@@ -371,7 +371,7 @@ export function SettingsModal({
                   const val = parseInt(unknownLimitInput, 10);
                   if (!Number.isNaN(val) && val >= 1) onSaveMaxActiveUnknown(val);
                 }}
-                className="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold"
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition"
               >
                 OK
               </button>
@@ -382,7 +382,7 @@ export function SettingsModal({
           <StarterDecksCatalog decks={decks} onAddStarterDeck={onAddStarterDeck} />
 
           {/* My Custom Cards */}
-          <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 space-y-2">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 space-y-2.5">
             <div className="flex items-start justify-between gap-2">
               <div className="font-bold flex-1">
                 {t.myCustomCards} ({customCards.length})
@@ -391,7 +391,7 @@ export function SettingsModal({
               <button
                 type="button"
                 onClick={onOpenAddCard}
-                className="px-2 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-bold flex-none"
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex-none transition"
               >
                 {t.addBtnShort}
               </button>
@@ -401,11 +401,11 @@ export function SettingsModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t.searchMyCardsPlaceholder}
-              className="w-full text-xs p-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-blue-500"
+              className="w-full text-sm p-2.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-blue-500"
             />
-            <div className="max-h-40 overflow-y-auto space-y-1.5">
+            <div className="max-h-44 overflow-y-auto space-y-1.5">
               {filteredCustom.length === 0 ? (
-                <div className="text-[11px] text-slate-400 text-center py-3">
+                <div className="text-xs text-slate-400 text-center py-3">
                   {customCards.length === 0 ? t.noCustomCardsYet : t.nothingFound}
                 </div>
               ) : (
@@ -415,20 +415,20 @@ export function SettingsModal({
                   .map((card) => (
                     <div
                       key={card.cardKey}
-                      className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700"
+                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="font-bold text-slate-800 dark:text-slate-100 truncate">
                           {card.learning}
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {card.orig}
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => onDeleteCustomCard(card.cardKey)}
-                        className="px-2 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950 rounded-lg transition flex-none"
+                        className="px-2.5 py-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950 rounded-lg transition flex-none"
                       >
                         {t.delete}
                       </button>
