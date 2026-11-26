@@ -3,6 +3,7 @@
 
 :root {
   --app-height: 100dvh;
+  color-scheme: light dark;
 }
 
 body {
@@ -12,7 +13,35 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   user-select: none;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(59 130 246 / 0.8);
+  outline-offset: 2px;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  animation: fadeSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal {
+    animation: none;
+  }
 }
 
 .safe-pb {

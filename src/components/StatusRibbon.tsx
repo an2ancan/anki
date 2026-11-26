@@ -28,23 +28,23 @@ export function StatusRibbon({
     dailyLimit > 0 ? Math.min(100, Math.round((dailyReviewedCount / dailyLimit) * 100)) : 100;
 
   return (
-    <div className="flex-none max-w-md w-full mx-auto px-3 pt-2">
-      <div className="flex items-center justify-between gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-1">
+    <div className="flex-none max-w-lg w-full mx-auto px-3.5 pt-2.5">
+      <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={onOpenStats}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md font-bold hover:opacity-90 transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold tabular-nums hover:opacity-90 transition ${
               goalReached
-                ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
-                : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                ? 'bg-emerald-100 dark:bg-emerald-950/90 text-emerald-700 dark:text-emerald-300'
+                : 'bg-blue-100/90 dark:bg-blue-950/90 text-blue-700 dark:text-blue-300'
             }`}
             title={t.openStatsTitle}
           >
             <span>
               {t.today}: {dailyReviewedCount}/{dailyLimit}
             </span>
-            <svg className="w-3 h-3 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -57,14 +57,14 @@ export function StatusRibbon({
           <button
             type="button"
             onClick={onOpenStats}
-            className="px-1.5 py-0.5 rounded-md font-bold bg-orange-100 dark:bg-orange-950/70 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
+            className="px-2.5 py-1 rounded-full font-bold tabular-nums bg-orange-100/90 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
             title={t.streakTitle}
           >
             🔥 {streak}
           </button>
         </div>
 
-        <div className="flex items-center gap-1 text-[10px]">
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs tabular-nums">
           <button
             type="button"
             onClick={() => onOpenProgress('new')}
@@ -72,7 +72,7 @@ export function StatusRibbon({
           >
             {t.newLabel}: {newCount}
           </button>
-          <span>•</span>
+          <span className="opacity-50">•</span>
           <button
             type="button"
             onClick={() => onOpenProgress('learning')}
@@ -80,7 +80,7 @@ export function StatusRibbon({
           >
             {t.learningLabel}: {learningCount}
           </button>
-          <span>•</span>
+          <span className="opacity-50">•</span>
           <button
             type="button"
             onClick={() => onOpenProgress('mastered')}
@@ -91,9 +91,13 @@ export function StatusRibbon({
         </div>
       </div>
 
-      <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
+      <div className="w-full bg-slate-200/80 dark:bg-slate-800 rounded-full h-2 mt-2 overflow-hidden">
         <div
-          className={`h-1.5 transition-all duration-300 ${goalReached ? 'bg-emerald-500' : 'bg-blue-600'}`}
+          className={`h-2 rounded-full transition-all duration-300 ${
+            goalReached
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+              : 'bg-gradient-to-r from-blue-600 to-indigo-500'
+          }`}
           style={{ width: `${dailyProgressPercent}%` }}
         />
       </div>

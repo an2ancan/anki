@@ -5,6 +5,7 @@ export const translations = {
     // Header & common
     mixedMode: 'Микс',
     addCardTitle: 'Добавить карточку',
+    addCardShort: 'Карточка',
     profileTitle: 'Профиль и синхронизация Supabase',
     settingsTitle: 'Настройки и словарь',
     themeTitle: 'Сменить тему',
@@ -242,6 +243,7 @@ export const translations = {
     // Header & common
     mixedMode: 'Mixed',
     addCardTitle: 'Add card',
+    addCardShort: 'Card',
     profileTitle: 'Profile & Supabase sync',
     settingsTitle: 'Settings & dictionary',
     themeTitle: 'Toggle theme',

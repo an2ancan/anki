@@ -13,7 +13,7 @@ The app is built as a **Local-First SPA** using **React 19 + TypeScript + Vite +
 ```mermaid
 flowchart TD
   subgraph UI["UI Layer (React Components)"]
-    Header["Header.tsx<br/>(deck switcher, mode, +, profile, settings, theme)"]
+    Header["Header.tsx<br/>(deck switcher, mode, + Card CTA, profile, settings)"]
     Ribbon["StatusRibbon.tsx<br/>(daily goal, streak 🔥, counters, progress bar)"]
     Card["FlashCard.tsx<br/>(card flip, audio, 4 dynamic rating buttons)"]
     Decks["DecksView.tsx<br/>(personal cabinet: create/delete decks, CSV, study)"]
@@ -78,7 +78,7 @@ anki/
 ├── .github/workflows/deploy.yml    # Automated Node 24 build & GitHub Pages deployment
 └── src/
     ├── main.tsx                    # React root mount
-    ├── index.css                   # Tailwind v4 import and mobile safe-area styles
+    ├── index.css                   # Tailwind v4 import, color-scheme, focus rings, reveal animation & safe-area styles
     ├── types.ts                    # Shared TypeScript interfaces and types
     ├── App.tsx                     # Root state container, effects, and hotkeys
     ├── data/
@@ -93,9 +93,9 @@ anki/
     │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
     │   └── supabase.ts             # Supabase client and fullSync / upsert / delete logic
     └── components/
-        ├── Header.tsx              # Compact 2-tier mobile bar: LaRecall brand/deck switcher, +, auth, settings + study direction bar
-        ├── StatusRibbon.tsx        # Daily goal, clickable streak 🔥, counters, progress bar
-        ├── FlashCard.tsx           # Interactive card with dynamic rating interval labels
+        ├── Header.tsx              # Frosted-glass 2-tier bar: LaRecall brand/deck switcher, labeled + Card CTA pill, auth, settings + study direction bar
+        ├── StatusRibbon.tsx        # Daily goal pill, clickable streak 🔥, counters (tabular-nums), gradient progress bar
+        ├── FlashCard.tsx           # Elevated flashcard surface, animated answer reveal panel, audio pills & dynamic rating buttons
         ├── DecksView.tsx           # Personal cabinet: create/delete decks, starter catalog, add cards, CSV import/export
         ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
         ├── SettingsModal.tsx       # UI language, theme, language-aware voice, limits, starter decks, custom cards

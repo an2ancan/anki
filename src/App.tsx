@@ -790,7 +790,7 @@ export default function App() {
   );
 
   return (
-    <div className="h-[100dvh] bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
+    <div className="h-[100dvh] bg-gradient-to-b from-slate-50 via-slate-50 to-indigo-50/40 dark:from-slate-950 dark:via-slate-950 dark:to-indigo-950/20 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
       <Header
         activeDeckName={activeDeckMeta?.name || t.myDecks}
         origLang={activeDeckMeta?.origLang || 'RU'}
@@ -828,7 +828,7 @@ export default function App() {
         }}
       />
 
-      <main className="flex-1 max-w-md w-full mx-auto px-3 py-2 flex flex-col justify-between overflow-hidden">
+      <main className="flex-1 max-w-lg w-full mx-auto px-3.5 py-2.5 flex flex-col justify-between overflow-hidden">
         {activeView === 'decks' ? (
           <DecksView
             decks={decks}
@@ -857,20 +857,20 @@ export default function App() {
             }}
           />
         ) : !currentCard ? (
-          <div className="my-auto text-center py-8 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
-            <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          <div className="my-auto text-center py-9 px-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-xl shadow-slate-900/[0.06] dark:shadow-black/30">
+            <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-base font-bold mb-1">
+            <h2 className="text-lg font-extrabold tracking-tight mb-1.5 text-balance">
               {activeDeckCards.length === 0
                 ? t.emptyDeckTitle
                 : stats.dailyReviewedCount >= stats.dailyLimit
                   ? t.dailyDoneTitle
                   : t.queueDoneTitle}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-5 text-balance">
               {activeDeckCards.length === 0
                 ? t.emptyDeckDesc
                 : stats.dailyReviewedCount >= stats.dailyLimit
@@ -881,7 +881,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setActiveView('decks')}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition"
+                className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-sm font-bold shadow-md shadow-blue-600/20 transition"
               >
                 {t.myDecks}
               </button>
@@ -892,7 +892,7 @@ export default function App() {
                   setAddCardTargetDeckKey(activeDeckKey);
                   setAddCardOpen(true);
                 }}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
+                className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-sm font-bold shadow-md shadow-blue-600/20 transition"
               >
                 {t.addFirstCard}
               </button>
@@ -900,7 +900,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => rebuildQueue(deck, stats, true)}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
+                className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-sm font-bold shadow-md shadow-blue-600/20 transition"
               >
                 {t.continue20}
               </button>
