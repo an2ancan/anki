@@ -950,44 +950,46 @@ export default function App() {
         )}
       </main>
 
-      <footer className="flex-none max-w-lg w-full mx-auto px-3.5 pb-1.5 pt-1 flex items-center justify-between gap-2 safe-pb">
-        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs tabular-nums whitespace-nowrap overflow-hidden">
-          <button
-            type="button"
-            onClick={() => {
-              setProgressFilter('new');
-              setProgressOpen(true);
-            }}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold whitespace-nowrap"
-          >
-            {t.newLabel}: {newCount}
-          </button>
-          <span className="text-slate-400 opacity-50">•</span>
-          <button
-            type="button"
-            onClick={() => {
-              setProgressFilter('learning');
-              setProgressOpen(true);
-            }}
-            className="text-amber-600 dark:text-amber-400 hover:underline font-semibold whitespace-nowrap"
-          >
-            {t.learningLabel}: {learningCount}
-          </button>
-          <span className="text-slate-400 opacity-50">•</span>
-          <button
-            type="button"
-            onClick={() => {
-              setProgressFilter('mastered');
-              setProgressOpen(true);
-            }}
-            className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold whitespace-nowrap"
-          >
-            {t.masteredLabel}: {masteredCount}
-          </button>
+      <footer className="flex-none w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 z-10 safe-pb">
+        <div className="max-w-lg w-full mx-auto px-3.5 pt-2 pb-1 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs tabular-nums whitespace-nowrap overflow-hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setProgressFilter('new');
+                setProgressOpen(true);
+              }}
+              className="text-blue-700 dark:text-blue-400 hover:underline font-bold whitespace-nowrap"
+            >
+              {t.newLabel}: {newCount}
+            </button>
+            <span className="text-slate-400">•</span>
+            <button
+              type="button"
+              onClick={() => {
+                setProgressFilter('learning');
+                setProgressOpen(true);
+              }}
+              className="text-amber-700 dark:text-amber-400 hover:underline font-bold whitespace-nowrap"
+            >
+              {t.learningLabel}: {learningCount}
+            </button>
+            <span className="text-slate-400">•</span>
+            <button
+              type="button"
+              onClick={() => {
+                setProgressFilter('mastered');
+                setProgressOpen(true);
+              }}
+              className="text-emerald-700 dark:text-emerald-400 hover:underline font-bold whitespace-nowrap"
+            >
+              {t.masteredLabel}: {masteredCount}
+            </button>
+          </div>
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-500 select-none flex-none">
+            LaRecall
+          </span>
         </div>
-        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400/75 dark:text-slate-600 select-none flex-none">
-          LaRecall
-        </span>
       </footer>
 
       <SettingsModal
