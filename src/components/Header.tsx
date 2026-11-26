@@ -49,39 +49,34 @@ export function Header({
   return (
     <header className="w-full flex-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-3.5 py-2.5 z-20">
       <div className="max-w-lg mx-auto space-y-2.5">
-        {/* Top Row: Brand & Deck Selector + Clear Actions */}
+        {/* Top Row: Deck Selector + Clear Actions */}
         <div className="flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={onToggleDecks}
-            className={`flex items-center gap-2.5 min-w-0 flex-1 text-left rounded-2xl px-2 py-1 -ml-2 transition ${
+            className={`flex items-center gap-2 min-w-0 flex-1 text-left rounded-2xl px-1.5 py-1 -ml-1.5 transition ${
               isDecksOpen
                 ? 'bg-blue-50 dark:bg-blue-950/60'
                 : 'hover:bg-slate-100/80 dark:hover:bg-slate-800/80'
             }`}
             title={t.decksCabinetTitle}
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-xs shadow-sm shadow-indigo-500/25 flex-none">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-xs shadow-sm shadow-indigo-500/25 flex-none">
               {learningLang.slice(0, 2)}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 leading-none mb-0.5">
-                LaRecall
-              </div>
-              <h1 className="text-sm font-bold leading-tight tracking-tight flex items-center gap-1 text-slate-900 dark:text-white">
-                <span className="truncate">{activeDeckName}</span>
-                <svg className="w-4 h-4 text-slate-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </h1>
-            </div>
+            <h1 className="min-w-0 flex-1 text-sm font-bold leading-tight tracking-tight flex items-center gap-1 text-slate-900 dark:text-white">
+              <span className="truncate">{activeDeckName}</span>
+              <svg className="w-4 h-4 text-slate-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </h1>
           </button>
 
           <div className="flex items-center gap-1.5 flex-none">
             <button
               type="button"
               onClick={onOpenAddCard}
-              className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition shadow-sm shadow-blue-600/25 active:scale-95 text-xs font-bold"
+              className="flex items-center gap-1 px-2.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition shadow-sm shadow-blue-600/25 active:scale-95 text-xs font-bold whitespace-nowrap"
               title={t.addCardTitle}
               aria-label={t.addCardTitle}
             >
@@ -94,11 +89,15 @@ export function Header({
             <button
               type="button"
               onClick={onOpenAuth}
-              className="relative flex items-center gap-1.5 px-2.5 py-2 bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition text-xs font-semibold text-slate-700 dark:text-slate-200"
-              title={t.profileTitle}
+              className="relative flex items-center gap-1.5 px-2 sm:px-2.5 py-2 bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition text-xs font-semibold text-slate-700 dark:text-slate-200"
+              title={userEmail ? `${t.profileTitle} (${userEmail})` : t.profileTitle}
+              aria-label={t.profileTitle}
             >
               <span className={`w-2 h-2 rounded-full flex-none ${dotClass}`} />
-              <span className="max-w-[56px] sm:max-w-[80px] truncate">{authLabel}</span>
+              <svg className="w-4 h-4 sm:hidden text-slate-600 dark:text-slate-300 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="hidden sm:inline max-w-[88px] truncate">{authLabel}</span>
             </button>
 
             <button

@@ -114,7 +114,7 @@ export function FlashCard({
         </div>
       </div>
 
-      <div className="flex-none mt-3 safe-pb">
+      <div className="flex-none mt-3">
         {isFlipped && (
           <div className="flex items-center justify-center gap-2 mb-2.5">
             <button

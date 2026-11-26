@@ -29,12 +29,12 @@ export function StatusRibbon({
 
   return (
     <div className="flex-none max-w-lg w-full mx-auto px-3.5 pt-2.5">
-      <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-1.5 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1 flex-none">
           <button
             type="button"
             onClick={onOpenStats}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold tabular-nums hover:opacity-90 transition ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-bold tabular-nums whitespace-nowrap hover:opacity-90 transition ${
               goalReached
                 ? 'bg-emerald-100 dark:bg-emerald-950/90 text-emerald-700 dark:text-emerald-300'
                 : 'bg-blue-100/90 dark:bg-blue-950/90 text-blue-700 dark:text-blue-300'
@@ -44,7 +44,7 @@ export function StatusRibbon({
             <span>
               {t.today}: {dailyReviewedCount}/{dailyLimit}
             </span>
-            <svg className="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 opacity-80 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -57,18 +57,18 @@ export function StatusRibbon({
           <button
             type="button"
             onClick={onOpenStats}
-            className="px-2.5 py-1 rounded-full font-bold tabular-nums bg-orange-100/90 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
+            className="px-2 py-0.5 rounded-full font-bold tabular-nums whitespace-nowrap bg-orange-100/90 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
             title={t.streakTitle}
           >
             🔥 {streak}
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs tabular-nums">
+        <div className="flex items-center gap-1 text-[11px] sm:text-xs tabular-nums whitespace-nowrap overflow-hidden">
           <button
             type="button"
             onClick={() => onOpenProgress('new')}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold whitespace-nowrap"
           >
             {t.newLabel}: {newCount}
           </button>
@@ -76,7 +76,7 @@ export function StatusRibbon({
           <button
             type="button"
             onClick={() => onOpenProgress('learning')}
-            className="text-amber-600 dark:text-amber-400 hover:underline font-semibold"
+            className="text-amber-600 dark:text-amber-400 hover:underline font-semibold whitespace-nowrap"
           >
             {t.learningLabel}: {learningCount}
           </button>
@@ -84,7 +84,7 @@ export function StatusRibbon({
           <button
             type="button"
             onClick={() => onOpenProgress('mastered')}
-            className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
+            className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold whitespace-nowrap"
           >
             {t.masteredLabel}: {masteredCount}
           </button>

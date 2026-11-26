@@ -928,6 +928,12 @@ export default function App() {
         )}
       </main>
 
+      <footer className="flex-none max-w-lg w-full mx-auto px-4 pb-1.5 pt-0.5 flex justify-end pointer-events-none select-none safe-pb">
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400/75 dark:text-slate-600">
+          LaRecall
+        </span>
+      </footer>
+
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
