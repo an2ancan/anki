@@ -34,7 +34,7 @@ export function Header({
   onOpenAuth,
   onOpenSettings,
 }: HeaderProps) {
-  const { t } = useI18n();
+  const { locale, setLocale, t } = useI18n();
 
   const dotClass = !userEmail
     ? 'bg-slate-400'
@@ -98,7 +98,17 @@ export function Header({
               title={t.profileTitle}
             >
               <span className={`w-2 h-2 rounded-full flex-none ${dotClass}`} />
-              <span className="max-w-[72px] truncate">{authLabel}</span>
+              <span className="max-w-[56px] sm:max-w-[80px] truncate">{authLabel}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
+              className="px-2 py-2 bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition text-xs font-bold text-slate-700 dark:text-slate-200 uppercase"
+              title={t.interfaceLang}
+              aria-label={t.interfaceLang}
+            >
+              {locale === 'ru' ? 'RU' : 'EN'}
             </button>
 
             <button

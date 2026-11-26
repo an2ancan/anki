@@ -10,6 +10,18 @@ export function getStoragePrefix(userId: string | null): string {
   return userId ? `anki_u_${userId}_` : 'anki_guest_';
 }
 
+export function clearUserLocalData(userId: string): void {
+  const prefix = getStoragePrefix(userId);
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(prefix)) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
+}
+
 export function loadLocalDeck(userId: string | null): Card[] {
   const prefix = getStoragePrefix(userId);
   const stored =

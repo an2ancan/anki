@@ -336,3 +336,8 @@ export async function fullSyncWithSupabase(
     mergedSpeech,
   };
 }
+
+export async function deleteAccountFromSupabase(): Promise<void> {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
+}

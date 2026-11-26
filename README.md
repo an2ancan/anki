@@ -37,8 +37,8 @@ npm run build    # Type-check & production build to dist/
 ## Supabase Setup Guide
 
 ### 1. Database Schema & Migrations
-- **Fresh setup**: Open **Supabase Dashboard → SQL Editor → New query**, paste [`supabase_schema.sql`](./supabase_schema.sql), and click **Run**.
-- **Upgrading an existing database**: Run [`supabase_migration_decks.sql`](./supabase_migration_decks.sql), [`supabase_migration_orig_learning.sql`](./supabase_migration_orig_learning.sql), and [`supabase_migration_catalog.sql`](./supabase_migration_catalog.sql).
+- **Fresh setup**: Open **Supabase Dashboard → SQL Editor → New query**, paste [`supabase_schema.sql`](./supabase_schema.sql), and click **Run** (includes tables, indexes, RLS policies, and the `delete_my_account()` RPC for in-app account deletion).
+- **Upgrading an existing database**: Run [`supabase_migration_decks.sql`](./supabase_migration_decks.sql), [`supabase_migration_orig_learning.sql`](./supabase_migration_orig_learning.sql), [`supabase_migration_catalog.sql`](./supabase_migration_catalog.sql), and [`supabase_migration_delete_account.sql`](./supabase_migration_delete_account.sql).
 - **Starter Decks CSV Seeds (Required for Starter Catalog)**: Run [`supabase_seed_catalog.sql`](./supabase_seed_catalog.sql) (DE/EN/RU) and [`supabase_seed_catalog_fr.sql`](./supabase_seed_catalog_fr.sql) (FR/EN/RU/DE) in **SQL Editor** to store the starter CSV corpora in `public.catalog_corpora`.
 
 ### 2. Authentication (Email, Password Reset & Google OAuth)

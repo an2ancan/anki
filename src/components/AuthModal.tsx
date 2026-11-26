@@ -19,6 +19,7 @@ interface AuthModalProps {
   syncState: SyncState;
   onSyncNow: () => Promise<void>;
   onSignOut: () => Promise<void>;
+  onDeleteAccount: () => Promise<void>;
   onAddStarterDeck: (
     level: CefrLevel,
     origLang: CatalogLang,
@@ -41,6 +42,7 @@ export function AuthModal({
   syncState,
   onSyncNow,
   onSignOut,
+  onDeleteAccount,
   onAddStarterDeck,
   onToast,
 }: AuthModalProps) {
@@ -51,6 +53,8 @@ export function AuthModal({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
@@ -244,10 +248,72 @@ export function AuthModal({
                 <button
                   type="button"
                   onClick={onSignOut}
-                  className="px-4 py-3 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-200 rounded-xl font-bold text-sm transition"
+                  className="px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm transition"
                 >
                   {t.signOutBtn}
                 </button>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                {!confirmDelete ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrorMsg('');
+                      setConfirmDelete(true);
+                    }}
+                    className="w-full py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl transition"
+                  >
+                    {t.deleteAccountBtn}
+                  </button>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-2.5">
+                    <p className="text-xs text-rose-700 dark:text-rose-300 leading-relaxed font-medium">
+                      {t.deleteAccountWarning}
+                    </p>
+                    {errorMsg && (
+                      <div className="text-xs text-rose-600 dark:text-rose-400 font-semibold">
+                        {errorMsg}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={deletingAccount}
+                        onClick={async () => {
+                          setErrorMsg('');
+                          setDeletingAccount(true);
+                          try {
+                            await onDeleteAccount();
+                            setConfirmDelete(false);
+                          } catch (err) {
+                            setErrorMsg(
+                              err instanceof Error ? err.message : t.authErrorDefault
+                            );
+                          } finally {
+                            setDeletingAccount(false);
+                          }
+                        }}
+                        className={`flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs transition ${
+                          deletingAccount ? 'opacity-60' : ''
+                        }`}
+                      >
+                        {deletingAccount ? t.deletingAccountBtn : t.deleteAccountConfirmBtn}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={deletingAccount}
+                        onClick={() => {
+                          setConfirmDelete(false);
+                          setErrorMsg('');
+                        }}
+                        className="px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs transition"
+                      >
+                        {t.cancel}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : (

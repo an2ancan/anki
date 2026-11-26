@@ -68,6 +68,7 @@ anki/
 ├── supabase_migration_decks.sql         # Migration: user_decks & moving cards to 'default' deck
 ├── supabase_migration_orig_learning.sql # Migration: language-agnostic orig <-> learning schema
 ├── supabase_migration_catalog.sql       # Migration: public.catalog_corpora table (CSV in Supabase)
+├── supabase_migration_delete_account.sql # Migration: self-service delete_my_account() RPC
 ├── supabase_seed_catalog.sql            # SQL seed inserting A1-A2, B1, B2, C1 (DE/EN/RU) CSVs into Supabase
 ├── supabase_seed_catalog_fr.sql         # SQL seed inserting FR-A1-A2..FR-C1 (FR/EN/RU/DE) CSVs into Supabase
 ├── supabase_migrate_default_cards.sql   # One-off migration moving legacy 70 default cards to user profile
@@ -93,14 +94,14 @@ anki/
     │   ├── speech.ts               # Speech engine: Google Cloud TTS + Web Speech fallback
     │   └── supabase.ts             # Supabase client and fullSync / upsert / delete logic
     └── components/
-        ├── Header.tsx              # Frosted-glass 2-tier bar: LaRecall brand/deck switcher, labeled + Card CTA pill, auth, settings + study direction bar
+        ├── Header.tsx              # Frosted-glass 2-tier bar: LaRecall brand/deck switcher, labeled + Card CTA pill, auth, RU/EN toggle, settings + study direction bar
         ├── StatusRibbon.tsx        # Daily goal pill, clickable streak 🔥, counters (tabular-nums), gradient progress bar
         ├── FlashCard.tsx           # Elevated flashcard surface, animated answer reveal panel, audio pills & dynamic rating buttons
         ├── DecksView.tsx           # Personal cabinet: create/delete decks, starter catalog, add cards, CSV import/export
         ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
         ├── SettingsModal.tsx       # UI language, theme, language-aware voice, limits, starter decks, custom cards
         ├── AddCardModal.tsx        # Form to create a new custom card
-        ├── AuthModal.tsx           # Email sign in/up, password reset, Google OAuth, sync & starter decks
+        ├── AuthModal.tsx           # Email sign in/up, password reset, Google OAuth, sync, self-service account deletion & starter decks
         ├── ProgressModal.tsx       # Card-by-card progress list, filters, search, reset
         ├── AiPromptBuilder.tsx     # Dynamic AI CSV prompt generator (languages, CEFR level, topic)
         ├── StarterDecksCatalog.tsx # Reusable starter deck catalog with dynamic Supabase word counts

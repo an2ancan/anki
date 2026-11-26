@@ -24,6 +24,7 @@ import {
   reconcileActiveQueue,
 } from './lib/srs';
 import {
+  clearUserLocalData,
   loadLocalDailyStats,
   loadLocalDeck,
   loadLocalDecks,
@@ -41,6 +42,7 @@ import {
   stopActiveAudio,
 } from './lib/speech';
 import {
+  deleteAccountFromSupabase,
   deleteCardFromSupabase,
   deleteDeckFromSupabase,
   fullSyncWithSupabase,
@@ -1007,6 +1009,15 @@ export default function App() {
         onSignOut={async () => {
           await supabase.auth.signOut();
           showToast(t.toastSignedOut);
+        }}
+        onDeleteAccount={async () => {
+          if (!user) return;
+          const uid = user.id;
+          await deleteAccountFromSupabase();
+          clearUserLocalData(uid);
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+          setAuthOpen(false);
+          showToast(t.toastAccountDeleted);
         }}
         onAddStarterDeck={handleAddStarterDeck}
         onToast={showToast}
