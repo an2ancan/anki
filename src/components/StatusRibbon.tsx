@@ -27,10 +27,10 @@ export function StatusRibbon({
           <button
             type="button"
             onClick={onOpenStats}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold tabular-nums whitespace-nowrap hover:opacity-90 transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold tabular-nums whitespace-nowrap hover:opacity-90 transition border ${
               goalReached
-                ? 'bg-emerald-100 dark:bg-emerald-950/90 text-emerald-700 dark:text-emerald-300'
-                : 'bg-blue-100/90 dark:bg-blue-950/90 text-blue-700 dark:text-blue-300'
+                ? 'bg-emerald-50 border-emerald-200/90 dark:bg-emerald-950/90 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300'
+                : 'bg-blue-50 border-blue-200/90 dark:bg-blue-950/90 dark:border-blue-800/60 text-blue-700 dark:text-blue-300'
             }`}
             title={t.openStatsTitle}
           >
@@ -50,7 +50,7 @@ export function StatusRibbon({
           <button
             type="button"
             onClick={onOpenStats}
-            className="px-2.5 py-1 rounded-full font-bold tabular-nums whitespace-nowrap bg-orange-100/90 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 hover:opacity-90 transition"
+            className="px-2.5 py-1 rounded-full font-bold tabular-nums whitespace-nowrap bg-amber-50 border border-amber-200/90 dark:bg-orange-950/80 dark:border-orange-800/60 text-amber-800 dark:text-orange-300 hover:opacity-90 transition"
             title={t.streakTitle}
           >
             🔥 {streak}
@@ -70,7 +70,7 @@ export function StatusRibbon({
         </button>
       </div>
 
-      <div className="w-full bg-slate-200/80 dark:bg-slate-800 rounded-full h-2 mt-2 overflow-hidden">
+      <div className="w-full bg-stone-200/90 dark:bg-slate-800 rounded-full h-2 mt-2 overflow-hidden">
         <div
           className={`h-2 rounded-full transition-all duration-300 ${
             goalReached

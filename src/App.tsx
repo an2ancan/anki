@@ -120,10 +120,16 @@ export default function App() {
     toastTimerRef.current = window.setTimeout(() => setToastMsg(''), 2200);
   }, []);
 
-  // Theme sync
+  // Theme sync (also updates browser/iOS Safari chrome & background to avoid harsh bottom vignette)
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
     localStorage.setItem('anki_theme', isDark ? 'dark' : 'light');
+    const bgColor = isDark ? '#020617' : '#f3f1ec';
+    const chromeColor = isDark ? '#0f172a' : '#fbfaf8';
+    document.documentElement.style.backgroundColor = bgColor;
+    document.body.style.backgroundColor = bgColor;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', chromeColor);
   }, [isDark]);
 
   const activeDeckKey = decks.some((d) => d.deckKey === stats.activeDeckKey)
@@ -827,7 +833,7 @@ export default function App() {
   );
 
   return (
-    <div className="h-[100dvh] bg-gradient-to-b from-slate-50 via-slate-50 to-indigo-50/40 dark:from-slate-950 dark:via-slate-950 dark:to-indigo-950/20 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
+    <div className="h-[100dvh] bg-gradient-to-b from-[#f6f4ef] via-[#f2f0ea] to-[#ebe8e0] dark:from-slate-950 dark:via-slate-950 dark:to-indigo-950/20 text-stone-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 overflow-hidden">
       <Header
         activeDeckName={activeDeckMeta?.name || t.myDecks}
         origLang={activeDeckMeta?.origLang || 'RU'}
@@ -884,7 +890,7 @@ export default function App() {
             }}
           />
         ) : !currentCard ? (
-          <div className="my-auto text-center py-9 px-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-xl shadow-slate-900/[0.06] dark:shadow-black/30">
+          <div className="my-auto text-center py-9 px-6 bg-[#fffefd] dark:bg-slate-900 border border-stone-200/90 dark:border-slate-800/80 rounded-3xl shadow-[0_10px_32px_rgba(28,25,23,0.07)] dark:shadow-black/30">
             <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M5 13l4 4L19 7" />
@@ -950,7 +956,7 @@ export default function App() {
         )}
       </main>
 
-      <footer className="flex-none w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 z-10 safe-pb">
+      <footer className="flex-none w-full bg-[#fbfaf8]/95 dark:bg-slate-900/90 backdrop-blur-md border-t border-stone-200/90 dark:border-slate-800/80 z-10 safe-pb">
         <div className="max-w-lg w-full mx-auto px-3.5 pt-2 pb-1 flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-xs tabular-nums whitespace-nowrap overflow-hidden">
             <button

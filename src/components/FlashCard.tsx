@@ -53,13 +53,13 @@ export function FlashCard({
           if ((e.target as HTMLElement).closest('button')) return;
           if (!isFlipped) onFlip();
         }}
-        className="flex-1 flex flex-col justify-between bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-900/[0.06] dark:shadow-black/30 active:scale-[0.995] transition duration-150 cursor-pointer overflow-y-auto"
+        className="flex-1 flex flex-col justify-between bg-[#fffefd] dark:bg-slate-900 border border-stone-200/90 dark:border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-[0_10px_32px_rgba(28,25,23,0.07)] dark:shadow-black/30 active:scale-[0.995] transition duration-150 cursor-pointer overflow-y-auto"
       >
-        <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800/80">
-          <span className="text-xs font-bold tracking-wide px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex-none">
+        <div className="flex items-center justify-between gap-2 pb-3 border-b border-stone-100 dark:border-slate-800/80">
+          <span className="text-xs font-bold tracking-wide px-2.5 py-1 rounded-full bg-stone-100 dark:bg-slate-800 text-stone-700 dark:text-slate-200 flex-none">
             {directionBadge}
           </span>
-          <span className="text-xs text-slate-400 dark:text-slate-400 font-medium truncate max-w-[200px]">
+          <span className="text-xs text-stone-500 dark:text-slate-400 font-medium truncate max-w-[200px]">
             {card.context || (card.isCustom ? t.myCardBadge : '')}
           </span>
           <button
@@ -100,19 +100,19 @@ export function FlashCard({
         </div>
 
         {isFlipped && (
-          <div className="my-2 p-4 rounded-2xl bg-blue-50/75 dark:bg-blue-950/35 border border-blue-100 dark:border-blue-900/50 text-center animate-reveal">
-            <div className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-300 mb-1.5 leading-snug text-balance">
+          <div className="my-2 p-4 rounded-2xl bg-indigo-50/70 dark:bg-blue-950/35 border border-indigo-200/70 dark:border-blue-900/50 text-center animate-reveal">
+            <div className="text-xl sm:text-2xl font-bold text-indigo-700 dark:text-blue-300 mb-1.5 leading-snug text-balance">
               {answerText}
             </div>
             {answerExample && (
-              <div className="text-sm sm:text-[15px] text-slate-600 dark:text-slate-300 italic leading-relaxed text-balance">
+              <div className="text-sm sm:text-[15px] text-stone-600 dark:text-slate-300 italic leading-relaxed text-balance">
                 {answerExample}
               </div>
             )}
           </div>
         )}
 
-        <div className="flex justify-between items-center gap-2 text-xs text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800/80 tabular-nums">
+        <div className="flex justify-between items-center gap-2 text-xs text-stone-400 dark:text-slate-400 pt-3 border-t border-stone-100 dark:border-slate-800/80 tabular-nums">
           <span>
             {t.repsLabel}: {card.reps || 0}
           </span>
