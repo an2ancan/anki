@@ -98,6 +98,7 @@ anki/
         ├── StatusRibbon.tsx        # Daily goal pill, clickable streak 🔥, + quick-add trigger & gradient progress bar
         ├── FlashCard.tsx           # Elevated flashcard surface, animated answer reveal panel, audio pills, card delete button & dynamic rating buttons
         ├── QuickAddModal.tsx       # Quick-add modal (+ button): add card, export CSV, import/decks & starter decks catalog
+        ├── DailyGoalModal.tsx      # Daily goal celebration modal with CSS confetti animation & continue CTA
         ├── DecksView.tsx           # Personal cabinet: create/delete decks, starter catalog, add cards, CSV import/export
         ├── StatsView.tsx           # Statistics page: streaks, 14-day chart, 7-day forecast
         ├── SettingsModal.tsx       # UI language, theme, language-aware voice, limits, starter decks, custom cards

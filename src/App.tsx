@@ -64,6 +64,7 @@ import { AddCardModal } from './components/AddCardModal';
 import { AuthModal } from './components/AuthModal';
 import { ProgressModal } from './components/ProgressModal';
 import { QuickAddModal } from './components/QuickAddModal';
+import { DailyGoalModal } from './components/DailyGoalModal';
 
 export default function App() {
   const { t } = useI18n();
@@ -97,6 +98,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<'study' | 'decks' | 'stats'>('study');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [dailyGoalOpen, setDailyGoalOpen] = useState(false);
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [addCardTargetDeckKey, setAddCardTargetDeckKey] = useState<string>(DEFAULT_DECK_KEY);
   const [authOpen, setAuthOpen] = useState(false);
@@ -485,16 +487,29 @@ export default function App() {
       });
       setCurrentIndex((i) => i + 1);
       setIsFlipped(false);
+
+      // Celebrate the exact moment the user reaches their daily goal
+      if (
+        stats.dailyLimit > 0 &&
+        stats.dailyReviewedCount < stats.dailyLimit &&
+        nextStats.dailyReviewedCount >= nextStats.dailyLimit
+      ) {
+        stopActiveAudio();
+        setDailyGoalOpen(true);
+      }
     },
     [isFlipped, currentCard, currentItem, deck, stats, user, currentIndex, mode]
   );
 
   // Keyboard shortcuts
-  const anyModalOpen = settingsOpen || addCardOpen || authOpen || progressOpen;
+  const anyModalOpen =
+    settingsOpen || quickAddOpen || dailyGoalOpen || addCardOpen || authOpen || progressOpen;
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSettingsOpen(false);
+        setQuickAddOpen(false);
+        setDailyGoalOpen(false);
         setAddCardOpen(false);
         setAuthOpen(false);
         setProgressOpen(false);
@@ -1022,6 +1037,24 @@ export default function App() {
         }}
         onDeleteCustomCard={handleDeleteCustomCard}
         onAddStarterDeck={handleAddStarterDeck}
+      />
+
+      <DailyGoalModal
+        isOpen={dailyGoalOpen}
+        reviewedCount={stats.dailyReviewedCount}
+        dailyLimit={stats.dailyLimit}
+        streak={getEffectiveStreak(stats)}
+        onContinue={() => {
+          setDailyGoalOpen(false);
+          if (!queue[currentIndex]) {
+            rebuildQueue(deck, stats, true);
+          }
+        }}
+        onOpenStats={() => {
+          setDailyGoalOpen(false);
+          setActiveView('stats');
+        }}
+        onClose={() => setDailyGoalOpen(false)}
       />
 
       <QuickAddModal

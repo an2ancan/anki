@@ -2,6 +2,7 @@ import type { Card, DailyStats, ProgressFilter } from '../types';
 import { getDateKeyOffset, getEffectiveStreak } from '../lib/stats';
 import { DAY_MS, getCardStage } from '../lib/srs';
 import { useI18n } from '../lib/I18nContext';
+import { InfoTip } from './InfoTip';
 
 interface StatsViewProps {
   deck: Card[];
@@ -183,7 +184,10 @@ export function StatsView({ deck, stats, onBackToStudy, onOpenProgress }: StatsV
       </div>
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-        <div className="text-sm font-bold mb-3">{t.forecast7Days}</div>
+        <div className="text-sm font-bold mb-3 flex items-center">
+          <span>{t.forecast7Days}</span>
+          <InfoTip text={t.forecast7DaysTip} />
+        </div>
         <div className="grid grid-cols-7 gap-1.5 items-end h-24">
           {forecast.map((f) => {
             const pct = Math.round((f.count / maxForecast) * 100);

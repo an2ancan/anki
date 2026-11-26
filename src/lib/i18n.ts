@@ -54,6 +54,11 @@ export const translations = {
     dailyDoneTitle: 'Дневная норма выполнена!',
     dailyDoneDesc: (done: number, limit: number) =>
       `Вы повторили ${done} из ${limit} карточек. Отличная работа!`,
+    goalCelebrationTitle: 'Вы молодцы!',
+    goalCelebrationBody: (done: number, limit: number) =>
+      `На сегодня план выполнен (${done}/${limit}). Но всегда есть возможность сделать чуть больше!`,
+    goalCelebrationContinue: 'Сделать чуть больше →',
+    goalCelebrationStats: 'Посмотреть статистику',
     queueDoneTitle: 'Очередь завершена!',
     queueDoneDesc: (done: number) => `Вы повторили ${done} карточек за сегодня.`,
     continue20: 'Продолжить ещё 20 карточек',
@@ -95,6 +100,8 @@ export const translations = {
     deckMastery: 'Освоение колоды',
     allCardsLink: 'Все карточки →',
     forecast7Days: 'Прогноз повторений (7 дней)',
+    forecast7DaysTip:
+      'Показывает, сколько карточек текущей колоды «созреют» для повторения в каждый из ближайших 7 дней (начиная с завтра) по расписанию интервального повторения (SRS). Новые слова и повторения на сегодня сюда не входят.',
     tomorrow: 'Завтра',
 
     // SettingsModal
@@ -301,6 +308,11 @@ export const translations = {
     dailyDoneTitle: 'Daily goal reached!',
     dailyDoneDesc: (done: number, limit: number) =>
       `You reviewed ${done} of ${limit} cards today. Great job!`,
+    goalCelebrationTitle: 'Well done!',
+    goalCelebrationBody: (done: number, limit: number) =>
+      `Today's plan is complete (${done}/${limit}). There's always room to do a little more!`,
+    goalCelebrationContinue: 'Do a little more →',
+    goalCelebrationStats: 'View statistics',
     queueDoneTitle: 'Queue complete!',
     queueDoneDesc: (done: number) => `You reviewed ${done} cards today.`,
     continue20: 'Continue 20 more cards',
@@ -342,6 +354,8 @@ export const translations = {
     deckMastery: 'Deck mastery',
     allCardsLink: 'All cards →',
     forecast7Days: 'Upcoming reviews (7 days)',
+    forecast7DaysTip:
+      'Shows how many cards in the active deck are scheduled to become due for review on each of the next 7 days (starting tomorrow) based on SRS intervals. Brand-new cards and cards due today are excluded.',
     tomorrow: 'Tomorrow',
 
     // SettingsModal
